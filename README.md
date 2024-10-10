@@ -1,4 +1,4 @@
-# Fully Distributed ML
+# Distributed ML
 A Test Bed for Prototyping Fully-Distributed ML Experiments
 
 ## Installation

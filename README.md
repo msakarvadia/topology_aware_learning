@@ -6,8 +6,8 @@ A Test Bed for Prototyping Fully-Distributed ML Experiments
 Requirements:
 - `python >=3.7,<3.11`
 ```bash
-git clone https://github.com/msakarvadia/fully_distributed_ml.git
-cd fully_distributed_ml
+git clone https://github.com/msakarvadia/distributed_ml.git
+cd distributed_ml
 conda create -p env python==3.10
 conda activate env
 pip install -r requirements.txt

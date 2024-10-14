@@ -8,14 +8,15 @@ import torch
 
 from src.fl_app import FedlearnApp
 from src.types import DataChoices
+from pathlib import Path
 
 if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    run_dir = "out"
+    run_dir = Path("./out")
     fl_app = FedlearnApp(
-        clients=10,
-        rounds=2,
+        clients=5,
+        rounds=10,
         dataset=DataChoices.CIFAR10,
         batch_size=16,
         epochs=2,

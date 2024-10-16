@@ -57,7 +57,8 @@ def local_train(
 
     for epoch in range(epochs):
         epoch_results = []
-        log_every_n_batches = 100
+        n_batches = 0
+        # log_every_n_batches = 100
         running_loss = 0.0
 
         for batch_idx, batch in enumerate(loader):
@@ -71,18 +72,28 @@ def local_train(
             optimizer.step()
 
             running_loss += loss.item()
-            if batch_idx % log_every_n_batches == (log_every_n_batches - 1):
-                epoch_results.append(
-                    {
-                        "time": datetime.now(),
-                        "client_idx": client.idx,
-                        "round_idx": round_idx,
-                        "epoch": epoch,
-                        "batch_idx": batch_idx,
-                        "train_loss": running_loss / log_every_n_batches,
-                    },
-                )
-                running_loss = 0.0
+            n_batches += 1
+
+        # Test client on local test set TODO
+
+        # Test client on global test set TODO
+        test_result = test_model(
+            client.model, client.data, round_idx, batch_size, device
+        )
+
+        epoch_results.append(
+            {
+                "time": datetime.now(),
+                "client_idx": client.idx,
+                "round_idx": round_idx,
+                "epoch": epoch,
+                # "batch_idx": batch_idx,
+                "data_size": len(client.data),
+                "train_loss": running_loss / n_batches,
+                "test_acc": test_result["test_acc"],
+                "test_loss": test_result["test_loss"],
+            },
+        )
 
         results.extend(epoch_results)
 
@@ -100,10 +111,10 @@ def test_model(
     from datetime import datetime
 
     model.eval()
+    total_loss, total_acc, n_batches = 0.0, 0.0, 0
     with torch.no_grad():
         model.to(device)
         loader = DataLoader(data, batch_size=batch_size)
-        total_loss, total_acc, n_batches = 0.0, 0.0, 0
         for batch in loader:
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)

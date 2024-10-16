@@ -66,7 +66,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--alpha",
         type=float,
-        default=1e-5,
+        default=1,
         help="""
             The number of data samples across clients is defined by a
             [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)

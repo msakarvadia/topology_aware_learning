@@ -103,21 +103,26 @@ def test_model(
     with torch.no_grad():
         model.to(device)
         loader = DataLoader(data, batch_size=batch_size)
-        total_loss, n_batches = 0.0, 0
+        total_loss, total_acc, n_batches = 0.0, 0.0, 0
         for batch in loader:
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
             preds = model(inputs)
-            print("pred shape: ", preds.shape)
-            print("targets shape: ", targets.shape)
             loss = F.cross_entropy(preds, targets)
-
             total_loss += loss.item()
+
+            # Accuracy calculations
+            top_probabilities, top_preds = torch.topk(preds, k=1, dim=1)
+            top_preds = torch.squeeze(top_preds)
+            acc = torch.sum(top_preds == targets) / batch_size
+            total_acc += acc.item()
+
             n_batches += 1
 
     res: Result = {
         "time": datetime.now(),
         "round_idx": round_idx,
         "test_loss": total_loss / n_batches,
+        "test_acc": total_acc / n_batches,
     }
     return res

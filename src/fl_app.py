@@ -162,7 +162,8 @@ class FedlearnApp:
                 logger.log(
                     APP_LOG_LEVEL,
                     f"{preface} Finished testing with test_loss="
-                    f"{test_result['test_loss']:.3f}",
+                    f"{test_result['test_loss']:.3f}"
+                    f", test_acc={test_result['test_acc']:.3f}",
                 )
         return results
 

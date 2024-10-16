@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import logging
 import pathlib
+from pathlib import Path
+from datetime import datetime
 
 import numpy
 import torch
@@ -19,8 +21,6 @@ from src.types import Result
 # Used within applications
 APP_LOG_LEVEL = 21
 logger = logging.getLogger(__name__)
-# Initialize logging
-logging.basicConfig(filename="example.log", encoding="utf-8", level=logging.DEBUG)
 
 
 class FedlearnApp:
@@ -56,6 +56,7 @@ class FedlearnApp:
             one client will be selected regardless of this value and the
             number of clients.
         seed: Seed for reproducibility.
+        run_dir: Run directory for results.
     """
 
     def __init__(
@@ -74,7 +75,13 @@ class FedlearnApp:
         alpha: float = 1e5,
         participation: float = 1.0,
         seed: int | None = None,
+        run_dir: pathlib.Path = Path("./out"),
     ) -> None:
+
+        # Initialize logging
+        logging.basicConfig(
+            filename=f"{run_dir}/experiment.log", encoding="utf-8", level=logging.DEBUG
+        )
 
         self.rng = numpy.random.default_rng(seed)
         if seed is not None:
@@ -118,6 +125,7 @@ class FedlearnApp:
             self.dataset,
             self.train,
             self.train_data,
+            self.test_data,
             self.alpha,
             self.rng,
         )
@@ -127,15 +135,18 @@ class FedlearnApp:
         """Close the application."""
         pass
 
-    def run(self, run_dir: pathlib.Path) -> None:
+    def run(
+        self,
+    ) -> None:
         """Run the application.
 
         Args:
-            run_dir: Directory for run outputs.
+
         Returns:
             List of results from each client after each round.
         """
-        results = []
+        client_results = []
+        global_results = []
         for round_idx in range(self.rounds):
             preface = f"({round_idx+1}/{self.rounds})"
             logger.log(
@@ -143,8 +154,8 @@ class FedlearnApp:
                 f"{preface} Starting local training for this round",
             )
 
-            train_result = self._federated_round(round_idx, run_dir)
-            results.extend(train_result)
+            train_result = self._federated_round(round_idx)
+            client_results.extend(train_result)
 
             if self.test_data is not None:
                 logger.log(
@@ -158,6 +169,15 @@ class FedlearnApp:
                     self.batch_size,
                     self.device,
                 )
+                global_results.append(
+                    {
+                        "time": datetime.now(),
+                        "round_idx": round_idx,
+                        "global_test_acc": test_result["test_acc"],
+                        "global_test_loss": test_result["test_loss"],
+                    },
+                )
+
                 # .result()
                 logger.log(
                     APP_LOG_LEVEL,
@@ -165,12 +185,11 @@ class FedlearnApp:
                     f"{test_result['test_loss']:.3f}"
                     f", test_acc={test_result['test_acc']:.3f}",
                 )
-        return results
+        return client_results, global_results
 
     def _federated_round(
         self,
         round_idx: int,
-        run_dir: pathlib.Path,
     ) -> list[Result]:
         """Perform a single round in federated learning.
 
@@ -182,7 +201,6 @@ class FedlearnApp:
 
         Args:
             round_idx: Round number.
-            run_dir: Run directory for results.
 
         Returns:
             List of results from each client.

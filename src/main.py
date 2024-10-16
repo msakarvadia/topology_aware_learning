@@ -2,11 +2,12 @@ from __future__ import annotations
 
 import logging
 import pathlib
+import os
+import argparse
 
 import numpy
 import torch
 import pandas as pd
-import argparse
 
 from src.fl_app import FedlearnApp
 from src.types import DataChoices
@@ -86,6 +87,12 @@ if __name__ == "__main__":
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(
+        "--out_dir",
+        type=str,
+        default="./out",
+        help="Path to output dir for all experiment log files/csvs",
+    )
+    parser.add_argument(
         "--data_dir",
         type=str,
         default="../data",
@@ -117,7 +124,11 @@ if __name__ == "__main__":
         data = DataChoices.CIFAR10
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    run_dir = Path("./out")
+    run_dir = Path(args.out_dir)
+    # check if run_dir exists, if not, make it
+    if not os.path.exists(run_dir):
+        os.makedirs(run_dir)
+
     fl_app = FedlearnApp(
         clients=args.clients,
         rounds=args.rounds,
@@ -133,8 +144,15 @@ if __name__ == "__main__":
         alpha=args.alpha,
         participation=args.participation,
         seed=args.seed,
+        run_dir=run_dir,
     )
-    result = fl_app.run(run_dir=run_dir)
-    df = pd.DataFrame(result)
-    print(df)
+    client_result, global_result = fl_app.run()
+    client_df = pd.DataFrame(client_result)
+    client_df.to_csv(f"{run_dir}/client_stats.csv")
+    print(client_df)
+
+    global_df = pd.DataFrame(global_result)
+    global_df.to_csv(f"{run_dir}/global_stats.csv")
+    print(global_df)
+
     fl_app.close()

@@ -53,7 +53,7 @@ def local_train(
     client.model.to(device)
     client.model.train()
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
-    loader = DataLoader(client.data, batch_size=batch_size)
+    loader = DataLoader(client.train_data, batch_size=batch_size)
 
     for epoch in range(epochs):
         epoch_results = []
@@ -76,9 +76,9 @@ def local_train(
 
         # Test client on local test set TODO
 
-        # Test client on global test set TODO
-        test_result = test_model(
-            client.model, client.data, round_idx, batch_size, device
+        # Test client on global test set
+        global_test_result = test_model(
+            client.model, client.global_test_data, round_idx, batch_size, device
         )
 
         epoch_results.append(
@@ -88,10 +88,10 @@ def local_train(
                 "round_idx": round_idx,
                 "epoch": epoch,
                 # "batch_idx": batch_idx,
-                "data_size": len(client.data),
+                "data_size": len(client.train_data),
                 "train_loss": running_loss / n_batches,
-                "test_acc": test_result["test_acc"],
-                "test_loss": test_result["test_loss"],
+                "global_test_acc": global_test_result["test_acc"],
+                "global_test_loss": global_test_result["test_loss"],
             },
         )
 

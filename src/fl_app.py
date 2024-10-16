@@ -132,6 +132,8 @@ class FedlearnApp:
 
         Args:
             run_dir: Directory for run outputs.
+        Returns:
+            List of results from each client after each round.
         """
         results = []
         for round_idx in range(self.rounds):
@@ -153,6 +155,7 @@ class FedlearnApp:
                     self.global_model,
                     self.test_data,
                     round_idx,
+                    self.batch_size,
                     self.device,
                 )
                 # .result()
@@ -161,6 +164,7 @@ class FedlearnApp:
                     f"{preface} Finished testing with test_loss="
                     f"{test_result['test_loss']:.3f}",
                 )
+        return results
 
     def _federated_round(
         self,
@@ -182,6 +186,7 @@ class FedlearnApp:
         Returns:
             List of results from each client.
         """
+        print("Round idx: ", round_idx)
         job = local_train if self.train else no_local_train
         # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
@@ -206,7 +211,6 @@ class FedlearnApp:
                 self.lr,
                 self.device,
             )
-            print("result: ", result)
 
             results.extend(result)
 

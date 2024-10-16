@@ -93,6 +93,7 @@ def test_model(
     model: nn.Module,
     data: Dataset,
     round_idx: int,
+    batch_size: int,
     device: torch.device,
 ) -> Result:
     """Evaluate a model."""
@@ -101,12 +102,14 @@ def test_model(
     model.eval()
     with torch.no_grad():
         model.to(device)
-        loader = DataLoader(data, batch_size=1)
+        loader = DataLoader(data, batch_size=batch_size)
         total_loss, n_batches = 0.0, 0
         for batch in loader:
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
             preds = model(inputs)
+            print("pred shape: ", preds.shape)
+            print("targets shape: ", targets.shape)
             loss = F.cross_entropy(preds, targets)
 
             total_loss += loss.item()

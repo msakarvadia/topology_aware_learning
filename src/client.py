@@ -28,6 +28,7 @@ class Client(BaseModel):
     global_test_data: Dataset = Field(
         description="global set of test data that every client and global model is evaluated on."
     )
+    neighbors: list[int] = Field(description="list of this clients neighbors")
     # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
 
@@ -87,6 +88,7 @@ def create_clients(
             model=create_model(data_name),
             train_data=client_subsets[idx],
             global_test_data=global_test_data,
+            neighbors=[],  # in a fl client there are no neighbors
         )
         clients.append(client)
 

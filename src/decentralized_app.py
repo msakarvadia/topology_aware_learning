@@ -58,7 +58,7 @@ class DecentrallearnApp:
         seed: Seed for reproducibility.
         run_dir: Run directory for results.
         topology: Network topology of each client's neighbors.
-            Each client has a list of neighbor client_idxs.
+            Each client has a list of neighbor idxs.
     """
 
     def __init__(
@@ -210,7 +210,6 @@ class DecentrallearnApp:
         Returns:
             List of results from each client.
         """
-        print("Round idx: ", round_idx)
         job = local_train if self.train else no_local_train
         # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
@@ -224,9 +223,10 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
+        print(selected_clients)
 
         for client in selected_clients:
-            client.model.load_state_dict(self.global_model.state_dict())
+            # client.model.load_state_dict(self.global_model.state_dict())
             result = job(
                 client,
                 round_idx,
@@ -235,16 +235,21 @@ class DecentrallearnApp:
                 self.lr,
                 self.device,
             )
+            preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
+            logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
             results.extend(result)
 
-        preface = f"({round_idx+1}/{self.rounds})"
-        logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
-        avg_params = unweighted_module_avg(selected_clients)
-        self.global_model.load_state_dict(avg_params)
-        logger.log(
-            APP_LOG_LEVEL,
-            f"{preface} Averaged the returned locally trained models",
-        )
+        # TODO (MS) aggregate for each client accross neighbors
+        for client in selected_clients:
+            neighbor_idxs = client.neighbors
+            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+            # neighbors = map(self.clients.__getitem__, neighbor_idxs)
+            avg_params = unweighted_module_avg(neighbors)
+            client.model.load_state_dict(avg_params)
+            logger.log(
+                APP_LOG_LEVEL,
+                f"{preface} Averaged the client's locally trained neighbors.",
+            )
 
         return results

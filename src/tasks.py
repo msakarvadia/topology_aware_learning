@@ -85,6 +85,7 @@ def local_train(
             {
                 "time": datetime.now(),
                 "client_idx": client.idx,
+                "neighbors": client.neighbors,
                 "round_idx": round_idx,
                 "epoch": epoch,
                 # "batch_idx": batch_idx,

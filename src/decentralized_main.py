@@ -9,7 +9,7 @@ import numpy
 import torch
 import pandas as pd
 
-from src.fl_app import FedlearnApp
+from src.decentralized_app import DecentrallearnApp
 from src.types import DataChoices
 from pathlib import Path
 
@@ -129,7 +129,13 @@ if __name__ == "__main__":
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
-    fl_app = FedlearnApp(
+    # TODO (MS): make topology an argument
+    topology = [
+        [1, 2],  # client 0 has neighbors 1, 2
+        [0],  # client 1 has neighbors 0
+        [0],  # client 2 has neighbors 0
+    ]
+    decentral_app = DecentrallearnApp(
         clients=args.clients,
         rounds=args.rounds,
         dataset=data,
@@ -137,6 +143,7 @@ if __name__ == "__main__":
         epochs=args.epochs,
         lr=args.lr,
         data_dir=args.data_dir,
+        topology=topology,
         device=device,
         download=args.download,
         train=args.train,
@@ -146,7 +153,7 @@ if __name__ == "__main__":
         seed=args.seed,
         run_dir=run_dir,
     )
-    client_result, global_result = fl_app.run()
+    client_result, global_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
@@ -155,4 +162,4 @@ if __name__ == "__main__":
     global_df.to_csv(f"{run_dir}/global_stats.csv")
     print(global_df)
 
-    fl_app.close()
+    decentral_app.close()

@@ -17,12 +17,6 @@ if __name__ == "__main__":
     # set up arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--clients",
-        type=int,
-        default=3,
-        help="# of simulated clients",
-    )
-    parser.add_argument(
         "--rounds",
         type=int,
         default=5,
@@ -136,8 +130,9 @@ if __name__ == "__main__":
         [0],  # client 2 has neighbors 0
     ]
     topology = np.array([[0, 1, 1], [1, 0, 0], [1, 0, 0]])
+    clients = topology.shape[0]  # number of clients
     decentral_app = DecentrallearnApp(
-        clients=args.clients,
+        clients=clients,
         rounds=args.rounds,
         dataset=data,
         batch_size=args.batch_size,

@@ -4,6 +4,7 @@ from collections import OrderedDict
 from typing import Optional
 
 import torch
+import numpy as np
 from numpy.random import Generator
 from pydantic import BaseModel
 from pydantic import ConfigDict
@@ -40,7 +41,7 @@ def create_clients(
     global_test_data: Dataset,
     data_alpha: float,
     rng: Generator,
-    topology: list[list[int]],
+    topology: np.array,  # list[list[int]],
 ) -> list[Client]:
     """Create many clients with disjoint sets of data.
 
@@ -84,12 +85,14 @@ def create_clients(
 
     clients = []
     for idx in client_ids:
+        neighbors = np.where(topology[idx] > 0)[0].tolist()
+        print(f"client: {idx}, neighbors: ", neighbors)
         client = DecentralClient(
             idx=idx,
             model=create_model(data_name),
             train_data=client_subsets[idx],
             global_test_data=global_test_data,
-            neighbors=topology[idx],
+            neighbors=neighbors,
         )
         clients.append(client)
 

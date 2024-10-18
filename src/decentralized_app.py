@@ -70,7 +70,7 @@ class DecentrallearnApp:
         epochs: int,
         lr: float,
         data_dir: pathlib.Path,
-        topology: list[list[int]],
+        topology: np.array,  # list[list[int]],
         device: str = "cpu",
         download: bool = False,
         train: bool = True,
@@ -162,35 +162,7 @@ class DecentrallearnApp:
             train_result = self._federated_round(round_idx)
             client_results.extend(train_result)
 
-            if self.test_data is not None:
-                logger.log(
-                    APP_LOG_LEVEL,
-                    f"{preface} Starting the test for the global model",
-                )
-                test_result = test_model(
-                    self.global_model,
-                    self.test_data,
-                    round_idx,
-                    self.batch_size,
-                    self.device,
-                )
-                global_results.append(
-                    {
-                        "time": datetime.now(),
-                        "round_idx": round_idx,
-                        "global_test_acc": test_result["test_acc"],
-                        "global_test_loss": test_result["test_loss"],
-                    },
-                )
-
-                # .result()
-                logger.log(
-                    APP_LOG_LEVEL,
-                    f"{preface} Finished testing with test_loss="
-                    f"{test_result['test_loss']:.3f}"
-                    f", test_acc={test_result['test_acc']:.3f}",
-                )
-        return client_results, global_results
+        return client_results  # , global_results
 
     def _federated_round(
         self,
@@ -210,6 +182,7 @@ class DecentrallearnApp:
         Returns:
             List of results from each client.
         """
+        print("round idx: ", round_idx)
         job = local_train if self.train else no_local_train
         # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
@@ -223,7 +196,6 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
-        print(selected_clients)
 
         for client in selected_clients:
             # client.model.load_state_dict(self.global_model.state_dict())
@@ -247,6 +219,7 @@ class DecentrallearnApp:
             # neighbors = map(self.clients.__getitem__, neighbor_idxs)
             avg_params = unweighted_module_avg(neighbors)
             client.model.load_state_dict(avg_params)
+            preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(
                 APP_LOG_LEVEL,
                 f"{preface} Averaged the client's locally trained neighbors.",

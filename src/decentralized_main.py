@@ -5,7 +5,7 @@ import pathlib
 import os
 import argparse
 
-import numpy
+import numpy as np
 import torch
 import pandas as pd
 
@@ -89,7 +89,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--out_dir",
         type=str,
-        default="./out",
+        default="./out_decentralized",
         help="Path to output dir for all experiment log files/csvs",
     )
     parser.add_argument(
@@ -135,6 +135,7 @@ if __name__ == "__main__":
         [0],  # client 1 has neighbors 0
         [0],  # client 2 has neighbors 0
     ]
+    topology = np.array([[0, 1, 1], [1, 0, 0], [1, 0, 0]])
     decentral_app = DecentrallearnApp(
         clients=args.clients,
         rounds=args.rounds,
@@ -153,13 +154,13 @@ if __name__ == "__main__":
         seed=args.seed,
         run_dir=run_dir,
     )
-    client_result, global_result = decentral_app.run()
+    client_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
 
-    global_df = pd.DataFrame(global_result)
-    global_df.to_csv(f"{run_dir}/global_stats.csv")
-    print(global_df)
+    # global_df = pd.DataFrame(global_result)
+    # global_df.to_csv(f"{run_dir}/global_stats.csv")
+    # print(global_df)
 
     decentral_app.close()

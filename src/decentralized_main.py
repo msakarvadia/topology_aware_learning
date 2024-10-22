@@ -81,9 +81,15 @@ if __name__ == "__main__":
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(
+        "--topology_file",
+        type=str,
+        default="topology/topo_1.txt",
+        help="Path to network topology saved as a numpy array adjacency matrix",
+    )
+    parser.add_argument(
         "--out_dir",
         type=str,
-        default="./out_decentralized",
+        default="logs",
         help="Path to output dir for all experiment log files/csvs",
     )
     parser.add_argument(
@@ -118,18 +124,18 @@ if __name__ == "__main__":
         data = DataChoices.CIFAR10
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    run_dir = Path(args.out_dir)
+    # set static out dir based on args
+    # print("_".join(map(str, list(vars(args).values()))))
+    arg_path = "_".join(map(str, list(vars(args).values())))
+    # Need to remove any . or / to ensure a single continuous file path
+    arg_path = arg_path.replace(".", "")
+    arg_path = arg_path.replace("/", "")
+    run_dir = Path(f"{args.out_dir}/{arg_path}/")
     # check if run_dir exists, if not, make it
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
-    # TODO (MS): make topology an argument
-    topology = [
-        [1, 2],  # client 0 has neighbors 1, 2
-        [0],  # client 1 has neighbors 0
-        [0],  # client 2 has neighbors 0
-    ]
-    topology = np.array([[0, 1, 1], [1, 0, 0], [1, 0, 0]])
+    topology = np.loadtxt(args.topology_file, dtype=int)
     clients = topology.shape[0]  # number of clients
     decentral_app = DecentrallearnApp(
         clients=clients,
@@ -153,9 +159,5 @@ if __name__ == "__main__":
     client_df = pd.DataFrame(client_result)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
-
-    # global_df = pd.DataFrame(global_result)
-    # global_df.to_csv(f"{run_dir}/global_stats.csv")
-    # print(global_df)
 
     decentral_app.close()

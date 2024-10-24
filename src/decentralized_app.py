@@ -212,13 +212,19 @@ class DecentrallearnApp:
 
             results.extend(result)
 
-        # TODO (MS) aggregate for each client accross neighbors
+        # aggregate for each client accross neighbors
         for client in selected_clients:
             neighbor_idxs = client.neighbors
+            neighbor_probs = client.neighbor_probs
+            # This is where we set the probability of including a speicfic neighbor in that aggregation round
+            # simulating faulty networks
+            prob_idxs = numpy.random.binomial(1, neighbor_probs)
+            # mask out any neighbors that don't make the inclusion threshold
+            neighbor_idxs = [a for a, b in zip(neighbor_idxs, prob_idxs) if b > 0]
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+            # skip aggregation for any client that has 0 neighbors in a given round
             if len(neighbors) == 0:
                 continue
-            # neighbors = map(self.clients.__getitem__, neighbor_idxs)
             avg_params = unweighted_module_avg(neighbors)
             client.model.load_state_dict(avg_params)
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"

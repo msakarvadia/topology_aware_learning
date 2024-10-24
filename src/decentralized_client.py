@@ -30,6 +30,9 @@ class DecentralClient(BaseModel):
         description="global set of test data that every client and global model is evaluated on."
     )
     neighbors: list[int] = Field(description="list of this clients neighbors")
+    neighbor_probs: list[float] = Field(
+        description="list of this clients neighbors' network connection probabilities (for modeling faulty networks)"
+    )
     # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
 
@@ -86,7 +89,6 @@ def create_clients(
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
-        # print(np.argwhere(topology[idx]>0))
         prob_idxs = np.argwhere(topology[idx] > 0)
         probs = (topology[idx][prob_idxs]).flatten().tolist()
         print(f"client: {idx}, neighbors: {neighbors}, neighbor probabilities: {probs}")
@@ -96,6 +98,7 @@ def create_clients(
             train_data=client_subsets[idx],
             global_test_data=global_test_data,
             neighbors=neighbors,
+            neighbor_probs=probs,
         )
         clients.append(client)
 

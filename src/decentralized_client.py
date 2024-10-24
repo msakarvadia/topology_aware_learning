@@ -86,7 +86,10 @@ def create_clients(
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
-        print(f"client: {idx}, neighbors: ", neighbors)
+        # print(np.argwhere(topology[idx]>0))
+        prob_idxs = np.argwhere(topology[idx] > 0)
+        probs = (topology[idx][prob_idxs]).flatten().tolist()
+        print(f"client: {idx}, neighbors: {neighbors}, neighbor probabilities: {probs}")
         client = DecentralClient(
             idx=idx,
             model=create_model(data_name),

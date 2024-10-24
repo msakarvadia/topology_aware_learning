@@ -42,7 +42,7 @@ topology = np.array(
 np.savetxt("topology/topo_4.txt", topology, fmt="%d")
 
 
-G = nx.powerlaw_cluster_graph(15, 3, p=0.01, seed=0)
+G = nx.powerlaw_cluster_graph(15, 2, p=0.01, seed=0)
 # randomly assign edge weights (network connection probabilities)
 for u, v, w in G.edges(data=True):
     # weight with chance of sustaining network connection
@@ -50,5 +50,5 @@ for u, v, w in G.edges(data=True):
 
 
 topology = nx.to_numpy_array(G)
-np.savetxt("topology/topo_5.txt", topology, fmt="%d")
+np.savetxt("topology/topo_5.txt", topology, fmt="%1.3f")
 print(topology)

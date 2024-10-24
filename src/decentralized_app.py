@@ -216,6 +216,8 @@ class DecentrallearnApp:
         for client in selected_clients:
             neighbor_idxs = client.neighbors
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+            if len(neighbors) == 0:
+                continue
             # neighbors = map(self.clients.__getitem__, neighbor_idxs)
             avg_params = unweighted_module_avg(neighbors)
             client.model.load_state_dict(avg_params)

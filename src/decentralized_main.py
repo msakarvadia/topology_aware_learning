@@ -135,7 +135,8 @@ if __name__ == "__main__":
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
 
-    topology = np.loadtxt(args.topology_file, dtype=int)
+    topology = np.loadtxt(args.topology_file, dtype=float)
+    # print(topology)
     clients = topology.shape[0]  # number of clients
     decentral_app = DecentrallearnApp(
         clients=clients,

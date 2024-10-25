@@ -78,12 +78,12 @@ def create_clients(
     if train:
         client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
 
-        alpha = [sample_alpha] * num_clients
-        client_popularity = rng.dirichlet(alpha)
+        # alpha = [sample_alpha] * num_clients
+        # client_popularity = rng.dirichlet(alpha)
 
-        for data_idx, _ in enumerate(train_data):
-            client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
-            client_indices[client_id].append(data_idx)
+        # for data_idx, _ in enumerate(train_data):
+        #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
+        #    client_indices[client_id].append(data_idx)
 
         # NOTE (MS): if we can figure out the labels here, then use scikitlearns train_test_split
         # to create balanced local train and test sets

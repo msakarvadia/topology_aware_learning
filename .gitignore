@@ -1,3 +1,6 @@
 env/
 data/
 *.log
+__pycache__/
+*.egg-info/
+core.*

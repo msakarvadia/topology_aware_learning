@@ -59,7 +59,7 @@ if __name__ == "__main__":
             """,
     )
     parser.add_argument(
-        "--alpha",
+        "--sample_alpha",
         type=float,
         default=1,
         help="""
@@ -70,6 +70,21 @@ if __name__ == "__main__":
             is large, then the number of data samples across
             clients is uniform (default). When the value is very small, then
             the sample distribution becomes more non-uniform. Note: this value
+            must be greater than 0.
+            """,
+    )
+    parser.add_argument(
+        "--label_alpha",
+        type=float,
+        default=1,
+        help="""
+            The number of data samples across clients is defined by a
+            [Dirichlet](https://en.wikipedia.org/wiki/Dirichlet_distribution)
+            distribution. This value is used to define the uniformity of the
+            data labels across all clients. When data alpha
+            is large, then the label distribution across
+            clients is uniform (default). When the value is very small, then
+            the label distribution becomes more non-uniform. Note: this value
             must be greater than 0.
             """,
     )
@@ -151,7 +166,8 @@ if __name__ == "__main__":
         download=args.download,
         train=args.train,
         test=args.test,
-        alpha=args.alpha,
+        label_alpha=args.label_alpha,
+        sample_alpha=args.sample_alpha,
         participation=args.participation,
         seed=args.seed,
         run_dir=run_dir,

@@ -14,6 +14,7 @@ from torch.utils.data import Subset
 
 from src.modules import create_model
 from src.types import DataChoices
+from src.data import federated_split
 
 
 class DecentralClient(BaseModel):
@@ -25,6 +26,12 @@ class DecentralClient(BaseModel):
     model: torch.nn.Module = Field(description="Client local model.")
     train_data: Optional[Subset] = Field(  # noqa: UP007
         description="Subset of data this client will train on.",
+    )
+    test_data: Optional[Subset] = Field(  # noqa: UP007
+        description="Subset of local data this client will test on.",
+    )
+    valid_data: Optional[Subset] = Field(  # noqa: UP007
+        description="Subset of local data this client will validate on.",
     )
     global_test_data: Dataset = Field(
         description="global set of test data that every client and global model is evaluated on."
@@ -42,7 +49,8 @@ def create_clients(
     train: bool,
     train_data: Dataset,
     global_test_data: Dataset,
-    data_alpha: float,
+    label_alpha: float,
+    sample_alpha: float,
     rng: Generator,
     topology: np.array,  # list[list[int]],
 ) -> list[Client]:
@@ -70,7 +78,7 @@ def create_clients(
     if train:
         client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
 
-        alpha = [data_alpha] * num_clients
+        alpha = [sample_alpha] * num_clients
         client_popularity = rng.dirichlet(alpha)
 
         for data_idx, _ in enumerate(train_data):
@@ -79,12 +87,35 @@ def create_clients(
 
         # NOTE (MS): if we can figure out the labels here, then use scikitlearns train_test_split
         # to create balanced local train and test sets
+        (train_indices, test_indices, valid_indices) = federated_split(
+            num_workers=num_clients,
+            data=train_data,
+            num_labels=10,
+            label_alpha=label_alpha,
+            sample_alpha=sample_alpha,
+            train_test_valid_split=(0.7, 0.2, 0.1),
+            ensure_at_least_one_sample=True,
+            rng=rng,
+            allow_overlapping_samples=False,
+        )
 
-        client_subsets = {
-            idx: Subset(train_data, client_indices[idx]) for idx in client_ids
+        train_subsets = {
+            idx: Subset(train_data, train_indices[idx]) for idx in client_ids
         }
+
+        test_subsets = valid_subsets = None
+        if test_indices is not None:
+            test_subsets = {
+                idx: Subset(train_data, test_indices[idx]) for idx in client_ids
+            }
+        if valid_indices is not None:
+            valid_subsets = {
+                idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
+            }
     else:
-        client_subsets = {idx: None for idx in client_ids}
+        train_subsets = {idx: None for idx in client_ids}
+        test_subsets = {idx: None for idx in client_ids}
+        valid_subsets = {idx: None for idx in client_ids}
 
     clients = []
     for idx in client_ids:
@@ -95,7 +126,9 @@ def create_clients(
         client = DecentralClient(
             idx=idx,
             model=create_model(data_name),
-            train_data=client_subsets[idx],
+            train_data=train_subsets[idx],
+            test_data=test_subsets[idx],
+            valid_data=valid_subsets[idx],
             global_test_data=global_test_data,
             neighbors=neighbors,
             neighbor_probs=probs,

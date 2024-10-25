@@ -75,7 +75,8 @@ class DecentrallearnApp:
         download: bool = False,
         train: bool = True,
         test: bool = True,
-        alpha: float = 1e5,
+        label_alpha: float = 1e5,
+        sample_alpha: float = 1e5,
         participation: float = 1.0,
         seed: int | None = None,
         run_dir: pathlib.Path = Path("./out"),
@@ -120,9 +121,10 @@ class DecentrallearnApp:
         self.topology = topology
 
         self.rounds = rounds
-        if alpha <= 0:
+        if sample_alpha <= 0 or label_alpha <= 0:
             raise ValueError("Argument `alpha` must be greater than 0.")
-        self.alpha = alpha
+        self.label_alpha = label_alpha
+        self.sample_alpha = sample_alpha
 
         self.clients = create_clients(
             clients,
@@ -130,7 +132,8 @@ class DecentrallearnApp:
             self.train,
             self.train_data,
             self.test_data,
-            self.alpha,
+            self.label_alpha,
+            self.sample_alpha,
             self.rng,
             self.topology,
         )

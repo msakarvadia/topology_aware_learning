@@ -133,10 +133,13 @@ if __name__ == "__main__":
 
     if args.dataset == "mnist":
         data = DataChoices.MNIST
+        num_labels = 10
     if args.dataset == "fmnist":
         data = DataChoices.FMNIST
+        num_labels = 10
     if args.dataset == "cifar10":
         data = DataChoices.CIFAR10
+        num_labels = 10
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # set static out dir based on args
@@ -157,6 +160,7 @@ if __name__ == "__main__":
         clients=clients,
         rounds=args.rounds,
         dataset=data,
+        num_labels=num_labels,
         batch_size=args.batch_size,
         epochs=args.epochs,
         lr=args.lr,

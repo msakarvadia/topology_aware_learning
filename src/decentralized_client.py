@@ -48,6 +48,7 @@ def create_clients(
     data_name: DataChoices,
     train: bool,
     train_data: Dataset,
+    num_labels: int,
     global_test_data: Dataset,
     label_alpha: float,
     sample_alpha: float,
@@ -85,15 +86,16 @@ def create_clients(
         #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
         #    client_indices[client_id].append(data_idx)
 
-        # NOTE (MS): if we can figure out the labels here, then use scikitlearns train_test_split
-        # to create balanced local train and test sets
+        # TODO(MS) to create balanced local train and test sets
+        # TODO(MS): pass in train_test_valid_split
         (train_indices, test_indices, valid_indices) = federated_split(
             num_workers=num_clients,
             data=train_data,
-            num_labels=10,
+            num_labels=num_labels,
             label_alpha=label_alpha,
             sample_alpha=sample_alpha,
-            train_test_valid_split=(0.7, 0.2, 0.1),
+            train_test_valid_split=None,
+            # train_test_valid_split=(0.7, 0.2, 0.1),
             ensure_at_least_one_sample=True,
             rng=rng,
             allow_overlapping_samples=False,
@@ -104,6 +106,8 @@ def create_clients(
         }
 
         test_subsets = valid_subsets = None
+        test_subsets = {idx: None for idx in client_ids}
+        valid_subsets = {idx: None for idx in client_ids}
         if test_indices is not None:
             test_subsets = {
                 idx: Subset(train_data, test_indices[idx]) for idx in client_ids

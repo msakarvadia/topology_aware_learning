@@ -66,6 +66,7 @@ class DecentrallearnApp:
         clients: int,
         rounds: int,
         dataset: DataChoices,
+        num_labels: int,
         batch_size: int,
         epochs: int,
         lr: float,
@@ -116,6 +117,7 @@ class DecentrallearnApp:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
+        self.num_labels = num_labels
 
         self.participation = participation
         self.topology = topology
@@ -131,6 +133,7 @@ class DecentrallearnApp:
             self.dataset,
             self.train,
             self.train_data,
+            self.num_labels,
             self.test_data,
             self.label_alpha,
             self.sample_alpha,

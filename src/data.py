@@ -206,7 +206,7 @@ def federated_split(
             indices[chosen_worker].append(idx)
             worker_samples[chosen_worker] += 1
 
-    if ensure_at_least_one_sample:
+    if ensure_at_least_one_sample and train_test_valid_split is not None:
         # Add one sample for each split
         for i in range(len(train_test_valid_split)):
             for worker in range(num_workers):

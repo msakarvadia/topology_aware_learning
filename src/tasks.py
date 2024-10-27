@@ -5,6 +5,7 @@ from torch import nn
 from torch.nn import functional as F  # noqa: N812
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
+from sklearn.metrics import classification_report
 
 from src.client import Client
 from src.types import Result
@@ -91,9 +92,10 @@ def local_train(
                 # "batch_idx": batch_idx,
                 "data_size": len(client.train_data),
                 "train_loss": running_loss / n_batches,
-                "global_test_acc": global_test_result["test_acc"],
-                "global_test_loss": global_test_result["test_loss"],
-            },
+                # "global_test_acc": global_test_result["test_acc"],
+                # "global_test_loss": global_test_result["test_loss"],
+            }
+            | global_test_result,
         )
 
         results.extend(epoch_results)
@@ -113,6 +115,8 @@ def test_model(
 
     model.eval()
     total_loss, total_acc, n_batches = 0.0, 0.0, 0
+    y_true = []
+    y_pred = []
     with torch.no_grad():
         model.to(device)
         loader = DataLoader(data, batch_size=batch_size)
@@ -120,21 +124,37 @@ def test_model(
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
             preds = model(inputs)
+            y_true.extend(targets.cpu().tolist())
             loss = F.cross_entropy(preds, targets)
             total_loss += loss.item()
 
             # Accuracy calculations
             top_probabilities, top_preds = torch.topk(preds, k=1, dim=1)
             top_preds = torch.squeeze(top_preds)
+            y_pred.extend(top_preds.cpu().tolist())
             acc = torch.sum(top_preds == targets) / batch_size
             total_acc += acc.item()
 
             n_batches += 1
 
+    # print("test acc: ", total_acc / n_batches)
+    report = classification_report(
+        y_true, y_pred, digits=4, output_dict=True, zero_division=0
+    )
+
+    stats_dict = {}
+    for k in report:
+        if dict == type(report[k]):
+            # print(k, report[k])
+            for header in report[k]:
+                stats_dict[f"{k}_{header}"] = report[k][header]
+                # print(f'{k}_{header}: {report[k][header]}')
+    # print(stats_dict)
+
     res: Result = {
-        "time": datetime.now(),
-        "round_idx": round_idx,
+        # "time": datetime.now(),
+        # "round_idx": round_idx,
         "test_loss": total_loss / n_batches,
         "test_acc": total_acc / n_batches,
-    }
+    } | stats_dict
     return res

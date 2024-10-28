@@ -127,6 +127,7 @@ def create_clients(
         prob_idxs = np.argwhere(topology[idx] > 0)
         probs = (topology[idx][prob_idxs]).flatten().tolist()
         print(f"client: {idx}, neighbors: {neighbors}, neighbor probabilities: {probs}")
+        # print(f"train data size: {len(train_subsets[idx])}")
         client = DecentralClient(
             idx=idx,
             model=create_model(data_name),
@@ -140,6 +141,27 @@ def create_clients(
         clients.append(client)
 
     return clients
+
+
+def weighted_module_avg(
+    selected_clients: list[Client],
+) -> OrderedDict[str, torch.Tensor]:
+    """Compute the weighted average of models."""
+    models = [client.model for client in selected_clients]
+    data_lens = [len(client.train_data) for client in selected_clients]
+    weights = [x / sum(data_lens) for x in data_lens]
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for model, w in zip(models, weights):
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    return avg_weights
 
 
 def unweighted_module_avg(

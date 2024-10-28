@@ -10,6 +10,7 @@ import torch
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
+from src.decentralized_client import weighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
 from src.tasks import local_train
@@ -81,6 +82,7 @@ class DecentrallearnApp:
         participation: float = 1.0,
         seed: int | None = None,
         run_dir: pathlib.Path = Path("./out"),
+        aggregation_strategy: str = "weighted",
     ) -> None:
 
         # Initialize logging
@@ -112,6 +114,12 @@ class DecentrallearnApp:
                 train=False,
                 download=True,
             )
+
+        self.aggregation_strategy = aggregation_strategy
+        if self.aggregation_strategy == "weighted":
+            self.aggregation_function = weighted_module_avg
+        if self.aggregation_strategy == "unweighted":
+            self.aggregation_function = unweighted_module_avg
 
         self.device = torch.device(device)
         self.epochs = epochs
@@ -231,7 +239,8 @@ class DecentrallearnApp:
             # skip aggregation for any client that has 0 neighbors in a given round
             if len(neighbors) == 0:
                 continue
-            avg_params = unweighted_module_avg(neighbors)
+            avg_params = self.aggregation_function(neighbors)
+            # avg_params = unweighted_module_avg(neighbors)
             client.model.load_state_dict(avg_params)
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(

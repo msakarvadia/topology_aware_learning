@@ -96,6 +96,13 @@ if __name__ == "__main__":
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(
+        "--aggregation_strategy",
+        type=str,
+        default="unweighted",
+        choices=["unweighted", "weighted"],
+        help="Type of aggregation stretegy used to among neighboring nodes.",
+    )
+    parser.add_argument(
         "--topology_file",
         type=str,
         default="topology/topo_1.txt",
@@ -175,6 +182,7 @@ if __name__ == "__main__":
         participation=args.participation,
         seed=args.seed,
         run_dir=run_dir,
+        aggregation_strategy=args.aggregation_strategy,
     )
     client_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)

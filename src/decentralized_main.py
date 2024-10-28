@@ -59,6 +59,15 @@ if __name__ == "__main__":
             """,
     )
     parser.add_argument(
+        "--prox_coeff",
+        type=float,
+        default=0.1,
+        help="""
+            The proximal term coefficient. If this is set to 0, then no
+            proximal term will be added.
+            """,
+    )
+    parser.add_argument(
         "--sample_alpha",
         type=float,
         default=100,
@@ -183,6 +192,7 @@ if __name__ == "__main__":
         seed=args.seed,
         run_dir=run_dir,
         aggregation_strategy=args.aggregation_strategy,
+        prox_coeff=args.prox_coeff,
     )
     client_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)

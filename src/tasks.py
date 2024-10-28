@@ -7,6 +7,7 @@ from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from sklearn.metrics import classification_report
 
+# TODO (MS): update all of these clients to decentralized clients
 from src.client import Client
 from src.types import Result
 
@@ -33,7 +34,9 @@ def local_train(
     epochs: int,
     batch_size: int,
     lr: float,
+    prox_coeff: float,
     device: torch.device,
+    neighbors: list[Client],
 ) -> list[Result]:
     """Local training job.
 
@@ -69,6 +72,18 @@ def local_train(
             loss = F.cross_entropy(preds, targets)
 
             optimizer.zero_grad()
+            # Append proximal term
+            # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
+            if prox_coeff > 0:
+                proximal_term = 0.0
+                for neighbor in neighbors:
+                    neighbor.model.to(device)
+                    for w, w_t in zip(
+                        client.model.parameters(), neighbor.model.parameters()
+                    ):
+                        proximal_term += (w - w_t).norm(2)
+                loss += (prox_coeff / 2) * proximal_term
+
             loss.backward()
             optimizer.step()
 

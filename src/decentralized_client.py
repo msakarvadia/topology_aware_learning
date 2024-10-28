@@ -23,6 +23,7 @@ class DecentralClient(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
     idx: int = Field(description="Client ID.")
+    prox_coeff: float = Field(description="Proximal term coefficient (FedProx).")
     model: torch.nn.Module = Field(description="Client local model.")
     train_data: Optional[Subset] = Field(  # noqa: UP007
         description="Subset of data this client will train on.",
@@ -42,6 +43,16 @@ class DecentralClient(BaseModel):
     )
     # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
+    def get_neighbors(self) -> list[ints]:
+        neighbor_idxs = self.neighbors
+        neighbor_probs = self.neighbor_probs
+        # This is where we set the probability of including a speicfic neighbor in that aggregation round
+        # simulating faulty networks
+        prob_idxs = np.random.binomial(1, neighbor_probs)
+        # mask out any neighbors that don't make the inclusion threshold
+        neighbor_idxs = [a for a, b in zip(neighbor_idxs, prob_idxs) if b > 0]
+        return neighbor_idxs
+
 
 def create_clients(
     num_clients: int,
@@ -54,6 +65,7 @@ def create_clients(
     sample_alpha: float,
     rng: Generator,
     topology: np.array,  # list[list[int]],
+    prox_coeff: float,
 ) -> list[Client]:
     """Create many clients with disjoint sets of data.
 
@@ -137,6 +149,7 @@ def create_clients(
             global_test_data=global_test_data,
             neighbors=neighbors,
             neighbor_probs=probs,
+            prox_coeff=prox_coeff,
         )
         clients.append(client)
 

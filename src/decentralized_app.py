@@ -83,6 +83,7 @@ class DecentrallearnApp:
         seed: int | None = None,
         run_dir: pathlib.Path = Path("./out"),
         aggregation_strategy: str = "weighted",
+        prox_coeff: float = 0,
     ) -> None:
 
         # Initialize logging
@@ -127,6 +128,7 @@ class DecentrallearnApp:
         self.lr = lr
         self.num_labels = num_labels
 
+        self.prox_coeff = prox_coeff
         self.participation = participation
         self.topology = topology
 
@@ -147,6 +149,7 @@ class DecentrallearnApp:
             self.sample_alpha,
             self.rng,
             self.topology,
+            self.prox_coeff,
         )
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
@@ -212,14 +215,17 @@ class DecentrallearnApp:
         )
 
         for client in selected_clients:
-            # client.model.load_state_dict(self.global_model.state_dict())
+            neighbor_idxs = client.get_neighbors()
+            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             result = job(
                 client,
                 round_idx,
                 self.epochs,
                 self.batch_size,
                 self.lr,
+                self.prox_coeff,
                 self.device,
+                neighbors,
             )
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
@@ -228,6 +234,9 @@ class DecentrallearnApp:
 
         # aggregate for each client accross neighbors
         for client in selected_clients:
+            neighbor_idxs = client.get_neighbors()
+            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+            """
             neighbor_idxs = client.neighbors
             neighbor_probs = client.neighbor_probs
             # This is where we set the probability of including a speicfic neighbor in that aggregation round
@@ -236,6 +245,7 @@ class DecentrallearnApp:
             # mask out any neighbors that don't make the inclusion threshold
             neighbor_idxs = [a for a, b in zip(neighbor_idxs, prob_idxs) if b > 0]
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+            """
             # skip aggregation for any client that has 0 neighbors in a given round
             if len(neighbors) == 0:
                 continue

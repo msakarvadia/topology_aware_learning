@@ -11,6 +11,8 @@ from sklearn.metrics import classification_report
 from src.client import Client
 from src.types import Result
 
+from parsl.app.app import python_app
+
 
 def no_local_train(
     client: Client,
@@ -28,6 +30,7 @@ def no_local_train(
     return []
 
 
+@python_app
 def local_train(
     client: Client,
     round_idx: int,

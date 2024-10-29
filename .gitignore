@@ -4,3 +4,6 @@ data/
 __pycache__/
 *.egg-info/
 core.*
+runinfo/
+cmd_parsl*
+parsl.*

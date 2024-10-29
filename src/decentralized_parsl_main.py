@@ -272,7 +272,7 @@ if __name__ == "__main__":
         prox_coeff=args.prox_coeff,
     )
     client_result = decentral_app.run()
-    client_df = pd.DataFrame(client_result.result())
+    client_df = pd.DataFrame(client_result)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
 

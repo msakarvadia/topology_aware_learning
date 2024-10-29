@@ -30,7 +30,6 @@ def no_local_train(
     return []
 
 
-@python_app
 def local_train(
     client: Client,
     round_idx: int,

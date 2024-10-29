@@ -234,7 +234,9 @@ class DecentrallearnApp:
 
         # Wait for local training for each round to finish
         # before aggregating
+        print("waiting for: ", results[0])
         results = [i.result() for i in results]
+        print("got all local training futures")
 
         # aggregate for each client accross neighbors
         for client in selected_clients:

@@ -8,14 +8,14 @@ from torch.utils.data import Dataset
 from sklearn.metrics import classification_report
 
 # TODO (MS): update all of these clients to decentralized clients
-from src.client import Client
+from src.decentralized_client import DecentralClient
 from src.types import Result
 
 from parsl.app.app import python_app
 
 
 def no_local_train(
-    client: Client,
+    client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
@@ -31,14 +31,14 @@ def no_local_train(
 
 
 def local_train(
-    client: Client,
+    client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
     lr: float,
     prox_coeff: float,
     device: torch.device,
-    neighbors: list[Client],
+    neighbors: list[DecentralClient],
 ) -> list[Result]:
     """Local training job.
 

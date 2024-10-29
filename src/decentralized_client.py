@@ -66,7 +66,7 @@ def create_clients(
     rng: Generator,
     topology: np.array,  # list[list[int]],
     prox_coeff: float,
-) -> list[Client]:
+) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
     Args:
@@ -157,7 +157,7 @@ def create_clients(
 
 
 def weighted_module_avg(
-    selected_clients: list[Client],
+    selected_clients: list[DecentralClient],
 ) -> OrderedDict[str, torch.Tensor]:
     """Compute the weighted average of models."""
     models = [client.model for client in selected_clients]
@@ -178,7 +178,7 @@ def weighted_module_avg(
 
 
 def unweighted_module_avg(
-    selected_clients: list[Client],
+    selected_clients: list[DecentralClient],
 ) -> OrderedDict[str, torch.Tensor]:
     """Compute the unweighted average of models."""
     models = [client.model for client in selected_clients]

@@ -73,7 +73,6 @@ def local_train(
             preds = client.model(inputs)
             loss = F.cross_entropy(preds, targets)
 
-            optimizer.zero_grad()
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
             if prox_coeff > 0:
@@ -87,7 +86,10 @@ def local_train(
                 loss += (prox_coeff / 2) * proximal_term
 
             loss.backward()
+            # print(client.model)
+            # print(f"{loss=}, {torch.count_nonzero(client.model.fc1.weight.grad)=}")
             optimizer.step()
+            optimizer.zero_grad()
 
             running_loss += loss.item()
             n_batches += 1

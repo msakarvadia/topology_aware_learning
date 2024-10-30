@@ -52,3 +52,11 @@ for u, v, w in G.edges(data=True):
 topology = nx.to_numpy_array(G)
 np.savetxt("topology/topo_5.txt", topology, fmt="%1.3f")
 print(topology)
+
+G = nx.complete_graph(3)
+topology = nx.to_numpy_array(G)
+np.savetxt("topology/topo_6.txt", topology, fmt="%1.3f")
+
+G = nx.complete_graph(10)
+topology = nx.to_numpy_array(G)
+np.savetxt("topology/topo_7.txt", topology, fmt="%1.3f")

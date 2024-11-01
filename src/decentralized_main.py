@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import torch
 import pandas as pd
+import json
 
 from src.decentralized_app import DecentrallearnApp
 from src.types import DataChoices
@@ -22,6 +23,12 @@ if __name__ == "__main__":
         type=int,
         default=5,
         help="# of aggregation rounds",
+    )
+    parser.add_argument(
+        "--checkpoint_every",
+        type=int,
+        default=3,
+        help="# of rounds to wait between checkpoints",
     )
     parser.add_argument(
         "--batch_size",
@@ -160,8 +167,8 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # set static out dir based on args
-    # print("_".join(map(str, list(vars(args).values()))))
-    arg_path = "_".join(map(str, list(vars(args).values())))
+    # I don't want to record the # of rounds, incase this changes in future experiments
+    arg_path = "_".join(map(str, list(vars(args).values())[1:]))
     # Need to remove any . or / to ensure a single continuous file path
     arg_path = arg_path.replace(".", "")
     arg_path = arg_path.replace("/", "")
@@ -169,9 +176,12 @@ if __name__ == "__main__":
     # check if run_dir exists, if not, make it
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
-    else:
-        print("we have already run this experiment, so exiting without re-running it")
-        sys.exit()
+    # else:
+    #    print("we have already run this experiment, so exiting without re-running it")
+    #    sys.exit()
+
+    # Save args in the run_dir
+    json.dump(vars(args), open(f"{run_dir}/args.txt", "w"))
 
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)
@@ -197,6 +207,7 @@ if __name__ == "__main__":
         run_dir=run_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
+        checkpoint_every=args.checkpoint_every,
     )
     client_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)

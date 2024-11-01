@@ -7,12 +7,16 @@ from datetime import datetime
 
 import numpy
 import torch
+import glob
+import os
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
+from src.modules import save_checkpoint
+from src.modules import load_checkpoint
 from src.tasks import local_train
 from src.tasks import no_local_train
 from src.tasks import test_model
@@ -84,11 +88,16 @@ class DecentrallearnApp:
         run_dir: pathlib.Path = Path("./out"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
+        checkpoint_every: int = 1,
     ) -> None:
+
+        self.run_dir = run_dir
 
         # Initialize logging
         logging.basicConfig(
-            filename=f"{run_dir}/experiment.log", encoding="utf-8", level=logging.DEBUG
+            filename=f"{self.run_dir}/experiment.log",
+            encoding="utf-8",
+            level=logging.DEBUG,
         )
 
         self.rng = numpy.random.default_rng(seed)
@@ -127,12 +136,15 @@ class DecentrallearnApp:
         self.batch_size = batch_size
         self.lr = lr
         self.num_labels = num_labels
+        self.checkpoint_every = checkpoint_every
 
         self.prox_coeff = prox_coeff
         self.participation = participation
         self.topology = topology
 
         self.rounds = rounds
+        self.start_round = 0  # this value will get overridden if we load from a ckpt
+
         if sample_alpha <= 0 or label_alpha <= 0:
             raise ValueError("Argument `alpha` must be greater than 0.")
         self.label_alpha = label_alpha
@@ -153,6 +165,21 @@ class DecentrallearnApp:
         )
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
+        self.client_results: list[Result] = []
+
+        list_of_ckpts = glob.glob(f"{self.run_dir}/*.pth")
+        if list_of_ckpts:
+            # get the latest (most recently saved) ckpt
+            checkpoint_path = max(list_of_ckpts, key=os.path.getctime)
+            logger.log(
+                APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
+            )
+            self.start_round, self.clients, self.client_results = load_checkpoint(
+                checkpoint_path, self.clients
+            )
+            self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
+            print(f"loaded latest ckpt from: {checkpoint_path}")
+
     def close(self) -> None:
         """Close the application."""
         pass
@@ -167,9 +194,8 @@ class DecentrallearnApp:
         Returns:
             List of results from each client after each round.
         """
-        client_results = []
-        global_results = []
-        for round_idx in range(self.rounds):
+        # client_results = []
+        for round_idx in range(self.start_round, self.rounds):
             preface = f"({round_idx+1}/{self.rounds})"
             logger.log(
                 APP_LOG_LEVEL,
@@ -177,9 +203,15 @@ class DecentrallearnApp:
             )
 
             train_result = self._federated_round(round_idx)
-            client_results.extend(train_result)
+            self.client_results.extend(train_result)
 
-        return client_results  # , global_results
+            checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
+            if round_idx % self.checkpoint_every == 0:
+                save_checkpoint(
+                    round_idx, self.clients, self.client_results, checkpoint_path
+                )
+
+        return self.client_results  # , global_results
 
     def _federated_round(
         self,
@@ -236,16 +268,6 @@ class DecentrallearnApp:
         for client in selected_clients:
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
-            """
-            neighbor_idxs = client.neighbors
-            neighbor_probs = client.neighbor_probs
-            # This is where we set the probability of including a speicfic neighbor in that aggregation round
-            # simulating faulty networks
-            prob_idxs = numpy.random.binomial(1, neighbor_probs)
-            # mask out any neighbors that don't make the inclusion threshold
-            neighbor_idxs = [a for a, b in zip(neighbor_idxs, prob_idxs) if b > 0]
-            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
-            """
             # skip aggregation for any client that has 0 neighbors in a given round
             if len(neighbors) == 0:
                 continue

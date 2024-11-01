@@ -24,6 +24,12 @@ if __name__ == "__main__":
         help="# of aggregation rounds",
     )
     parser.add_argument(
+        "--checkpoint_every",
+        type=int,
+        default=3,
+        help="# of rounds to wait between checkpoints",
+    )
+    parser.add_argument(
         "--batch_size",
         type=int,
         default=16,
@@ -197,6 +203,7 @@ if __name__ == "__main__":
         run_dir=run_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
+        checkpoint_every=args.checkpoint_every,
     )
     client_result = decentral_app.run()
     client_df = pd.DataFrame(client_result)

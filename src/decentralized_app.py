@@ -88,6 +88,7 @@ class DecentrallearnApp:
         run_dir: pathlib.Path = Path("./out"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
+        checkpoint_every: int = 1,
     ) -> None:
 
         self.run_dir = run_dir
@@ -135,6 +136,7 @@ class DecentrallearnApp:
         self.batch_size = batch_size
         self.lr = lr
         self.num_labels = num_labels
+        self.checkpoint_every = checkpoint_every
 
         self.prox_coeff = prox_coeff
         self.participation = participation
@@ -204,9 +206,10 @@ class DecentrallearnApp:
             self.client_results.extend(train_result)
 
             checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
-            save_checkpoint(
-                round_idx, self.clients, self.client_results, checkpoint_path
-            )
+            if round_idx % self.checkpoint_every == 0:
+                save_checkpoint(
+                    round_idx, self.clients, self.client_results, checkpoint_path
+                )
 
         return self.client_results  # , global_results
 

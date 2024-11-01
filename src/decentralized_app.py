@@ -133,6 +133,8 @@ class DecentrallearnApp:
         self.topology = topology
 
         self.rounds = rounds
+        self.start_round = 0  # this value will get overridden if we load from a ckpt
+
         if sample_alpha <= 0 or label_alpha <= 0:
             raise ValueError("Argument `alpha` must be greater than 0.")
         self.label_alpha = label_alpha
@@ -169,7 +171,7 @@ class DecentrallearnApp:
         """
         client_results = []
         global_results = []
-        for round_idx in range(self.rounds):
+        for round_idx in range(self.start_round, self.rounds):
             preface = f"({round_idx+1}/{self.rounds})"
             logger.log(
                 APP_LOG_LEVEL,

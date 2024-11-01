@@ -137,3 +137,35 @@ def load_data(
         return torchvision.datasets.MNIST(**kwargs)
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")
+
+
+def save_checkpoint(
+    round_idx: int,
+    clients: list[DecentralClient],
+    ckpt_path: pathlib.Path,
+):
+    client_state_dicts = []
+    for client in clients:
+        client_state_dicts.append(client.model.state_dict())
+
+    ckpt = {
+        client_state_dicts: client_state_dicts,
+        round_idx: round_idx,
+    }
+
+    torch.save(ckpt, ckpt_path)
+
+    return
+
+
+def load_checkpoint(
+    ckpt_path: pathlib.Path,
+    clients: list[DecentralClient],
+) -> tuple(int, list[DecentralClient]):
+
+    ckpt = torch.load(ckpt_path)
+    for i in len(clients):
+        sd = ckpt["client_state_dicts"][i]
+        clients[i].model.load_state_dict(sd)
+
+    return ckpt["round_idx"], clients

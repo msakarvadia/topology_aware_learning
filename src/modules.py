@@ -142,6 +142,7 @@ def load_data(
 def save_checkpoint(
     round_idx: int,
     clients: list[DecentralClient],
+    client_results: list[Result],
     ckpt_path: pathlib.Path,
 ):
     client_state_dicts = []
@@ -151,6 +152,7 @@ def save_checkpoint(
     ckpt = {
         "client_state_dicts": client_state_dicts,
         "round_idx": round_idx,
+        "client_results": client_results,
     }
 
     torch.save(ckpt, ckpt_path)
@@ -162,11 +164,11 @@ def save_checkpoint(
 def load_checkpoint(
     ckpt_path: pathlib.Path,
     clients: list[DecentralClient],
-) -> tuple(int, list[DecentralClient]):
+) -> tuple(int, list[DecentralClient], list[Result]):
 
     ckpt = torch.load(ckpt_path)
     for i in range(len(clients)):
         sd = ckpt["client_state_dicts"][i]
         clients[i].model.load_state_dict(sd)
 
-    return ckpt["round_idx"], clients
+    return ckpt["round_idx"], clients, ckpt["client_results"]

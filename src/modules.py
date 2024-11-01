@@ -149,11 +149,12 @@ def save_checkpoint(
         client_state_dicts.append(client.model.state_dict())
 
     ckpt = {
-        client_state_dicts: client_state_dicts,
-        round_idx: round_idx,
+        "client_state_dicts": client_state_dicts,
+        "round_idx": round_idx,
     }
 
     torch.save(ckpt, ckpt_path)
+    print(f"Saved checkpoint for round: {round_idx}")
 
     return
 
@@ -164,7 +165,7 @@ def load_checkpoint(
 ) -> tuple(int, list[DecentralClient]):
 
     ckpt = torch.load(ckpt_path)
-    for i in len(clients):
+    for i in range(len(clients)):
         sd = ckpt["client_state_dicts"][i]
         clients[i].model.load_state_dict(sd)
 

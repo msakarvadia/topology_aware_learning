@@ -169,9 +169,9 @@ if __name__ == "__main__":
     # check if run_dir exists, if not, make it
     if not os.path.exists(run_dir):
         os.makedirs(run_dir)
-    else:
-        print("we have already run this experiment, so exiting without re-running it")
-        sys.exit()
+    # else:
+    #    print("we have already run this experiment, so exiting without re-running it")
+    #    sys.exit()
 
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)

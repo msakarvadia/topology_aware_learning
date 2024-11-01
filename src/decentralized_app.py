@@ -7,12 +7,16 @@ from datetime import datetime
 
 import numpy
 import torch
+import glob
+import os
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
+from src.modules import save_checkpoint
+from src.modules import load_checkpoint
 from src.tasks import local_train
 from src.tasks import no_local_train
 from src.tasks import test_model
@@ -86,9 +90,13 @@ class DecentrallearnApp:
         prox_coeff: float = 0,
     ) -> None:
 
+        self.run_dir = run_dir
+
         # Initialize logging
         logging.basicConfig(
-            filename=f"{run_dir}/experiment.log", encoding="utf-8", level=logging.DEBUG
+            filename=f"{self.run_dir}/experiment.log",
+            encoding="utf-8",
+            level=logging.DEBUG,
         )
 
         self.rng = numpy.random.default_rng(seed)
@@ -155,6 +163,19 @@ class DecentrallearnApp:
         )
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
+        list_of_ckpts = glob.glob(f"{self.run_dir}/*.pth")
+        if list_of_ckpts:
+            # get the latest (most recently saved) ckpt
+            checkpoint_path = max(list_of_ckpts, key=os.path.getctime)
+            logger.log(
+                APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
+            )
+            self.start_round, self.clients = load_checkpoint(
+                checkpoint_path, self.clients
+            )
+            self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
+            print(f"loaded latest ckpt from: {checkpoint_path}")
+
     def close(self) -> None:
         """Close the application."""
         pass
@@ -180,6 +201,9 @@ class DecentrallearnApp:
 
             train_result = self._federated_round(round_idx)
             client_results.extend(train_result)
+
+            checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
+            save_checkpoint(round_idx, self.clients, checkpoint_path)
 
         return client_results  # , global_results
 

@@ -9,6 +9,7 @@ import sys
 import numpy as np
 import torch
 import pandas as pd
+import json
 
 from src.decentralized_app import DecentrallearnApp
 from src.types import DataChoices
@@ -166,8 +167,8 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     # set static out dir based on args
-    # print("_".join(map(str, list(vars(args).values()))))
-    arg_path = "_".join(map(str, list(vars(args).values())))
+    # I don't want to record the # of rounds, incase this changes in future experiments
+    arg_path = "_".join(map(str, list(vars(args).values())[1:]))
     # Need to remove any . or / to ensure a single continuous file path
     arg_path = arg_path.replace(".", "")
     arg_path = arg_path.replace("/", "")
@@ -178,6 +179,9 @@ if __name__ == "__main__":
     # else:
     #    print("we have already run this experiment, so exiting without re-running it")
     #    sys.exit()
+
+    # Save args in the run_dir
+    json.dump(vars(args), open(f"{run_dir}/args.txt", "w"))
 
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)

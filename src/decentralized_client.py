@@ -4,6 +4,7 @@ from collections import OrderedDict
 from typing import Optional
 
 import torch
+import json
 import numpy as np
 from numpy.random import Generator
 from pydantic import BaseModel
@@ -66,6 +67,7 @@ def create_clients(
     rng: Generator,
     topology: np.array,  # list[list[int]],
     prox_coeff: float,
+    run_dir: pathlib.Path,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -152,6 +154,20 @@ def create_clients(
             prox_coeff=prox_coeff,
         )
         clients.append(client)
+
+    # save label counts per worker
+    label_counts_per_worker = {
+        label: [0] * len(client_ids) for label in range(num_labels)
+    }
+
+    for idx in client_ids:
+        for batch in train_subsets[idx]:
+            _, label = batch
+            label_counts_per_worker[label][idx] += 1
+
+    json.dump(
+        label_counts_per_worker, open(f"{run_dir}/label_counts_per_worker.txt", "w")
+    )
 
     return clients
 

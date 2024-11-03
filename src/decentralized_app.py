@@ -162,6 +162,7 @@ class DecentrallearnApp:
             self.rng,
             self.topology,
             self.prox_coeff,
+            self.run_dir,
         )
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 

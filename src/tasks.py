@@ -14,6 +14,7 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
+@python_app
 def no_local_train(
     client: DecentralClient,
     round_idx: int,
@@ -27,9 +28,10 @@ def no_local_train(
     Returns:
         Empty result list.
     """
-    return []
+    return [], client
 
 
+@python_app
 def local_train(
     client: DecentralClient,
     round_idx: int,
@@ -119,7 +121,7 @@ def local_train(
 
         results.extend(epoch_results)
 
-    return results
+    return results, client
 
 
 def test_model(

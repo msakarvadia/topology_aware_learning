@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
@@ -121,6 +122,21 @@ def local_train(
 
         results.extend(epoch_results)
 
+    # need to turn of differentiation for leaf node operation
+    """
+    with torch.no_grad():
+        print("before: ", client.model.fc1.weight, file=sys.stderr)
+        client.model.fc1.weight += 1
+        print("after adding 1: ", client.model.fc1.weight, file=sys.stderr)
+
+    for name, param in client.model.named_parameters():
+        print("after local training param:", file=sys.stderr)
+        print(f"{name=}, {client.idx=}", file=sys.stderr)
+        print(param.data, file=sys.stderr)
+        client.model.fc1.weight += 1
+        param.data += 1
+        break
+    """
     return results, client
 
 

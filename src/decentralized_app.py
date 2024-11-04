@@ -277,7 +277,6 @@ class DecentrallearnApp:
         for i in resolved_futures:
             for client in self.clients:
                 if client.idx == i[1].idx:
-                    client.model = i[1].model
                     print(f"{client.idx=}")
                     print(f"{i[1].idx=}")
                     # check if parameters match before and after training
@@ -288,10 +287,15 @@ class DecentrallearnApp:
                         param = param[1]
                         train_name = train_param[0]
                         train_param = train_param[1]
+                        if "fc1" in name:
+                            print(f"{param=}")
+                            print(f"{train_param=}")
                         print(
                             f"{name=} & {train_name=} parameter's match before and after training: ",
-                            torch.equal(param.data.cpu(), train_param.data.cpu()),
+                            torch.equal(param.cpu(), train_param.cpu()),
                         )
+                    # assign the new model to old model
+                    client.model = i[1].model
 
         # NOTE (MS): do we need to re-select clients after they return from jobs?
         selected_clients = list(
@@ -302,6 +306,7 @@ class DecentrallearnApp:
             ),
         )
 
+        """
         # aggregate for each client accross neighbors
         for client in selected_clients:
             print("aggregating clients")
@@ -319,4 +324,5 @@ class DecentrallearnApp:
                 f"{preface} Averaged the client's locally trained neighbors.",
             )
 
+        """
         return results

@@ -27,7 +27,7 @@ def no_local_train(
     Returns:
         Empty result list.
     """
-    return []
+    return [], client
 
 
 def local_train(
@@ -119,7 +119,7 @@ def local_train(
 
         results.extend(epoch_results)
 
-    return results
+    return results, client
 
 
 def test_model(

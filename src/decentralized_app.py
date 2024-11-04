@@ -250,7 +250,7 @@ class DecentrallearnApp:
         for client in selected_clients:
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
-            result = job(
+            result, client = job(
                 client,
                 round_idx,
                 self.epochs,
@@ -264,6 +264,20 @@ class DecentrallearnApp:
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
             results.extend(result)
+
+        for c in selected_clients:
+            for client in self.clients:
+                if c.idx == client.idx:
+                    client.model.load_state_dict(c.model.state_dict())
+
+        # assessing if reselecting clients has an effect
+        selected_clients = list(
+            self.rng.choice(
+                numpy.asarray(self.clients),
+                size=size,
+                replace=False,
+            ),
+        )
 
         # aggregate for each client accross neighbors
         for client in selected_clients:

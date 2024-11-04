@@ -24,7 +24,7 @@ def compare_models(sd_1, sd_2):
 
 # iterate through models
 
-for round_idx in range(2):
+for round_idx in range(1):
     for model in range(2):
         print(f"{round_idx=}, {model=}")
         print("before local train")

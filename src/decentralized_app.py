@@ -257,7 +257,7 @@ class DecentrallearnApp:
         selected_clients = numpy.asarray(self.clients).tolist()
 
         futures = []
-        for client in selected_clients:
+        for client in self.clients:
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             future = job(
@@ -322,11 +322,11 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
-        """
         selected_clients = numpy.asarray(self.clients).tolist()
+        """
 
         # aggregate for each client accross neighbors
-        for client in selected_clients:
+        for client in self.clients:
             print("aggregating clients")
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()

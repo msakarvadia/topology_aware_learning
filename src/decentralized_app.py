@@ -236,7 +236,7 @@ class DecentrallearnApp:
         print("round idx: ", round_idx)
         for client in self.clients:
             torch.save(
-                client.model.state_dict,
+                client.model.state_dict(),
                 f"{client.idx}_{round_idx}_before_local_train_parsl.pth",
             )
         job = local_train if self.train else no_local_train
@@ -302,7 +302,7 @@ class DecentrallearnApp:
                     # assign the new model to old model
                     client.model.load_state_dict(i[1].model.state_dict())
                 torch.save(
-                    client.model.state_dict,
+                    client.model.state_dict(),
                     f"{client.idx}_{round_idx}_after_local_train_parsl.pth",
                 )
 
@@ -334,7 +334,7 @@ class DecentrallearnApp:
 
         for client in self.clients:
             torch.save(
-                client.model.state_dict,
+                client.model.state_dict(),
                 f"{client.idx}_{round_idx}_after_agg_parsl.pth",
             )
 

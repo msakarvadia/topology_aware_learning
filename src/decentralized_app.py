@@ -306,7 +306,6 @@ class DecentrallearnApp:
             ),
         )
 
-        """
         # aggregate for each client accross neighbors
         for client in selected_clients:
             print("aggregating clients")
@@ -324,5 +323,4 @@ class DecentrallearnApp:
                 f"{preface} Averaged the client's locally trained neighbors.",
             )
 
-        """
         return results

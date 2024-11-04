@@ -14,7 +14,7 @@ def compare_models(sd_1, sd_2):
                 raise Exception
     if models_differ == 0:
         print("Models match perfectly! :)")
-        raise 0
+        return 0
 
     raise 1
 
@@ -28,7 +28,6 @@ for round_idx in range(5):
     sd_2 = torch.load(f"0_{round_idx}_before_local_train_serial.pth", weights_only=True)
     compare_models(sd_1, sd_2)
 
-    """
     print("after local train")
     sd_1 = torch.load(f"0_{round_idx}_after_local_train_parsl.pth", weights_only=True)
     sd_2 = torch.load(f"0_{round_idx}_after_local_train_serial.pth", weights_only=True)
@@ -38,4 +37,3 @@ for round_idx in range(5):
     sd_1 = torch.load(f"0_{round_idx}_after_agg_parsl.pth", weights_only=True)
     sd_2 = torch.load(f"0_{round_idx}_after_agg_serial.pth", weights_only=True)
     compare_models(sd_1, sd_2)
-    """

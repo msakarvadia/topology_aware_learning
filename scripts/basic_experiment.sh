@@ -24,7 +24,7 @@ do
                 for topo in 7 6 5 4 3 2 1;
                 do
                     topo_path=topology/topo_$topo.txt
-                    python decentralized_main.py --topology $topo_path --aggregation_strategy $aggregation_strategy --sample_alpha $sample_alpha --label_alpha $label_alpha --prox_coeff $prox_coeff --rounds 1
+                    python decentralized_main.py --topology $topo_path --aggregation_strategy $aggregation_strategy --sample_alpha $sample_alpha --label_alpha $label_alpha --prox_coeff $prox_coeff --rounds 50
                 done
             done
         done

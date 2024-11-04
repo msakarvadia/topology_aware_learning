@@ -234,6 +234,11 @@ class DecentrallearnApp:
             List of results from each client.
         """
         print("round idx: ", round_idx)
+        for client in self.clients:
+            torch.save(
+                client.model.state_dict,
+                f"{client.idx}_{round_idx}_before_local_train_parsl.pth",
+            )
         job = local_train if self.train else no_local_train
         # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
@@ -296,6 +301,10 @@ class DecentrallearnApp:
                         )
                     # assign the new model to old model
                     client.model.load_state_dict(i[1].model.state_dict())
+                torch.save(
+                    client.model.state_dict,
+                    f"{client.idx}_{round_idx}_after_local_train_parsl.pth",
+                )
 
         # NOTE (MS): do we need to re-select clients after they return from jobs?
         selected_clients = list(
@@ -321,6 +330,12 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL,
                 f"{preface} Averaged the client's locally trained neighbors.",
+            )
+
+        for client in self.clients:
+            torch.save(
+                client.model.state_dict,
+                f"{client.idx}_{round_idx}_after_agg_parsl.pth",
             )
 
         return results

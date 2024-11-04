@@ -295,7 +295,7 @@ class DecentrallearnApp:
                             torch.equal(param.cpu(), train_param.cpu()),
                         )
                     # assign the new model to old model
-                    client.model = i[1].model
+                    client.model.load_state_dict(i[1].model.state_dict())
 
         # NOTE (MS): do we need to re-select clients after they return from jobs?
         selected_clients = list(

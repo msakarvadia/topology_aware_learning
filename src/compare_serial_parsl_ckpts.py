@@ -7,9 +7,9 @@ def compare_models(sd_1, sd_2):
         if torch.equal(key_item_1[1].cpu(), key_item_2[1].cpu()):
             pass
         else:
-            # print(key_item_1[1])
-            # print(key_item_2[1])
-            # return 1
+            print(key_item_1[1])
+            print(key_item_2[1])
+            return 1
             models_differ += 1
             if key_item_1[0] == key_item_2[0]:
                 print("Mismtach found at", key_item_1[0])

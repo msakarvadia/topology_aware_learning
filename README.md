@@ -1,5 +1,6 @@
 # Distributed ML
 A Test Bed for Prototyping Fully-Distributed ML Experiments
+![2_recall](https://github.com/user-attachments/assets/210ab91c-d411-4b09-bc8e-b86e64d20fc3)
 
 ## Installation
 

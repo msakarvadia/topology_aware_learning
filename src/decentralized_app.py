@@ -245,7 +245,6 @@ class DecentrallearnApp:
 
         size = int(max(1, len(self.clients) * self.participation))
         assert 1 <= size <= len(self.clients)
-        """
         selected_clients = list(
             self.rng.choice(
                 numpy.asarray(self.clients),
@@ -253,11 +252,9 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
-        """
-        selected_clients = numpy.asarray(self.clients).tolist()
 
         futures = []
-        for client in self.clients:
+        for client in selected_clients:
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             future = job(
@@ -314,7 +311,6 @@ class DecentrallearnApp:
             )
 
         # NOTE (MS): do we need to re-select clients after they return from jobs?
-        """
         selected_clients = list(
             self.rng.choice(
                 numpy.asarray(self.clients),
@@ -322,11 +318,9 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
-        selected_clients = numpy.asarray(self.clients).tolist()
-        """
 
         # aggregate for each client accross neighbors
-        for client in self.clients:
+        for client in selected_clients:
             print("aggregating clients")
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()

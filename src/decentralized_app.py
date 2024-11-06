@@ -319,6 +319,20 @@ class DecentrallearnApp:
             ),
         )
 
+        for c in selected_clients:
+            for client in self.clients:
+                if c.idx == client.idx:
+                    client.model.load_state_dict(c.model.state_dict())
+
+        # assessing if reselecting clients has an effect
+        selected_clients = list(
+            self.rng.choice(
+                numpy.asarray(self.clients),
+                size=size,
+                replace=False,
+            ),
+        )
+
         # aggregate for each client accross neighbors
         for client in selected_clients:
             print("aggregating clients")

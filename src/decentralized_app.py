@@ -23,6 +23,7 @@ from src.tasks import no_local_train
 from src.tasks import test_model
 from src.types import DataChoices
 from src.types import Result
+from src.decentralized_client import DecentralClient
 
 # Used within applications
 APP_LOG_LEVEL = 21
@@ -197,6 +198,7 @@ class DecentrallearnApp:
             List of results from each client after each round.
         """
         # client_results = []
+        train_result_futures = []
         for round_idx in range(self.start_round, self.rounds):
             preface = f"({round_idx+1}/{self.rounds})"
             logger.log(
@@ -204,15 +206,23 @@ class DecentrallearnApp:
                 f"{preface} Starting local training for this round",
             )
 
-            train_result = self._federated_round(round_idx)
-            self.client_results.extend(train_result)
+            train_result_future = self._federated_round(round_idx)
+            train_result_futures.extend(train_result_future)
+            # NOTE (MS): turning append not extending (might need to revisit this)
+            # self.client_results.extend(train_result)
 
             checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
             if round_idx % self.checkpoint_every == 0:
+                self.client_results = [
+                    i.result()[0] for i in as_completed(train_result_futures)
+                ]
                 save_checkpoint(
                     round_idx, self.clients, self.client_results, checkpoint_path
                 )
 
+        self.client_results = [
+            i.result()[0] for i in as_completed(train_result_futures)
+        ]
         return self.client_results  # , global_results
 
     def _federated_round(
@@ -268,24 +278,12 @@ class DecentrallearnApp:
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
         # each future is a tuple (results, client)
-        resolved_futures = [i.result() for i in as_completed(futures)]
+        # resolved_futures = [i.result() for i in as_completed(futures)]
         # assign results
-        [results.extend(i[0]) for i in resolved_futures]
+        # [results.extend(i[0]) for i in resolved_futures]
 
         # assign clients
-        for i in resolved_futures:
-            for client in self.clients:
-                if client.idx == i[1].idx:
-                    client.model.load_state_dict(i[1].model.state_dict())
-
-        # NOTE (MS): do we need to re-select clients after they return from jobs?
-        selected_clients = list(
-            self.rng.choice(
-                numpy.asarray(self.clients),
-                size=size,
-                replace=False,
-            ),
-        )
+        self.update_clients_from_futures(futures)
 
         for c in selected_clients:
             for client in self.clients:
@@ -303,7 +301,7 @@ class DecentrallearnApp:
 
         # aggregate for each client accross neighbors
         for client in selected_clients:
-            print("aggregating clients")
+            # print(f"aggregating clients {self.clients=}")
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             # skip aggregation for any client that has 0 neighbors in a given round
@@ -318,4 +316,13 @@ class DecentrallearnApp:
                 f"{preface} Averaged the client's locally trained neighbors.",
             )
 
-        return results
+        return futures  # results
+
+    def update_clients_from_futures(
+        self, futures: tuple(list[Result], DecentralClient)
+    ) -> list[DecentralClient]:
+        # assign clients
+        for i in futures:
+            for client in self.clients:
+                if client.idx == i[1].idx:
+                    client.model.load_state_dict(i[1].model.state_dict())

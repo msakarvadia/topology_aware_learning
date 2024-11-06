@@ -23,7 +23,7 @@ def no_local_train(
     batch_size: int,
     lr: float,
     device: torch.device,
-) -> list[Result]:
+) -> tuple(list[Result], DecentralClient):
     """No-op version of [local_train]
 
     Returns:
@@ -42,7 +42,7 @@ def local_train(
     prox_coeff: float,
     device: torch.device,
     neighbors: list[DecentralClient],
-) -> list[Result]:
+) -> tuple(list[Result], DecentralClient):
     """Local training job.
 
     Args:

@@ -60,3 +60,18 @@ np.savetxt("topology/topo_6.txt", topology, fmt="%1.3f")
 G = nx.complete_graph(10)
 topology = nx.to_numpy_array(G)
 np.savetxt("topology/topo_7.txt", topology, fmt="%1.3f")
+
+# make graph with single node
+topology = np.array(
+    [
+        [
+            0,
+            1,
+        ],
+        [
+            1,
+            0,
+        ],
+    ]
+)
+np.savetxt("topology/topo_8.txt", topology, fmt="%d")

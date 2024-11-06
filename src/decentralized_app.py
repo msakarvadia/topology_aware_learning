@@ -9,6 +9,7 @@ import numpy
 import torch
 import glob
 import os
+from concurrent.futures import as_completed
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
@@ -233,6 +234,11 @@ class DecentrallearnApp:
             List of results from each client.
         """
         print("round idx: ", round_idx)
+        for client in self.clients:
+            torch.save(
+                client.model.state_dict(),
+                f"{client.idx}_{round_idx}_before_local_train_parsl.pth",
+            )
         job = local_train if self.train else no_local_train
         # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
@@ -247,10 +253,12 @@ class DecentrallearnApp:
             ),
         )
 
+        futures = []
         for client in selected_clients:
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
-            result, client = job(
+            future = job(
+                # result, client = job(
                 client,
                 round_idx,
                 self.epochs,
@@ -260,10 +268,56 @@ class DecentrallearnApp:
                 self.device,
                 neighbors,
             )
+            print(f"Launched Future: {future=}")
+            futures.append(future)
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
-            results.extend(result)
+        # each future is a tuple (results, client)
+        resolved_futures = [i.result() for i in as_completed(futures)]
+        # assign results
+        [results.extend(i[0]) for i in resolved_futures]
+
+        # assign clients
+        for i in resolved_futures:
+            for client in self.clients:
+                if client.idx == i[1].idx:
+                    print(f"{client.idx=}")
+                    print(f"{i[1].idx=}")
+                    """
+                    # check if parameters match before and after training
+                    for param, train_param in zip(
+                        client.model.named_parameters(), i[1].model.named_parameters()
+                    ):
+                        name = param[0]
+                        param = param[1]
+                        train_name = train_param[0]
+                        train_param = train_param[1]
+                        #if "fc1" in name:
+                        #    print(f"{param=}")
+                        #    print(f"{train_param=}")
+                        print(
+                            f"{name=} & {train_name=} parameter's match before and after training: ",
+                            torch.equal(param.cpu(), train_param.cpu()),
+                        )
+                    # assign the new model to old model
+                    """
+                    client.model.load_state_dict(i[1].model.state_dict())
+
+        for client in self.clients:
+            torch.save(
+                client.model.state_dict(),
+                f"{client.idx}_{round_idx}_after_local_train_parsl.pth",
+            )
+
+        # NOTE (MS): do we need to re-select clients after they return from jobs?
+        selected_clients = list(
+            self.rng.choice(
+                numpy.asarray(self.clients),
+                size=size,
+                replace=False,
+            ),
+        )
 
         for c in selected_clients:
             for client in self.clients:
@@ -281,6 +335,7 @@ class DecentrallearnApp:
 
         # aggregate for each client accross neighbors
         for client in selected_clients:
+            print("aggregating clients")
             neighbor_idxs = client.get_neighbors()
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             # skip aggregation for any client that has 0 neighbors in a given round
@@ -293,6 +348,12 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL,
                 f"{preface} Averaged the client's locally trained neighbors.",
+            )
+
+        for client in self.clients:
+            torch.save(
+                client.model.state_dict(),
+                f"{client.idx}_{round_idx}_after_agg_parsl.pth",
             )
 
         return results

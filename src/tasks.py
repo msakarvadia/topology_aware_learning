@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import sys
 import torch
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
@@ -14,6 +15,7 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
+@python_app
 def no_local_train(
     client: DecentralClient,
     round_idx: int,
@@ -30,6 +32,7 @@ def no_local_train(
     return [], client
 
 
+@python_app
 def local_train(
     client: DecentralClient,
     round_idx: int,

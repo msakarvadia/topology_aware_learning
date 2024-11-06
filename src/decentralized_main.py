@@ -15,6 +15,21 @@ from src.decentralized_app import DecentrallearnApp
 from src.types import DataChoices
 from pathlib import Path
 
+import parsl
+from parsl.config import Config
+
+# PBSPro is the right provider for Polaris:
+from parsl.providers import PBSProProvider, LocalProvider
+
+# The high throughput executor is for scaling to HPC systems:
+from parsl.executors import HighThroughputExecutor
+
+# address_by_interface is needed for the HighThroughputExecutor:
+from parsl.addresses import address_by_interface
+
+# You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
+from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
+
 if __name__ == "__main__":
     # set up arg parser
     parser = argparse.ArgumentParser()
@@ -138,6 +153,13 @@ if __name__ == "__main__":
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(
+        "--parsl_executor",
+        type=str,
+        default="local",
+        choices=["local", "node"],
+        help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
+    )
+    parser.add_argument(
         "--download",
         action="store_false",
         help="By default dataset is downloaded. If you set this flag, dataset will not be downloaded.",
@@ -186,6 +208,77 @@ if __name__ == "__main__":
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)
     clients = topology.shape[0]  # number of clients
+
+    ######### Parsl
+    src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
+    env = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/env/"
+
+    user_opts = {
+        "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
+        "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
+        "account": "argonne_tpc",
+        "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
+        "walltime": "00:30:00",
+        "nodes_per_block": 1,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
+    }
+    local_provider = LocalProvider(
+        # 1 debug node
+        nodes_per_block=1,
+        init_blocks=1,
+        min_blocks=0,
+        max_blocks=1,  # Can increase more to have more parallel jobs
+    )
+    pbs_provider = PBSProProvider(
+        launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--depth=64 --ppn 1"),
+        account=user_opts["account"],
+        queue=user_opts["queue"],
+        select_options="ngpus=4",
+        # PBS directives (header lines): for array jobs pass '-J' option
+        scheduler_options=user_opts["scheduler_options"],
+        # Command to be run before starting a worker, such as:
+        worker_init=user_opts["worker_init"],
+        # number of compute nodes allocated for each block
+        nodes_per_block=user_opts["nodes_per_block"],
+        init_blocks=1,
+        min_blocks=0,
+        max_blocks=1,  # Can increase more to have more parallel jobs
+        walltime=user_opts["walltime"],
+    )
+    if args.parsl_executor == "local":
+        executor = HighThroughputExecutor(
+            label="Decentral_train",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=4,
+            prefetch_capacity=0,
+            provider=local_provider,
+        )
+    if args.parsl_executor == "node":
+        executor = HighThroughputExecutor(
+            label="Decentral_train",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=4,
+            # if this is set, it will override other settings for max_workers if set
+            available_accelerators=["1", "2", "3", "4"],
+            address=address_by_interface("bond0"),
+            cpu_affinity="block-reverse",
+            prefetch_capacity=0,
+            provider=pbs_provider,
+        )
+
+    config = Config(
+        executors=[executor],
+        checkpoint_mode="task_exit",
+        retries=2,
+        app_cache=True,
+    )
+
+    parsl.load(config)
+    #########
+
     decentral_app = DecentrallearnApp(
         clients=clients,
         rounds=args.rounds,

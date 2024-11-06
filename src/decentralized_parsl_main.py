@@ -143,7 +143,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--out_dir",
         type=str,
-        default="parsl_logs",
+        default="logs",
         help="Path to output dir for all experiment log files/csvs",
     )
     parser.add_argument(

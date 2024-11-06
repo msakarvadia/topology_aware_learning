@@ -234,13 +234,7 @@ class DecentrallearnApp:
             List of results from each client.
         """
         print("round idx: ", round_idx)
-        for client in self.clients:
-            torch.save(
-                client.model.state_dict(),
-                f"{client.idx}_{round_idx}_before_local_train_parsl.pth",
-            )
         job = local_train if self.train else no_local_train
-        # futures: list[TaskFuture[list[Result]]] = []
         results: list[Result] = []
 
         size = int(max(1, len(self.clients) * self.participation))
@@ -282,33 +276,7 @@ class DecentrallearnApp:
         for i in resolved_futures:
             for client in self.clients:
                 if client.idx == i[1].idx:
-                    print(f"{client.idx=}")
-                    print(f"{i[1].idx=}")
-                    """
-                    # check if parameters match before and after training
-                    for param, train_param in zip(
-                        client.model.named_parameters(), i[1].model.named_parameters()
-                    ):
-                        name = param[0]
-                        param = param[1]
-                        train_name = train_param[0]
-                        train_param = train_param[1]
-                        #if "fc1" in name:
-                        #    print(f"{param=}")
-                        #    print(f"{train_param=}")
-                        print(
-                            f"{name=} & {train_name=} parameter's match before and after training: ",
-                            torch.equal(param.cpu(), train_param.cpu()),
-                        )
-                    # assign the new model to old model
-                    """
                     client.model.load_state_dict(i[1].model.state_dict())
-
-        for client in self.clients:
-            torch.save(
-                client.model.state_dict(),
-                f"{client.idx}_{round_idx}_after_local_train_parsl.pth",
-            )
 
         # NOTE (MS): do we need to re-select clients after they return from jobs?
         selected_clients = list(
@@ -348,12 +316,6 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL,
                 f"{preface} Averaged the client's locally trained neighbors.",
-            )
-
-        for client in self.clients:
-            torch.save(
-                client.model.state_dict(),
-                f"{client.idx}_{round_idx}_after_agg_parsl.pth",
             )
 
         return results

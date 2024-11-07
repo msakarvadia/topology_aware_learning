@@ -213,16 +213,18 @@ class DecentrallearnApp:
 
             checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
             if round_idx % self.checkpoint_every == 0:
-                self.client_results = [
+                resolved_futures = [
                     i.result()[0] for i in as_completed(train_result_futures)
                 ]
+                [self.client_results.extend(i) for i in resolved_futures]
+                # print(results)
                 save_checkpoint(
                     round_idx, self.clients, self.client_results, checkpoint_path
                 )
 
-        self.client_results = [
-            i.result()[0] for i in as_completed(train_result_futures)
-        ]
+        resolved_futures = [i.result()[0] for i in as_completed(train_result_futures)]
+        [self.client_results.extend(i) for i in resolved_futures]
+        print(self.client_results)
         return self.client_results  # , global_results
 
     def _federated_round(

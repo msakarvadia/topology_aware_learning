@@ -15,9 +15,10 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
-@python_app
+@python_app(executors=["decentral_train"])
 def no_local_train(
-    client: DecentralClient,
+    futures: tuple(list[Result], DecentralClient),
+    # client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
@@ -29,19 +30,21 @@ def no_local_train(
     Returns:
         Empty result list.
     """
+    client = futures[1]
     return [], client
 
 
-@python_app
+@python_app(executors=["decentral_train"])
 def local_train(
-    client: DecentralClient,
+    future: tuple(list[Result], DecentralClient),
+    # client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
     lr: float,
     prox_coeff: float,
     device: torch.device,
-    neighbors: list[DecentralClient],
+    # clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
 
@@ -57,12 +60,20 @@ def local_train(
         List of results that record the training history.
     """
     from datetime import datetime
+    import numpy
 
+    client = future[1]
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
     loader = DataLoader(client.train_data, batch_size=batch_size)
+
+    """
+    # get neighbors for fed prox
+    neighbor_idxs = client.get_neighbors()
+    neighbors = numpy.asarray(clients)[neighbor_idxs].tolist()
+    """
 
     for epoch in range(epochs):
         epoch_results = []
@@ -76,6 +87,7 @@ def local_train(
             preds = client.model(inputs)
             loss = F.cross_entropy(preds, targets)
 
+            """
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
             if prox_coeff > 0:
@@ -87,6 +99,7 @@ def local_train(
                     ):
                         proximal_term += (w - w_t).norm(2)
                 loss += (prox_coeff / 2) * proximal_term
+            """
 
             loss.backward()
             # print(client.model)

@@ -22,7 +22,7 @@ from parsl.config import Config
 from parsl.providers import PBSProProvider, LocalProvider
 
 # The high throughput executor is for scaling to HPC systems:
-from parsl.executors import HighThroughputExecutor
+from parsl.executors import HighThroughputExecutor, ThreadPoolExecutor
 
 # address_by_interface is needed for the HighThroughputExecutor:
 from parsl.addresses import address_by_interface
@@ -244,9 +244,13 @@ if __name__ == "__main__":
         max_blocks=1,  # Can increase more to have more parallel jobs
         walltime=user_opts["walltime"],
     )
+    threadpool_executor = ThreadPoolExecutor(
+        label="threadpool_executor",
+        max_threads=2,
+    )
     if args.parsl_executor == "local":
         executor = HighThroughputExecutor(
-            label="Decentral_train",
+            label="decentral_train",
             heartbeat_period=15,
             heartbeat_threshold=120,
             worker_debug=True,
@@ -256,7 +260,7 @@ if __name__ == "__main__":
         )
     if args.parsl_executor == "node":
         executor = HighThroughputExecutor(
-            label="Decentral_train",
+            label="decentral_train",
             heartbeat_period=15,
             heartbeat_threshold=120,
             worker_debug=True,
@@ -270,7 +274,7 @@ if __name__ == "__main__":
         )
 
     config = Config(
-        executors=[executor],
+        executors=[executor, threadpool_executor],
         checkpoint_mode="task_exit",
         retries=2,
         app_cache=True,

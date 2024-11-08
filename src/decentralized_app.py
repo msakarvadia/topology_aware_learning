@@ -14,6 +14,7 @@ from concurrent.futures import as_completed
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
+from src.decentralized_client import parsl_unweighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
 from src.modules import save_checkpoint
@@ -133,6 +134,8 @@ class DecentrallearnApp:
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
+        if self.aggregation_strategy == "parsl":
+            self.aggregation_function = parsl_unweighted_module_avg
 
         self.device = torch.device(device)
         self.epochs = epochs

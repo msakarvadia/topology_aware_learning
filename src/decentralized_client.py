@@ -232,8 +232,8 @@ def unweighted_module_avg(
 
 @python_app(executors=["threadpool_executor"])
 def parsl_unweighted_module_avg(
-    neighbor_futures: list[(list[Result], DecentralClient)],
     client_future: tuple(list[Result], DecentralClient),
+    *neighbor_futures: list[(list[Result], DecentralClient)],
     # selected_clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
@@ -243,7 +243,8 @@ def parsl_unweighted_module_avg(
     with torch.no_grad():
         avg_weights = OrderedDict()
         for client in neighbor_futures:
-            model = client.result()[1].model
+            model = client[1].model
+            # model = client.result()[1].model
             for name, value in model.state_dict().items():
                 partial = w * torch.clone(value)
                 if name not in avg_weights:

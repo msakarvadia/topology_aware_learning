@@ -305,6 +305,7 @@ class DecentrallearnApp:
         for client in selected_clients:
             print("aggregating clients")
             neighbor_idxs = client.get_neighbors()
+            neighbor_idxs.append(client.idx)
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             # skip aggregation for any client that has 0 neighbors in a given round
             if len(neighbors) == 0:

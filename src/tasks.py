@@ -69,9 +69,9 @@ def local_train(
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
-    """
     # get neighbors for fed prox
     neighbor_idxs = client.get_neighbors()
+    """
     neighbors = numpy.asarray(clients)[neighbor_idxs].tolist()
     """
 

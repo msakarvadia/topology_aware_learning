@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from typing import Optional
+from typing import OrderedDict
 
 import sys
 import torch
@@ -202,14 +203,18 @@ def weighted_module_avg(
 
 @python_app(executors=["threadpool_executor"])
 def unweighted_module_avg(
-    neighbor_futures: list[tuple(list[Result], DecentralClient)],
+    neighbor_futures: list[(list[Result], DecentralClient)],
     client_future: tuple(list[Result], DecentralClient),
     # selected_clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
     print(f"aggregate {neighbor_futures=}", file=sys.stderr)
+    # sd = [client_future[1].model.state_dict() for client_future in neighbor_futures]
+    print(f"{neighbor_futures[0][1].model=}")
+    # print(f"{client_future=}")
+    # print(f"{client_future[1].model=}")
+    client_sd = client_future[1].model.state_dict()
     models = [client_future.result()[1].model for client_future in neighbor_futures]
-    # models = [client_future[1].model for client_future in neighbor_futures]
     w = 1 / len(models)
 
     with torch.no_grad():
@@ -223,5 +228,57 @@ def unweighted_module_avg(
                     avg_weights[name] += partial
 
     client_future[1].model.load_state_dict(avg_weights)
+    return client_future
+
+
+'''
+@python_app(executors=["threadpool_executor"])
+def unweighted_module_avg(
+    neighbor_futures: list[(list[Result], DecentralClient)],
+    client_future: tuple(list[Result], DecentralClient),
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
+    """Compute the unweighted average of models."""
+    w = 1 / len(neighbor_futures)
+
+    avg_weights = OrderedDict()
+    print(f"aggregate {neighbor_futures=}", file=sys.stderr)
+    for model_future in neighbor_futures:
+        print(f"{model_future=}")
+        avg_weights = add_to_sd(w, avg_weights, model_future.result())
+    
+    #print(avg_weights)
+    #client_future = update_sd(avg_weights.result(), client_future)
+    client_future[1].model.load_state_dict(avg_weights.result())
     # return (client_future[0], client_future[1])
     return client_future
+'''
+
+
+@python_app(executors=["threadpool_executor"])
+def update_sd(
+    avg_weights: OrderedDict,
+    model_future: tuple(list[Result], DecentralClient),
+) -> tuple(list[Result], DecentralClient):
+
+    print("updateing sd")
+    model_future[1].model.load_state_dict(avg_weights)
+    return model_future
+
+
+@python_app(executors=["threadpool_executor"])
+def add_to_sd(
+    w: float,
+    avg_weights: OrderedDict,
+    model_future: tuple(list[Result], DecentralClient),
+) -> OrderedDict:
+    print("adding to sd")
+    model = model_future[1].model
+    for name, value in model.state_dict().items():
+        partial = w * torch.clone(value)
+        if name not in avg_weights:
+            avg_weights[name] = partial
+        else:
+            avg_weights[name] += partial
+
+    return avg_weights

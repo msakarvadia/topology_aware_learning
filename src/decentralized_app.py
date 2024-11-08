@@ -183,7 +183,6 @@ class DecentrallearnApp:
             self.start_round, self.clients, self.client_results = load_checkpoint(
                 checkpoint_path, self.clients
             )
-            print(self.client_results)
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")
 
@@ -270,33 +269,20 @@ class DecentrallearnApp:
             train_result_futures.extend(futures)
             print("next round of training")
 
-            # train_result_future = self._federated_round(round_idx)
-            # NOTE (MS): turning append not extending (might need to revisit this)
-            # self.client_results.extend(train_result)
-
-            """
-            checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
-            if round_idx % self.checkpoint_every == 0:
-                resolved_futures = [
-                    i.result()[0] for i in as_completed(train_result_futures)
-                ]
-                [self.client_results.extend(i) for i in resolved_futures]
-                self.clients = [
-                    i.result()[1] for i in as_completed(train_result_futures)
-                ]
-                print(self.clients)
-                save_checkpoint(
-                    round_idx, self.clients, self.client_results, checkpoint_path
-                )
-            """
-
+        # NOTE (MS): added +1 to round_idx for saving ckpt
         checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
         resolved_futures = [i.result() for i in as_completed(train_result_futures)]
         # resolved_futures = [i.result()[0] for i in as_completed(train_result_futures)]
         [self.client_results.extend(i[0]) for i in resolved_futures]
-        self.clients = [i[1] for i in resolved_futures]
-        save_checkpoint(round_idx, self.clients, self.client_results, checkpoint_path)
+        ckpt_clients = []
+        # for i in range(len(self.clients)):
+        for client_idx, client_future in round_states[round_idx + 1].items():
+            client = client_future["agg"].result()[1]
+            ckpt_clients.append(client)
+        # self.clients = [i[1] for i in futures]
+        save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
         print(self.client_results)
+        print(f"{len(self.clients)=}")
         return self.client_results  # , global_results
 
     def _federated_round(

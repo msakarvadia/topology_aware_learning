@@ -104,7 +104,6 @@ class DecentrallearnApp:
         )
 
         self.rng = numpy.random.default_rng(seed)
-        print(type(self.rng))
         if seed is not None:
             torch.manual_seed(seed)
 
@@ -209,7 +208,7 @@ class DecentrallearnApp:
                 "agg": ([{}], self.clients[client_idx])
             }
 
-        print(round_states)
+        # print(round_states)
         self.client_results = []
         train_result_futures = []
         for round_idx in range(self.start_round, self.rounds):
@@ -252,17 +251,17 @@ class DecentrallearnApp:
                 print(f"aggregating for {client.idx=} with {neighbor_idxs=}")
                 # need to combine neighbors w/ client and pass to aggregate function
                 # return client
-                agg_client = round_states[round_idx + 1][client_idx]["train"]
+                agg_client = round_states[round_idx + 1][client.idx]["train"]
                 agg_neighbors = []
                 neighbor_idxs.append(client.idx)
                 for i in neighbor_idxs:
                     agg_neighbors.append(round_states[round_idx + 1][i]["train"])
                 print(f"{agg_neighbors=}")
-                # future = self.aggregation_function(agg_neighbors, agg_client)
-                # round_states[round_idx + 1][client.idx].update({'agg' : future})
-                round_states[round_idx + 1][client.idx].update(
-                    {"agg": round_states[round_idx + 1][client.idx]["train"]}
-                )
+                future = self.aggregation_function(agg_neighbors, agg_client)
+                round_states[round_idx + 1][client.idx].update({"agg": future})
+                # round_states[round_idx + 1][client.idx].update(
+                #    {"agg": round_states[round_idx + 1][client.idx]["train"]}
+                # )
 
             print("next round of training")
 

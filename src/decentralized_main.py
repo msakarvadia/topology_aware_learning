@@ -131,7 +131,7 @@ if __name__ == "__main__":
         "--aggregation_strategy",
         type=str,
         default="unweighted",
-        choices=["unweighted", "weighted", "parsl"],
+        choices=["unweighted", "weighted"],
         help="Type of aggregation stretegy used to among neighboring nodes.",
     )
     parser.add_argument(

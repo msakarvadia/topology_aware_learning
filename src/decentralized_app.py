@@ -14,7 +14,6 @@ from concurrent.futures import as_completed
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
-from src.decentralized_client import parsl_unweighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
 from src.modules import save_checkpoint

@@ -205,7 +205,9 @@ class DecentrallearnApp:
         round_idx = 0
         round_states[round_idx] = {}
         for client_idx in range(len(self.clients)):
-            round_states[round_idx][client_idx] = ([{}], self.clients[client_idx])
+            round_states[round_idx][client_idx] = {
+                "agg": ([{}], self.clients[client_idx])
+            }
 
         print(round_states)
         self.client_results = []
@@ -220,9 +222,12 @@ class DecentrallearnApp:
             futures = []
             round_states[round_idx + 1] = {}
             for client_idx in range(len(self.clients)):
-                train_input = round_states[round_idx][client_idx]
+                print(
+                    f"Keys before agg, {round_idx=}, {client_idx=}",
+                    round_states[round_idx][client_idx].keys(),
+                )
+                train_input = round_states[round_idx][client_idx]["agg"]
                 future = job(
-                    # result, client = job(
                     train_input,
                     round_idx,
                     self.epochs,
@@ -230,17 +235,16 @@ class DecentrallearnApp:
                     self.lr,
                     self.prox_coeff,
                     self.device,
-                    # neighbors,
                 )
                 print(f"Launched Future: {future=}")
                 futures.append(future)
-                round_states[round_idx + 1][client_idx] = future
+                round_states[round_idx + 1][client_idx] = {"train": future}
 
                 preface = f"({round_idx+1}/{self.rounds}, client {client_idx}, )"
                 logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
-                # print(f"{self.clients[0]=}")
 
-            # for client_idx in range(len(self.clients)):
+            train_result_futures.extend(futures)
+
             for client in self.clients:
                 neighbor_idxs = client.get_neighbors()
                 if len(neighbor_idxs) == 0:
@@ -248,19 +252,21 @@ class DecentrallearnApp:
                 print(f"aggregating for {client.idx=} with {neighbor_idxs=}")
                 # need to combine neighbors w/ client and pass to aggregate function
                 # return client
-                agg_client = round_states[round_idx + 1][client_idx]
+                agg_client = round_states[round_idx + 1][client_idx]["train"]
                 agg_neighbors = []
                 neighbor_idxs.append(client.idx)
                 for i in neighbor_idxs:
-                    agg_neighbors.append(round_states[round_idx + 1][i])
+                    agg_neighbors.append(round_states[round_idx + 1][i]["train"])
                 print(f"{agg_neighbors=}")
-                future = self.aggregation_function(agg_neighbors, agg_client)
-                # round_states[round_idx + 1][client.idx] = future
+                # future = self.aggregation_function(agg_neighbors, agg_client)
+                # round_states[round_idx + 1][client.idx].update({'agg' : future})
+                round_states[round_idx + 1][client.idx].update(
+                    {"agg": round_states[round_idx + 1][client.idx]["train"]}
+                )
 
             print("next round of training")
 
             # train_result_future = self._federated_round(round_idx)
-            train_result_futures.extend(futures)
             # NOTE (MS): turning append not extending (might need to revisit this)
             # self.client_results.extend(train_result)
 

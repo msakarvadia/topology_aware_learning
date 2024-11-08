@@ -207,7 +207,7 @@ def unweighted_module_avg(
     # selected_clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
-    print(f"{neighbor_futures=}", file=sys.stderr)
+    print(f"aggregate {neighbor_futures=}", file=sys.stderr)
     models = [client_future[1].model for client_future in neighbor_futures]
     print(f"aggregate {models=}", file=sys.stderr)
     w = 1 / len(models)

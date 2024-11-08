@@ -203,34 +203,6 @@ def weighted_module_avg(
     # return (client_future[0], client_future[1])
 
 
-'''
-@python_app(executors=["threadpool_executor"])
-def unweighted_module_avg(
-    neighbor_futures: list[(list[Result], DecentralClient)],
-    client_future: tuple(list[Result], DecentralClient),
-    # selected_clients: list[DecentralClient],
-) -> tuple(list[Result], DecentralClient):
-    """Compute the unweighted average of models."""
-    print(f"aggregate {neighbor_futures=}", file=sys.stderr)
-    # print(f"aggregate {client_future.result()=}", file=sys.stderr)
-    models = [client_future.result()[1].model for client_future in neighbor_futures]
-    w = 1 / len(models)
-
-    with torch.no_grad():
-        avg_weights = OrderedDict()
-        for model in models:
-            for name, value in model.state_dict().items():
-                partial = w * torch.clone(value)
-                if name not in avg_weights:
-                    avg_weights[name] = partial
-                else:
-                    avg_weights[name] += partial
-
-    client_future[1].model.load_state_dict(avg_weights)
-    return client_future
-'''
-
-
 @python_app(executors=["threadpool_executor"])
 def unweighted_module_avg(
     client_future: tuple(list[Result], DecentralClient),

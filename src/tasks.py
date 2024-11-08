@@ -24,6 +24,7 @@ def no_local_train(
     batch_size: int,
     lr: float,
     device: torch.device,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """No-op version of [local_train]
 
@@ -44,6 +45,7 @@ def local_train(
     lr: float,
     prox_coeff: float,
     device: torch.device,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
     # clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -69,12 +71,6 @@ def local_train(
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
-    # get neighbors for fed prox
-    neighbor_idxs = client.get_neighbors()
-    """
-    neighbors = numpy.asarray(clients)[neighbor_idxs].tolist()
-    """
-
     for epoch in range(epochs):
         epoch_results = []
         n_batches = 0
@@ -87,19 +83,18 @@ def local_train(
             preds = client.model(inputs)
             loss = F.cross_entropy(preds, targets)
 
-            """
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
             if prox_coeff > 0:
                 proximal_term = 0.0
-                for neighbor in neighbors:
+                for neighbor_future in neighbor_futures:
+                    neighbor = neighbor_future[1]
                     neighbor.model.to(device)
                     for w, w_t in zip(
                         client.model.parameters(), neighbor.model.parameters()
                     ):
                         proximal_term += (w - w_t).norm(2)
                 loss += (prox_coeff / 2) * proximal_term
-            """
 
             loss.backward()
             # print(client.model)

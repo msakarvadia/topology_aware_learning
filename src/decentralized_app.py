@@ -183,6 +183,7 @@ class DecentrallearnApp:
             self.start_round, self.clients, self.client_results = load_checkpoint(
                 checkpoint_path, self.clients
             )
+            print(self.client_results)
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")
 
@@ -203,15 +204,13 @@ class DecentrallearnApp:
         job = local_train if self.train else no_local_train
 
         round_states = {}
-        round_idx = 0
-        round_states[round_idx] = {}
+        round_idx = self.start_round
+        round_states[self.start_round] = {}
         for client_idx in range(len(self.clients)):
-            round_states[round_idx][client_idx] = {
+            round_states[self.start_round][client_idx] = {
                 "agg": ([{}], self.clients[client_idx])
             }
 
-        # print(round_states)
-        self.client_results = []
         train_result_futures = []
         for round_idx in range(self.start_round, self.rounds):
             print("round idx: ", round_idx)
@@ -222,12 +221,17 @@ class DecentrallearnApp:
             )
             futures = []
             round_states[round_idx + 1] = {}
-            for client_idx in range(len(self.clients)):
+            # for client_idx in range(len(self.clients)):
+            for client in self.clients:
+                neighbor_idxs = client.get_neighbors()
+                fed_prox_neighbors = []
+                for i in neighbor_idxs:
+                    fed_prox_neighbors.append(round_states[round_idx][i]["agg"])
                 print(
-                    f"Keys before agg, {round_idx=}, {client_idx=}",
-                    round_states[round_idx][client_idx].keys(),
+                    f"Keys before agg, {round_idx=}, {client.idx=}",
+                    round_states[round_idx][client.idx].keys(),
                 )
-                train_input = round_states[round_idx][client_idx]["agg"]
+                train_input = round_states[round_idx][client.idx]["agg"]
                 future = job(
                     train_input,
                     round_idx,
@@ -236,15 +240,14 @@ class DecentrallearnApp:
                     self.lr,
                     self.prox_coeff,
                     self.device,
+                    *fed_prox_neighbors,
                 )
                 print(f"Launched Future: {future=}")
-                futures.append(future)
-                round_states[round_idx + 1][client_idx] = {"train": future}
+                # futures.append(future)
+                round_states[round_idx + 1][client.idx] = {"train": future}
 
-                preface = f"({round_idx+1}/{self.rounds}, client {client_idx}, )"
+                preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
                 logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
-
-            train_result_futures.extend(futures)
 
             for client in self.clients:
                 neighbor_idxs = client.get_neighbors()
@@ -261,11 +264,10 @@ class DecentrallearnApp:
                 print(f"{agg_neighbors=}")
                 print(f"{agg_client=}")
                 future = self.aggregation_function(agg_client, *agg_neighbors)
+                futures.append(future)
                 round_states[round_idx + 1][client.idx].update({"agg": future})
-                # round_states[round_idx + 1][client.idx].update(
-                #    {"agg": round_states[round_idx + 1][client.idx]["train"]}
-                # )
 
+            train_result_futures.extend(futures)
             print("next round of training")
 
             # train_result_future = self._federated_round(round_idx)

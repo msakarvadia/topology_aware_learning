@@ -23,6 +23,8 @@ from src.tasks import no_local_train
 from src.tasks import test_model
 from src.types import DataChoices
 from src.types import Result
+from src.decentralized_client import DecentralClient
+from parsl.app.app import python_app
 
 # Used within applications
 APP_LOG_LEVEL = 21
@@ -131,6 +133,8 @@ class DecentrallearnApp:
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
+        if self.aggregation_strategy == "parsl":
+            self.aggregation_function = parsl_unweighted_module_avg
 
         self.device = torch.device(device)
         self.epochs = epochs
@@ -196,24 +200,112 @@ class DecentrallearnApp:
         Returns:
             List of results from each client after each round.
         """
-        # client_results = []
+        job = local_train if self.train else no_local_train
+
+        round_states = {}
+        round_idx = self.start_round
+        round_states[self.start_round] = {}
+        for client_idx in range(len(self.clients)):
+            round_states[self.start_round][client_idx] = {
+                "agg": ([{}], self.clients[client_idx])
+            }
+
+        train_result_futures = []
+        # this is to check if we are trying to resume training from a checkpoint that has already been completed
+        if self.start_round >= self.rounds:
+            return []
         for round_idx in range(self.start_round, self.rounds):
+
+            # TODO (MS): select client indexes
+            size = int(max(1, len(self.clients) * self.participation))
+            assert 1 <= size <= len(self.clients)
+            selected_client_idxs = self.rng.choice(
+                list(range(len(self.clients))),
+                size=size,
+                replace=False,
+            ).tolist()
+            print(f"{selected_client_idxs=}")
+
+            print("round idx: ", round_idx)
             preface = f"({round_idx+1}/{self.rounds})"
             logger.log(
                 APP_LOG_LEVEL,
                 f"{preface} Starting local training for this round",
             )
-
-            train_result = self._federated_round(round_idx)
-            self.client_results.extend(train_result)
-
-            checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
-            if round_idx % self.checkpoint_every == 0:
-                save_checkpoint(
-                    round_idx, self.clients, self.client_results, checkpoint_path
+            futures = []
+            round_states[round_idx + 1] = {}
+            for client in self.clients:
+                train_input = round_states[round_idx][client.idx]["agg"]
+                # only use clients for round if they are selected
+                if client.idx not in selected_client_idxs:
+                    round_states[round_idx + 1][client.idx] = {"train": train_input}
+                    continue
+                neighbor_idxs = client.get_neighbors()
+                fed_prox_neighbors = []
+                for i in neighbor_idxs:
+                    fed_prox_neighbors.append(round_states[round_idx][i]["agg"])
+                # print(
+                #    f"Keys before agg, {round_idx=}, {client.idx=}",
+                #    round_states[round_idx][client.idx].keys(),
+                # )
+                # train_input = round_states[round_idx][client.idx]["agg"]
+                future = job(
+                    train_input,
+                    round_idx,
+                    self.epochs,
+                    self.batch_size,
+                    self.lr,
+                    self.prox_coeff,
+                    self.device,
+                    *fed_prox_neighbors,
                 )
+                print(f"Launched Future: {future=}")
+                round_states[round_idx + 1][client.idx] = {"train": future}
 
-        return self.client_results  # , global_results
+                preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
+                logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
+
+            for client in self.clients:
+                agg_client = round_states[round_idx + 1][client.idx]["train"]
+                # only use clients for round if they are selected
+                if client.idx not in selected_client_idxs:
+                    round_states[round_idx + 1][client.idx].update({"agg": agg_client})
+                    continue
+
+                neighbor_idxs = client.get_neighbors()
+                if len(neighbor_idxs) == 0:
+                    continue
+                # need to combine neighbors w/ client and pass to aggregate function
+                agg_neighbors = []
+                neighbor_idxs.append(client.idx)
+                print(f"{neighbor_idxs=}")
+                for i in neighbor_idxs:
+                    print(f"{round_idx=}")
+                    print(f"{i=}")
+                    agg_neighbors.append(round_states[round_idx + 1][i]["train"])
+                future = self.aggregation_function(agg_client, *agg_neighbors)
+                futures.append(future)
+                round_states[round_idx + 1][client.idx].update({"agg": future})
+
+            train_result_futures.extend(futures)
+
+        checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
+        resolved_futures = [i.result() for i in as_completed(train_result_futures)]
+        [self.client_results.extend(i[0]) for i in resolved_futures]
+        ckpt_clients = []
+        for client_idx, client_future in round_states[round_idx + 1].items():
+            result_object = client_future["agg"]
+            print(f"{type(client_future['agg'][1])=}")
+            # This is how we handle clients that are not returning appfutures (due to not being selected)
+            if isinstance(result_object[1], DecentralClient):
+                client = client_future["agg"][1]
+            else:
+                client = client_future["agg"].result()[1]
+            ckpt_clients.append(client)
+        save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
+        print(self.client_results)
+        print(f"{len(self.clients)=}")
+        return self.client_results
 
     def _federated_round(
         self,
@@ -237,7 +329,17 @@ class DecentrallearnApp:
         job = local_train if self.train else no_local_train
         results: list[Result] = []
 
-        size = int(max(1, len(self.clients) * self.participation))
+        selected_clients = self.select_clients(
+            self.participation, self.clients, self.rng
+        )
+        print(selected_clients)
+
+        # TODO(MS): need to make variable
+        # size = int(max(1, len(self.clients) * self.participation))
+        num_clients = 3
+        size = int(max(1, num_clients * self.participation))
+
+        """
         assert 1 <= size <= len(self.clients)
         selected_clients = list(
             self.rng.choice(
@@ -246,11 +348,25 @@ class DecentrallearnApp:
                 replace=False,
             ),
         )
-
+        futures =  self.launch_training_jobs(
+            selected_clients,
+            round_idx,
+            self.epochs,
+            self.batch_size,
+            self.lr,
+            self.prox_coeff,
+            self.device,
+        )
+        """
         futures = []
-        for client in selected_clients:
-            neighbor_idxs = client.get_neighbors()
-            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+        for i in range(size):
+            client = selected_clients[i]
+            print(f"TRAINING LOOP: {client=}")
+            print(f"TRAINING LOOP: {client.result()=}")
+
+            # for client in selected_clients:
+            # neighbor_idxs = client.get_neighbors()
+            # neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
             future = job(
                 # result, client = job(
                 client,
@@ -260,33 +376,25 @@ class DecentrallearnApp:
                 self.lr,
                 self.prox_coeff,
                 self.device,
-                neighbors,
+                self.clients,
+                # neighbors,
             )
             print(f"Launched Future: {future=}")
             futures.append(future)
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
+        print("next round of training")
         # each future is a tuple (results, client)
-        resolved_futures = [i.result() for i in as_completed(futures)]
+        # resolved_futures = [i.result() for i in as_completed(futures)]
         # assign results
-        [results.extend(i[0]) for i in resolved_futures]
+        # [results.extend(i[0]) for i in resolved_futures]
 
         # assign clients
-        for i in resolved_futures:
-            for client in self.clients:
-                if client.idx == i[1].idx:
-                    client.model.load_state_dict(i[1].model.state_dict())
+        clients = self.update_clients_from_futures(futures)
+        print(f"in round: {self.clients=}")
 
-        # NOTE (MS): do we need to re-select clients after they return from jobs?
-        selected_clients = list(
-            self.rng.choice(
-                numpy.asarray(self.clients),
-                size=size,
-                replace=False,
-            ),
-        )
-
+        """
         for c in selected_clients:
             for client in self.clients:
                 if c.idx == client.idx:
@@ -303,7 +411,7 @@ class DecentrallearnApp:
 
         # aggregate for each client accross neighbors
         for client in selected_clients:
-            print("aggregating clients")
+            # print(f"aggregating clients {self.clients=}")
             neighbor_idxs = client.get_neighbors()
             neighbor_idxs.append(client.idx)
             neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
@@ -318,5 +426,6 @@ class DecentrallearnApp:
                 APP_LOG_LEVEL,
                 f"{preface} Averaged the client's locally trained neighbors.",
             )
+        """
 
-        return results
+        return futures  # results

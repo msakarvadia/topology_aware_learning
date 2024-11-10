@@ -15,34 +15,39 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
-@python_app
+@python_app(executors=["decentral_train"])
 def no_local_train(
-    client: DecentralClient,
+    futures: tuple(list[Result], DecentralClient),
+    # client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
     lr: float,
     device: torch.device,
-) -> list[Result]:
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+) -> tuple(list[Result], DecentralClient):
     """No-op version of [local_train]
 
     Returns:
         Empty result list.
     """
+    client = futures[1]
     return [], client
 
 
-@python_app
+@python_app(executors=["decentral_train"])
 def local_train(
-    client: DecentralClient,
+    future: tuple(list[Result], DecentralClient),
+    # client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
     lr: float,
     prox_coeff: float,
     device: torch.device,
-    neighbors: list[DecentralClient],
-) -> list[Result]:
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
     """Local training job.
 
     Args:
@@ -57,7 +62,9 @@ def local_train(
         List of results that record the training history.
     """
     from datetime import datetime
+    import numpy
 
+    client = future[1]
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
@@ -80,7 +87,8 @@ def local_train(
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
             if prox_coeff > 0:
                 proximal_term = 0.0
-                for neighbor in neighbors:
+                for neighbor_future in neighbor_futures:
+                    neighbor = neighbor_future[1]
                     neighbor.model.to(device)
                     for w, w_t in zip(
                         client.model.parameters(), neighbor.model.parameters()

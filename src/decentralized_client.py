@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from typing import Optional
+from typing import OrderedDict
 
+import sys
 import torch
 import json
 import numpy as np
@@ -16,6 +18,8 @@ from torch.utils.data import Subset
 from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
+
+from parsl.app.app import python_app
 
 
 class DecentralClient(BaseModel):
@@ -172,17 +176,22 @@ def create_clients(
     return clients
 
 
+@python_app(executors=["threadpool_executor"])
 def weighted_module_avg(
-    selected_clients: list[DecentralClient],
-) -> OrderedDict[str, torch.Tensor]:
+    client_future: tuple(list[Result], DecentralClient),
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+) -> tuple(list[Result], DecentralClient):
     """Compute the weighted average of models."""
-    models = [client.model for client in selected_clients]
-    data_lens = [len(client.train_data) for client in selected_clients]
+    data_lens = [len(client_future[1].train_data) for client_future in neighbor_futures]
     weights = [x / sum(data_lens) for x in data_lens]
 
     with torch.no_grad():
         avg_weights = OrderedDict()
-        for model, w in zip(models, weights):
+        for i in range(len(neighbor_futures)):
+            client = neighbor_futures[i]
+            model = client[1].model
+            model.to("cpu")
+            w = weights[i]
             for name, value in model.state_dict().items():
                 partial = w * torch.clone(value)
                 if name not in avg_weights:
@@ -190,19 +199,27 @@ def weighted_module_avg(
                 else:
                     avg_weights[name] += partial
 
-    return avg_weights
+    client_future[1].model.load_state_dict(avg_weights)
+    return client_future
+    # return (client_future[0], client_future[1])
 
 
+@python_app(executors=["threadpool_executor"])
 def unweighted_module_avg(
-    selected_clients: list[DecentralClient],
-) -> OrderedDict[str, torch.Tensor]:
+    client_future: tuple(list[Result], DecentralClient),
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
-    models = [client.model for client in selected_clients]
-    w = 1 / len(selected_clients)
+    print("new aggregate round")
+    w = 1 / len(neighbor_futures)
 
     with torch.no_grad():
         avg_weights = OrderedDict()
-        for model in models:
+        for client in neighbor_futures:
+            model = client[1].model
+            model.to("cpu")
+            # model = client.result()[1].model
             for name, value in model.state_dict().items():
                 partial = w * torch.clone(value)
                 if name not in avg_weights:
@@ -210,4 +227,6 @@ def unweighted_module_avg(
                 else:
                     avg_weights[name] += partial
 
-    return avg_weights
+    client_future[1].model.load_state_dict(avg_weights)
+
+    return client_future

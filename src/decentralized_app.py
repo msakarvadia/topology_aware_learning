@@ -211,6 +211,9 @@ class DecentrallearnApp:
             }
 
         train_result_futures = []
+        # this is to check if we are trying to resume training from a checkpoint that has already been completed
+        if self.start_round >= self.rounds:
+            return []
         for round_idx in range(self.start_round, self.rounds):
 
             # TODO (MS): select client indexes

@@ -200,13 +200,12 @@ class DecentrallearnApp:
         Returns:
             List of results from each client after each round.
         """
-        job = local_train if self.train else no_local_train
 
-        round_states = {}
+        self.round_states = {}
         round_idx = self.start_round
-        round_states[self.start_round] = {}
+        self.round_states[self.start_round] = {}
         for client_idx in range(len(self.clients)):
-            round_states[self.start_round][client_idx] = {
+            self.round_states[self.start_round][client_idx] = {
                 "agg": ([{}], self.clients[client_idx])
             }
 
@@ -215,85 +214,14 @@ class DecentrallearnApp:
         if self.start_round >= self.rounds:
             return []
         for round_idx in range(self.start_round, self.rounds):
-
-            # TODO (MS): select client indexes
-            size = int(max(1, len(self.clients) * self.participation))
-            assert 1 <= size <= len(self.clients)
-            selected_client_idxs = self.rng.choice(
-                list(range(len(self.clients))),
-                size=size,
-                replace=False,
-            ).tolist()
-            print(f"{selected_client_idxs=}")
-
-            print("round idx: ", round_idx)
-            preface = f"({round_idx+1}/{self.rounds})"
-            logger.log(
-                APP_LOG_LEVEL,
-                f"{preface} Starting local training for this round",
-            )
-            futures = []
-            round_states[round_idx + 1] = {}
-            for client in self.clients:
-                train_input = round_states[round_idx][client.idx]["agg"]
-                # only use clients for round if they are selected
-                if client.idx not in selected_client_idxs:
-                    round_states[round_idx + 1][client.idx] = {"train": train_input}
-                    continue
-                neighbor_idxs = client.get_neighbors()
-                fed_prox_neighbors = []
-                for i in neighbor_idxs:
-                    fed_prox_neighbors.append(round_states[round_idx][i]["agg"])
-                # print(
-                #    f"Keys before agg, {round_idx=}, {client.idx=}",
-                #    round_states[round_idx][client.idx].keys(),
-                # )
-                # train_input = round_states[round_idx][client.idx]["agg"]
-                future = job(
-                    train_input,
-                    round_idx,
-                    self.epochs,
-                    self.batch_size,
-                    self.lr,
-                    self.prox_coeff,
-                    self.device,
-                    *fed_prox_neighbors,
-                )
-                print(f"Launched Future: {future=}")
-                round_states[round_idx + 1][client.idx] = {"train": future}
-
-                preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
-                logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
-
-            for client in self.clients:
-                agg_client = round_states[round_idx + 1][client.idx]["train"]
-                # only use clients for round if they are selected
-                if client.idx not in selected_client_idxs:
-                    round_states[round_idx + 1][client.idx].update({"agg": agg_client})
-                    continue
-
-                neighbor_idxs = client.get_neighbors()
-                if len(neighbor_idxs) == 0:
-                    continue
-                # need to combine neighbors w/ client and pass to aggregate function
-                agg_neighbors = []
-                neighbor_idxs.append(client.idx)
-                print(f"{neighbor_idxs=}")
-                for i in neighbor_idxs:
-                    print(f"{round_idx=}")
-                    print(f"{i=}")
-                    agg_neighbors.append(round_states[round_idx + 1][i]["train"])
-                future = self.aggregation_function(agg_client, *agg_neighbors)
-                futures.append(future)
-                round_states[round_idx + 1][client.idx].update({"agg": future})
-
+            futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
 
         checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
         resolved_futures = [i.result() for i in as_completed(train_result_futures)]
         [self.client_results.extend(i[0]) for i in resolved_futures]
         ckpt_clients = []
-        for client_idx, client_future in round_states[round_idx + 1].items():
+        for client_idx, client_future in self.round_states[round_idx + 1].items():
             result_object = client_future["agg"]
             print(f"{type(client_future['agg'][1])=}")
             # This is how we handle clients that are not returning appfutures (due to not being selected)
@@ -327,104 +255,68 @@ class DecentrallearnApp:
         """
         print("round idx: ", round_idx)
         job = local_train if self.train else no_local_train
-        results: list[Result] = []
 
-        selected_clients = self.select_clients(
-            self.participation, self.clients, self.rng
-        )
-        print(selected_clients)
-
-        # TODO(MS): need to make variable
-        # size = int(max(1, len(self.clients) * self.participation))
-        num_clients = 3
-        size = int(max(1, num_clients * self.participation))
-
-        """
+        # select client indexes
+        size = int(max(1, len(self.clients) * self.participation))
         assert 1 <= size <= len(self.clients)
-        selected_clients = list(
-            self.rng.choice(
-                numpy.asarray(self.clients),
-                size=size,
-                replace=False,
-            ),
-        )
-        futures =  self.launch_training_jobs(
-            selected_clients,
-            round_idx,
-            self.epochs,
-            self.batch_size,
-            self.lr,
-            self.prox_coeff,
-            self.device,
-        )
-        """
-        futures = []
-        for i in range(size):
-            client = selected_clients[i]
-            print(f"TRAINING LOOP: {client=}")
-            print(f"TRAINING LOOP: {client.result()=}")
+        selected_client_idxs = self.rng.choice(
+            list(range(len(self.clients))),
+            size=size,
+            replace=False,
+        ).tolist()
+        print(f"{selected_client_idxs=}")
 
-            # for client in selected_clients:
-            # neighbor_idxs = client.get_neighbors()
-            # neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
+        preface = f"({round_idx+1}/{self.rounds})"
+        logger.log(
+            APP_LOG_LEVEL,
+            f"{preface} Starting local training for this round",
+        )
+        futures = []
+        self.round_states[round_idx + 1] = {}
+        for client in self.clients:
+            train_input = self.round_states[round_idx][client.idx]["agg"]
+            # only use clients for round if they are selected
+            if client.idx not in selected_client_idxs:
+                self.round_states[round_idx + 1][client.idx] = {"train": train_input}
+                continue
+            neighbor_idxs = client.get_neighbors()
+            fed_prox_neighbors = []
+            for i in neighbor_idxs:
+                fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
             future = job(
-                # result, client = job(
-                client,
+                train_input,
                 round_idx,
                 self.epochs,
                 self.batch_size,
                 self.lr,
                 self.prox_coeff,
                 self.device,
-                self.clients,
-                # neighbors,
+                *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")
-            futures.append(future)
+            self.round_states[round_idx + 1][client.idx] = {"train": future}
+
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
 
-        print("next round of training")
-        # each future is a tuple (results, client)
-        # resolved_futures = [i.result() for i in as_completed(futures)]
-        # assign results
-        # [results.extend(i[0]) for i in resolved_futures]
-
-        # assign clients
-        clients = self.update_clients_from_futures(futures)
-        print(f"in round: {self.clients=}")
-
-        """
-        for c in selected_clients:
-            for client in self.clients:
-                if c.idx == client.idx:
-                    client.model.load_state_dict(c.model.state_dict())
-
-        # assessing if reselecting clients has an effect
-        selected_clients = list(
-            self.rng.choice(
-                numpy.asarray(self.clients),
-                size=size,
-                replace=False,
-            ),
-        )
-
-        # aggregate for each client accross neighbors
-        for client in selected_clients:
-            # print(f"aggregating clients {self.clients=}")
-            neighbor_idxs = client.get_neighbors()
-            neighbors = numpy.asarray(self.clients)[neighbor_idxs].tolist()
-            # skip aggregation for any client that has 0 neighbors in a given round
-            if len(neighbors) == 0:
+        for client in self.clients:
+            agg_client = self.round_states[round_idx + 1][client.idx]["train"]
+            # only use clients for round if they are selected
+            if client.idx not in selected_client_idxs:
+                self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
                 continue
-            avg_params = self.aggregation_function(neighbors)
-            # avg_params = unweighted_module_avg(neighbors)
-            client.model.load_state_dict(avg_params)
-            preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
-            logger.log(
-                APP_LOG_LEVEL,
-                f"{preface} Averaged the client's locally trained neighbors.",
-            )
-        """
+
+            neighbor_idxs = client.get_neighbors()
+            if len(neighbor_idxs) == 0:
+                continue
+            # need to combine neighbors w/ client and pass to aggregate function
+            agg_neighbors = []
+            neighbor_idxs.append(client.idx)
+            print(f"{neighbor_idxs=}")
+            for i in neighbor_idxs:
+                agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
+            future = self.aggregation_function(agg_client, *agg_neighbors)
+            futures.append(future)
+            self.round_states[round_idx + 1][client.idx].update({"agg": future})
 
         return futures  # results

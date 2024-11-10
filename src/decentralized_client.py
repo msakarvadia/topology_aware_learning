@@ -182,6 +182,7 @@ def weighted_module_avg(
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the weighted average of models."""
+    print("weighted aggregate round")
     data_lens = [len(client_future[1].train_data) for client_future in neighbor_futures]
     weights = [x / sum(data_lens) for x in data_lens]
 
@@ -211,7 +212,7 @@ def unweighted_module_avg(
     # selected_clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
-    print("new aggregate round")
+    print("unweighted aggregate round")
     w = 1 / len(neighbor_futures)
 
     with torch.no_grad():

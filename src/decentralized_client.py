@@ -190,6 +190,7 @@ def weighted_module_avg(
         for i in range(len(neighbor_futures)):
             client = neighbor_futures[i]
             model = client[1].model
+            model.to("cpu")
             w = weights[i]
             for name, value in model.state_dict().items():
                 partial = w * torch.clone(value)
@@ -217,6 +218,7 @@ def unweighted_module_avg(
         avg_weights = OrderedDict()
         for client in neighbor_futures:
             model = client[1].model
+            model.to("cpu")
             # model = client.result()[1].model
             for name, value in model.state_dict().items():
                 partial = w * torch.clone(value)

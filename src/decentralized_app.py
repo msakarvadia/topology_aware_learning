@@ -4,6 +4,7 @@ import logging
 import pathlib
 from pathlib import Path
 from datetime import datetime
+from concurrent.futures import as_completed
 
 import numpy
 import torch
@@ -16,6 +17,7 @@ from src.decentralized_client import weighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
 from src.modules import load_checkpoint
+from src.modules import save_checkpoint
 from src.tasks import local_train
 from src.tasks import no_local_train
 from src.tasks import test_model
@@ -210,13 +212,13 @@ class DecentrallearnApp:
         train_result_futures = []
         # this is to check if we are trying to resume training from a checkpoint that has already been completed
         if self.start_round >= self.rounds:
-            return self.client_results, [], self.round_states
+            return []
+            # return self.client_results, [], self.round_states
 
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
 
-        """
         checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
         resolved_futures = [i.result() for i in as_completed(train_result_futures)]
         [self.client_results.extend(i[0]) for i in resolved_futures]
@@ -231,9 +233,8 @@ class DecentrallearnApp:
                 client = client_future["agg"].result()[1]
             ckpt_clients.append(client)
         save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
-        """
-        return self.client_results, train_result_futures, self.round_states
-        # return self.client_results
+        # return self.client_results, train_result_futures, self.round_states
+        return self.client_results
 
     def _federated_round(
         self,

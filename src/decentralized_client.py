@@ -179,9 +179,14 @@ def create_clients(
 @python_app(executors=["threadpool_executor"])
 def weighted_module_avg(
     client_future: tuple(list[Result], DecentralClient),
+    seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the weighted average of models."""
+    import torch
+
+    if seed is not None:
+        torch.manual_seed(seed)
     print("weighted aggregate round")
     data_lens = [len(client_future[1].train_data) for client_future in neighbor_futures]
     weights = [x / sum(data_lens) for x in data_lens]
@@ -208,10 +213,16 @@ def weighted_module_avg(
 @python_app(executors=["threadpool_executor"])
 def unweighted_module_avg(
     client_future: tuple(list[Result], DecentralClient),
+    seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
     # selected_clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
+    import torch
+    import torch
+
+    if seed is not None:
+        torch.manual_seed(seed)
     print("unweighted aggregate round")
     w = 1 / len(neighbor_futures)
 

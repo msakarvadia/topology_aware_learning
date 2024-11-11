@@ -323,7 +323,7 @@ class DecentrallearnApp:
             print(f"{neighbor_idxs=}")
             for i in neighbor_idxs:
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
-            future = self.aggregation_function(agg_client, *agg_neighbors)
+            future = self.aggregation_function(agg_client, self.seed, *agg_neighbors)
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})
 

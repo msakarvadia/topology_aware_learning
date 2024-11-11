@@ -62,7 +62,8 @@ def local_train(
         List of results that record the training history.
     """
     from datetime import datetime
-    import numpy
+
+    # import numpy
 
     client = future[1]
     results: list[Result] = []

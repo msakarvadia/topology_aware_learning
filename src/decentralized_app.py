@@ -16,8 +16,7 @@ from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.modules import create_model
 from src.modules import load_data
-from src.modules import load_checkpoint
-from src.modules import save_checkpoint
+from src.utils import load_checkpoint
 from src.tasks import local_train
 from src.tasks import no_local_train
 from src.tasks import test_model
@@ -192,7 +191,11 @@ class DecentrallearnApp:
 
     def run(
         self,
-    ) -> None:
+    ) -> (
+        list[Result],
+        tuple(list[Result], DecentralClient),
+        dict[int, dict[int, tuple(list[Result], DecentralClient)]],
+    ):
         """Run the application.
 
         Args:

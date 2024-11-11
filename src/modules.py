@@ -139,6 +139,7 @@ def load_data(
         raise ValueError(f"Unknown dataset: {data_name}.")
 
 
+"""
 def save_checkpoint(
     round_idx: int,
     clients: list[DecentralClient],
@@ -172,3 +173,30 @@ def load_checkpoint(
         clients[i].model.load_state_dict(sd)
 
     return ckpt["round_idx"], clients, ckpt["client_results"]
+
+def process_futures_and_ckpt(
+    client_results: list[Result], 
+    train_result_futures: tuple(list[Result], DecentralClient), 
+    round_states: dict[int, dict[int, tuple(list[Result], DecentralClient)]],
+    rounds: int,
+    ) -> None:
+
+    ######### Process and Save training results
+    resolved_futures = [i.result() for i in as_completed(train_result_futures)]
+    [client_results.extend(i[0]) for i in resolved_futures]
+    ckpt_clients = []
+    for client_idx, client_future in round_states[rounds].items():
+        result_object = client_future["agg"]
+        # This is how we handle clients that are not returning appfutures (due to not being selected)
+        if isinstance(result_object[1], DecentralClient):
+            client = client_future["agg"][1]
+        else:
+            client = client_future["agg"].result()[1]
+        ckpt_clients.append(client)
+    # NOTE (MS): we only train until N-1 round so name ckpt accordingly
+    checkpoint_path = f"{run_dir}/{args.rounds-1}_ckpt.pth"
+    save_checkpoint(args.rounds - 1, ckpt_clients, client_results, checkpoint_path)
+
+    client_df = pd.DataFrame(client_results)
+    client_df.to_csv(f"{run_dir}/client_stats.csv")
+"""

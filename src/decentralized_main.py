@@ -5,7 +5,6 @@ import pathlib
 import os
 import argparse
 import sys
-from concurrent.futures import as_completed
 
 import numpy as np
 import torch
@@ -13,8 +12,7 @@ import pandas as pd
 import json
 
 from src.decentralized_app import DecentrallearnApp
-from src.decentralized_client import DecentralClient
-from src.modules import save_checkpoint
+from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
 from pathlib import Path
 
@@ -313,6 +311,14 @@ if __name__ == "__main__":
     client_results, train_result_futures, round_states = decentral_app.run()
 
     ######### Process and Save training results
+    process_futures_and_ckpt(
+        client_results,
+        train_result_futures,
+        round_states,
+        args.rounds,
+        run_dir,
+    )
+    """
     resolved_futures = [i.result() for i in as_completed(train_result_futures)]
     [client_results.extend(i[0]) for i in resolved_futures]
     ckpt_clients = []
@@ -327,11 +333,12 @@ if __name__ == "__main__":
     # NOTE (MS): we only train until N-1 round so name ckpt accordingly
     checkpoint_path = f"{run_dir}/{args.rounds-1}_ckpt.pth"
     save_checkpoint(args.rounds - 1, ckpt_clients, client_results, checkpoint_path)
-    #########
 
     client_df = pd.DataFrame(client_results)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
+    #########
+    """
 
     parsl.dfk().cleanup()
     decentral_app.close()

@@ -113,20 +113,20 @@ class DecentrallearnApp:
         self.train, self.test = train, test
         self.train_data, self.test_data = None, None
         root = pathlib.Path(data_dir)
-        if self.train:
-            self.train_data = load_data(
-                self.dataset,
-                root,
-                train=True,
-                download=True,
-            )
-        if self.test:
-            self.test_data = load_data(
-                self.dataset,
-                root,
-                train=False,
-                download=True,
-            )
+        # if self.train:
+        self.train_data = load_data(
+            self.dataset,
+            root,
+            train=True,
+            download=True,
+        )
+        # if self.test:
+        self.test_data = load_data(
+            self.dataset,
+            root,
+            train=False,
+            download=True,
+        )
 
         self.aggregation_strategy = aggregation_strategy
         if self.aggregation_strategy == "weighted":
@@ -158,7 +158,7 @@ class DecentrallearnApp:
         self.clients = create_clients(
             clients,
             self.dataset,
-            self.train,
+            # self.train,
             self.train_data,
             self.num_labels,
             self.test_data,

@@ -62,7 +62,7 @@ class DecentralClient(BaseModel):
 def create_clients(
     num_clients: int,
     data_name: DataChoices,
-    train: bool,
+    # train: bool,
     train_data: Dataset,
     num_labels: int,
     global_test_data: Dataset,
@@ -94,50 +94,50 @@ def create_clients(
     """
     client_ids = list(range(num_clients))
 
-    if train:
-        client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
+    # if train:
+    client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
 
-        # alpha = [sample_alpha] * num_clients
-        # client_popularity = rng.dirichlet(alpha)
+    # alpha = [sample_alpha] * num_clients
+    # client_popularity = rng.dirichlet(alpha)
 
-        # for data_idx, _ in enumerate(train_data):
-        #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
-        #    client_indices[client_id].append(data_idx)
+    # for data_idx, _ in enumerate(train_data):
+    #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
+    #    client_indices[client_id].append(data_idx)
 
-        # TODO(MS) to create balanced local train and test sets
-        # TODO(MS): pass in train_test_valid_split
-        (train_indices, test_indices, valid_indices) = federated_split(
-            num_workers=num_clients,
-            data=train_data,
-            num_labels=num_labels,
-            label_alpha=label_alpha,
-            sample_alpha=sample_alpha,
-            train_test_valid_split=None,
-            # train_test_valid_split=(0.7, 0.2, 0.1),
-            ensure_at_least_one_sample=True,
-            rng=rng,
-            allow_overlapping_samples=False,
-        )
+    # TODO(MS) to create balanced local train and test sets
+    # TODO(MS): pass in train_test_valid_split
+    (train_indices, test_indices, valid_indices) = federated_split(
+        num_workers=num_clients,
+        data=train_data,
+        num_labels=num_labels,
+        label_alpha=label_alpha,
+        sample_alpha=sample_alpha,
+        train_test_valid_split=None,
+        # train_test_valid_split=(0.7, 0.2, 0.1),
+        ensure_at_least_one_sample=True,
+        rng=rng,
+        allow_overlapping_samples=False,
+    )
 
-        train_subsets = {
-            idx: Subset(train_data, train_indices[idx]) for idx in client_ids
+    train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
+
+    test_subsets = valid_subsets = None
+    test_subsets = {idx: None for idx in client_ids}
+    valid_subsets = {idx: None for idx in client_ids}
+    if test_indices is not None:
+        test_subsets = {
+            idx: Subset(train_data, test_indices[idx]) for idx in client_ids
         }
-
-        test_subsets = valid_subsets = None
-        test_subsets = {idx: None for idx in client_ids}
-        valid_subsets = {idx: None for idx in client_ids}
-        if test_indices is not None:
-            test_subsets = {
-                idx: Subset(train_data, test_indices[idx]) for idx in client_ids
-            }
-        if valid_indices is not None:
-            valid_subsets = {
-                idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
-            }
+    if valid_indices is not None:
+        valid_subsets = {
+            idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
+        }
+    """
     else:
         train_subsets = {idx: None for idx in client_ids}
         test_subsets = {idx: None for idx in client_ids}
         valid_subsets = {idx: None for idx in client_ids}
+    """
 
     clients = []
     for idx in client_ids:

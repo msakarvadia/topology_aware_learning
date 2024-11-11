@@ -311,4 +311,5 @@ if __name__ == "__main__":
     client_df.to_csv(f"{run_dir}/client_stats.csv")
     print(client_df)
 
+    parsl.dfk().cleanup()
     decentral_app.close()

@@ -103,7 +103,8 @@ class DecentrallearnApp:
         )
 
         self.rng = numpy.random.default_rng(seed)
-        if seed is not None:
+        self.seed = seed
+        if self.seed is not None:
             torch.manual_seed(seed)
 
         self.dataset = dataset
@@ -297,6 +298,7 @@ class DecentrallearnApp:
                 self.lr,
                 self.prox_coeff,
                 self.device,
+                self.seed,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")

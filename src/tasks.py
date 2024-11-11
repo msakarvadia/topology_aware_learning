@@ -1,12 +1,8 @@
 from __future__ import annotations
 
 import sys
-import torch
 from torch import nn
-from torch.nn import functional as F  # noqa: N812
-from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
-from sklearn.metrics import classification_report
 
 # TODO (MS): update all of these clients to decentralized clients
 from src.decentralized_client import DecentralClient
@@ -24,6 +20,7 @@ def no_local_train(
     batch_size: int,
     lr: float,
     device: torch.device,
+    seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """No-op version of [local_train]
@@ -45,6 +42,7 @@ def local_train(
     lr: float,
     prox_coeff: float,
     device: torch.device,
+    seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
     # clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
@@ -62,6 +60,12 @@ def local_train(
         List of results that record the training history.
     """
     from datetime import datetime
+    import torch
+    from torch.utils.data import DataLoader
+    from torch.nn import functional as F  # noqa: N812
+
+    if seed is not None:
+        torch.manual_seed(seed)
 
     # import numpy
 
@@ -110,7 +114,12 @@ def local_train(
 
         # Test client on global test set
         global_test_result = test_model(
-            client.model, client.global_test_data, round_idx, batch_size, device
+            client.model,
+            client.global_test_data,
+            round_idx,
+            batch_size,
+            device,
+            seed,
         )
 
         epoch_results.append(
@@ -140,9 +149,17 @@ def test_model(
     round_idx: int,
     batch_size: int,
     device: torch.device,
+    seed: int,
 ) -> Result:
     """Evaluate a model."""
     from datetime import datetime
+    from sklearn.metrics import classification_report
+    import torch
+    from torch.utils.data import DataLoader
+    from torch.nn import functional as F  # noqa: N812
+
+    if seed is not None:
+        torch.manual_seed(seed)
 
     model.eval()
     total_loss, total_acc, n_batches = 0.0, 0.0, 0

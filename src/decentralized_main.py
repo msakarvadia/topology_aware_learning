@@ -8,7 +8,6 @@ import sys
 
 import numpy as np
 import torch
-import pandas as pd
 import json
 
 from src.decentralized_app import DecentrallearnApp

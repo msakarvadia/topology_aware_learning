@@ -309,10 +309,9 @@ if __name__ == "__main__":
         prox_coeff=args.prox_coeff,
         checkpoint_every=args.checkpoint_every,
     )
-    client_results = decentral_app.run()
-    # client_results, train_result_futures, round_states = decentral_app.run()
+    # client_results = decentral_app.run()
+    client_results, train_result_futures, round_states = decentral_app.run()
 
-    """
     ######### Process and Save training results
     resolved_futures = [i.result() for i in as_completed(train_result_futures)]
     [client_results.extend(i[0]) for i in resolved_futures]
@@ -329,7 +328,6 @@ if __name__ == "__main__":
     checkpoint_path = f"{run_dir}/{args.rounds-1}_ckpt.pth"
     save_checkpoint(args.rounds - 1, ckpt_clients, client_results, checkpoint_path)
     #########
-    """
 
     client_df = pd.DataFrame(client_results)
     client_df.to_csv(f"{run_dir}/client_stats.csv")

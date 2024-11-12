@@ -326,7 +326,8 @@ class DecentrallearnApp:
             neighbor_idxs.append(client.idx)
             print(f"{neighbor_idxs=}")
             for i in neighbor_idxs:
-                agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
+                # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
+                agg_neighbors.append(self.round_states[round_idx][i]["agg"])
             future = self.aggregation_function(agg_client, self.seed, *agg_neighbors)
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

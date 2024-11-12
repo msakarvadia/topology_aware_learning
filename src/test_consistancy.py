@@ -26,12 +26,18 @@ python decentralized_main.py  \
     --rounds 2 --out_dir logs/w_agg/{i}/ \
     --aggregation_strategy unweighted \
 """
+command = f"""
+python decentralized_main.py  \
+    --prox_coeff 0 \
+    --aggregation_strategy unweighted \
+    --rounds 2 --out_dir logs/scale_agg/{i}/ \
+    --aggregation_strategy scale_agg \
+"""
 for i in range(50):
     command = f"""
     python decentralized_main.py  \
         --prox_coeff 0 \
         --aggregation_strategy unweighted \
-        --rounds 2 --out_dir logs/scale_agg/{i}/ \
-        --aggregation_strategy scale_agg \
+        --rounds 2 --out_dir logs/unweighted_prior_round_neighbors/{i}/ \
     """
     os.system(command)

@@ -131,7 +131,7 @@ if __name__ == "__main__":
         "--aggregation_strategy",
         type=str,
         default="unweighted",
-        choices=["unweighted", "weighted"],
+        choices=["unweighted", "weighted", "test_agg", "scale_agg"],
         help="Type of aggregation stretegy used to among neighboring nodes.",
     )
     parser.add_argument(
@@ -165,7 +165,7 @@ if __name__ == "__main__":
         help="By default dataset is downloaded. If you set this flag, dataset will not be downloaded.",
     )
     parser.add_argument(
-        "--train",
+        "--no_train",
         action="store_false",
         help="By default flag is True and local training will be run. If you set this flag, then no-op version of this application will be performed where no training is done (used for debugging purposes).",
     )
@@ -295,7 +295,7 @@ if __name__ == "__main__":
         topology=topology,
         device=device,
         download=args.download,
-        train=args.train,
+        train=args.no_train,
         test=args.test,
         label_alpha=args.label_alpha,
         sample_alpha=args.sample_alpha,

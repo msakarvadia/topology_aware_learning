@@ -13,29 +13,7 @@ from parsl.app.app import python_app
 
 @python_app(executors=["decentral_train"])
 def no_local_train(
-    futures: tuple(list[Result], DecentralClient),
-    # client: DecentralClient,
-    round_idx: int,
-    epochs: int,
-    batch_size: int,
-    lr: float,
-    device: torch.device,
-    seed: int,
-    *neighbor_futures: list[(list[Result], DecentralClient)],
-) -> tuple(list[Result], DecentralClient):
-    """No-op version of [local_train]
-
-    Returns:
-        Empty result list.
-    """
-    client = futures[1]
-    return [], client
-
-
-@python_app(executors=["decentral_train"])
-def local_train(
     future: tuple(list[Result], DecentralClient),
-    # client: DecentralClient,
     round_idx: int,
     epochs: int,
     batch_size: int,
@@ -44,7 +22,6 @@ def local_train(
     device: torch.device,
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
-    # clients: list[DecentralClient],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
 
@@ -67,7 +44,95 @@ def local_train(
     if seed is not None:
         torch.manual_seed(seed)
 
-    # import numpy
+    client = future[1]
+    results: list[Result] = []
+    client.model.to(device)
+    client.model.train()
+    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
+    loader = DataLoader(client.train_data, batch_size=batch_size)
+
+    for epoch in range(epochs):
+        epoch_results = []
+        n_batches = 1
+        running_loss = 0.0
+
+        """
+        for batch_idx, batch in enumerate(loader):
+            inputs, targets = batch
+            inputs, targets = inputs.to(device), targets.to(device)
+            preds = client.model(inputs)
+            loss = F.cross_entropy(preds, targets)
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+
+            running_loss += loss.item()
+            n_batches += 1
+
+        """
+        # Test client on local test set TODO
+
+        # Test client on global test set
+        global_test_result = test_model(
+            client.model,
+            client.global_test_data,
+            round_idx,
+            batch_size,
+            device,
+            seed,
+        )
+
+        epoch_results.append(
+            {
+                "time": datetime.now(),
+                "client_idx": client.idx,
+                "neighbors": client.neighbors,
+                "round_idx": round_idx,
+                "epoch": epoch,
+                "data_size": len(client.train_data),
+                "train_loss": running_loss / n_batches,
+            }
+            | global_test_result,
+        )
+
+        results.extend(epoch_results)
+
+    return results, client
+
+
+@python_app(executors=["decentral_train"])
+def local_train(
+    future: tuple(list[Result], DecentralClient),
+    round_idx: int,
+    epochs: int,
+    batch_size: int,
+    lr: float,
+    prox_coeff: float,
+    device: torch.device,
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+) -> tuple(list[Result], DecentralClient):
+    """Local training job.
+
+    Args:
+        client: The client to train.
+        round_idx: The current round number.
+        epochs: Number of epochs.
+        batch_size: Batch size when iterating through data.
+        lr: Learning rate.
+        device: Backend hardware to train with.
+
+    Returns:
+        List of results that record the training history.
+    """
+    from datetime import datetime
+    import torch
+    from torch.utils.data import DataLoader
+    from torch.nn import functional as F  # noqa: N812
+
+    if seed is not None:
+        torch.manual_seed(seed)
 
     client = future[1]
     results: list[Result] = []
@@ -79,7 +144,6 @@ def local_train(
     for epoch in range(epochs):
         epoch_results = []
         n_batches = 0
-        # log_every_n_batches = 100
         running_loss = 0.0
 
         for batch_idx, batch in enumerate(loader):
@@ -102,8 +166,6 @@ def local_train(
                 loss += (prox_coeff / 2) * proximal_term
 
             loss.backward()
-            # print(client.model)
-            # print(f"{loss=}, {torch.count_nonzero(client.model.fc1.weight.grad)=}")
             optimizer.step()
             optimizer.zero_grad()
 
@@ -129,11 +191,8 @@ def local_train(
                 "neighbors": client.neighbors,
                 "round_idx": round_idx,
                 "epoch": epoch,
-                # "batch_idx": batch_idx,
                 "data_size": len(client.train_data),
                 "train_loss": running_loss / n_batches,
-                # "global_test_acc": global_test_result["test_acc"],
-                # "global_test_loss": global_test_result["test_loss"],
             }
             | global_test_result,
         )

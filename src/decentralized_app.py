@@ -14,6 +14,8 @@ import os
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
+from src.decentralized_client import test_agg
+from src.decentralized_client import scale_agg
 from src.modules import create_model
 from src.modules import load_data
 from src.utils import load_checkpoint
@@ -113,28 +115,30 @@ class DecentrallearnApp:
         self.train, self.test = train, test
         self.train_data, self.test_data = None, None
         root = pathlib.Path(data_dir)
-        if self.train:
-            self.train_data = load_data(
-                self.dataset,
-                root,
-                train=True,
-                download=True,
-            )
-        if self.test:
-            self.test_data = load_data(
-                self.dataset,
-                root,
-                train=False,
-                download=True,
-            )
+        # if self.train:
+        self.train_data = load_data(
+            self.dataset,
+            root,
+            train=True,
+            download=True,
+        )
+        # if self.test:
+        self.test_data = load_data(
+            self.dataset,
+            root,
+            train=False,
+            download=True,
+        )
 
         self.aggregation_strategy = aggregation_strategy
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
-        if self.aggregation_strategy == "parsl":
-            self.aggregation_function = parsl_unweighted_module_avg
+        if self.aggregation_strategy == "test_agg":
+            self.aggregation_function = test_agg
+        if self.aggregation_strategy == "scale_agg":
+            self.aggregation_function = scale_agg
 
         self.device = torch.device(device)
         self.epochs = epochs
@@ -158,7 +162,7 @@ class DecentrallearnApp:
         self.clients = create_clients(
             clients,
             self.dataset,
-            self.train,
+            # self.train,
             self.train_data,
             self.num_labels,
             self.test_data,
@@ -322,7 +326,8 @@ class DecentrallearnApp:
             neighbor_idxs.append(client.idx)
             print(f"{neighbor_idxs=}")
             for i in neighbor_idxs:
-                agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
+                # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
+                agg_neighbors.append(self.round_states[round_idx][i]["agg"])
             future = self.aggregation_function(agg_client, self.seed, *agg_neighbors)
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

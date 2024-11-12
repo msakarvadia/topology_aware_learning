@@ -62,7 +62,7 @@ class DecentralClient(BaseModel):
 def create_clients(
     num_clients: int,
     data_name: DataChoices,
-    train: bool,
+    # train: bool,
     train_data: Dataset,
     num_labels: int,
     global_test_data: Dataset,
@@ -94,50 +94,50 @@ def create_clients(
     """
     client_ids = list(range(num_clients))
 
-    if train:
-        client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
+    # if train:
+    client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
 
-        # alpha = [sample_alpha] * num_clients
-        # client_popularity = rng.dirichlet(alpha)
+    # alpha = [sample_alpha] * num_clients
+    # client_popularity = rng.dirichlet(alpha)
 
-        # for data_idx, _ in enumerate(train_data):
-        #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
-        #    client_indices[client_id].append(data_idx)
+    # for data_idx, _ in enumerate(train_data):
+    #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
+    #    client_indices[client_id].append(data_idx)
 
-        # TODO(MS) to create balanced local train and test sets
-        # TODO(MS): pass in train_test_valid_split
-        (train_indices, test_indices, valid_indices) = federated_split(
-            num_workers=num_clients,
-            data=train_data,
-            num_labels=num_labels,
-            label_alpha=label_alpha,
-            sample_alpha=sample_alpha,
-            train_test_valid_split=None,
-            # train_test_valid_split=(0.7, 0.2, 0.1),
-            ensure_at_least_one_sample=True,
-            rng=rng,
-            allow_overlapping_samples=False,
-        )
+    # TODO(MS) to create balanced local train and test sets
+    # TODO(MS): pass in train_test_valid_split
+    (train_indices, test_indices, valid_indices) = federated_split(
+        num_workers=num_clients,
+        data=train_data,
+        num_labels=num_labels,
+        label_alpha=label_alpha,
+        sample_alpha=sample_alpha,
+        train_test_valid_split=None,
+        # train_test_valid_split=(0.7, 0.2, 0.1),
+        ensure_at_least_one_sample=True,
+        rng=rng,
+        allow_overlapping_samples=False,
+    )
 
-        train_subsets = {
-            idx: Subset(train_data, train_indices[idx]) for idx in client_ids
+    train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
+
+    test_subsets = valid_subsets = None
+    test_subsets = {idx: None for idx in client_ids}
+    valid_subsets = {idx: None for idx in client_ids}
+    if test_indices is not None:
+        test_subsets = {
+            idx: Subset(train_data, test_indices[idx]) for idx in client_ids
         }
-
-        test_subsets = valid_subsets = None
-        test_subsets = {idx: None for idx in client_ids}
-        valid_subsets = {idx: None for idx in client_ids}
-        if test_indices is not None:
-            test_subsets = {
-                idx: Subset(train_data, test_indices[idx]) for idx in client_ids
-            }
-        if valid_indices is not None:
-            valid_subsets = {
-                idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
-            }
+    if valid_indices is not None:
+        valid_subsets = {
+            idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
+        }
+    """
     else:
         train_subsets = {idx: None for idx in client_ids}
         test_subsets = {idx: None for idx in client_ids}
         valid_subsets = {idx: None for idx in client_ids}
+    """
 
     clients = []
     for idx in client_ids:
@@ -240,5 +240,53 @@ def unweighted_module_avg(
                     avg_weights[name] += partial
 
     client_future[1].model.load_state_dict(avg_weights)
+
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
+def scale_agg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
+    """Compute the unweighted average of models."""
+    import torch
+    import torch
+
+    if seed is not None:
+        torch.manual_seed(seed)
+    print("unweighted aggregate round")
+    w = 1 / len(neighbor_futures)
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for client in [
+            client_future,
+        ]:
+            model = client[1].model
+            model.to("cpu")
+            # model = client.result()[1].model
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    client_future[1].model.load_state_dict(avg_weights)
+
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
+def test_agg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
+    """Compute the unweighted average of models."""
 
     return client_future

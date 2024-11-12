@@ -14,6 +14,8 @@ import os
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
+from src.decentralized_client import test_agg
+from src.decentralized_client import scale_agg
 from src.modules import create_model
 from src.modules import load_data
 from src.utils import load_checkpoint
@@ -133,8 +135,10 @@ class DecentrallearnApp:
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
-        if self.aggregation_strategy == "parsl":
-            self.aggregation_function = parsl_unweighted_module_avg
+        if self.aggregation_strategy == "test_agg":
+            self.aggregation_function = test_agg
+        if self.aggregation_strategy == "scale_agg":
+            self.aggregation_function = scale_agg
 
         self.device = torch.device(device)
         self.epochs = epochs

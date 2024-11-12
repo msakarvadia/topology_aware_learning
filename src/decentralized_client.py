@@ -242,3 +242,51 @@ def unweighted_module_avg(
     client_future[1].model.load_state_dict(avg_weights)
 
     return client_future
+
+
+@python_app(executors=["threadpool_executor"])
+def scale_agg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
+    """Compute the unweighted average of models."""
+    import torch
+    import torch
+
+    if seed is not None:
+        torch.manual_seed(seed)
+    print("unweighted aggregate round")
+    w = 1 / len(neighbor_futures)
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for client in [
+            client_future,
+        ]:
+            model = client[1].model
+            model.to("cpu")
+            # model = client.result()[1].model
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    client_future[1].model.load_state_dict(avg_weights)
+
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
+def test_agg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    # selected_clients: list[DecentralClient],
+) -> tuple(list[Result], DecentralClient):
+    """Compute the unweighted average of models."""
+
+    return client_future

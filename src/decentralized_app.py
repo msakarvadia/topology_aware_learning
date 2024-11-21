@@ -73,13 +73,13 @@ class DecentrallearnApp:
     def __init__(
         self,
         data_dir: pathlib.Path,  # TODO
-        topology: np.array,  # TODO,
+        # topology: np.array,  # TODO,
+        topology_path: pathlib.Path = Path("topology/topo_1.txt"),  # TODO,
         dataset: str = "mnist",
         rounds: int = 5,
         batch_size: int = 16,
         epochs: int = "2",
         lr: float = "1e-3",
-        # device: str = "cpu",  # TODO
         download: bool = False,
         train: bool = True,
         test: bool = True,
@@ -157,7 +157,8 @@ class DecentrallearnApp:
 
         self.prox_coeff = prox_coeff
         self.participation = participation
-        self.topology = topology
+        # self.topology = topology
+        self.topology = numpy.loadtxt(topology_path, dtype=float)
 
         self.rounds = rounds
         self.start_round = 0  # this value will get overridden if we load from a ckpt

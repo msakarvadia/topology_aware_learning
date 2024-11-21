@@ -291,7 +291,7 @@ if __name__ == "__main__":
         epochs=args.epochs,
         lr=args.lr,
         data_dir=args.data_dir,
-        topology=topology,
+        topology_path=args.topology_file,
         # device=device,
         download=args.download,
         train=args.no_train,

@@ -284,10 +284,10 @@ if __name__ == "__main__":
     #########
 
     decentral_app = DecentrallearnApp(
-        clients=clients,
+        #    clients=clients,
         rounds=args.rounds,
-        dataset=data,
-        num_labels=num_labels,
+        dataset=args.dataset,
+        #    num_labels=num_labels,
         batch_size=args.batch_size,
         epochs=args.epochs,
         lr=args.lr,
@@ -304,7 +304,7 @@ if __name__ == "__main__":
         run_dir=run_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
-        checkpoint_every=args.checkpoint_every,
+        #    checkpoint_every=args.checkpoint_every,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states = decentral_app.run()

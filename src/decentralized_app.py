@@ -72,28 +72,38 @@ class DecentrallearnApp:
 
     def __init__(
         self,
-        clients: int,
-        rounds: int,
-        dataset: DataChoices,
-        num_labels: int,
-        batch_size: int,
-        epochs: int,
-        lr: float,
-        data_dir: pathlib.Path,
-        topology: np.array,  # list[list[int]],
-        device: str = "cpu",
+        # dataset: DataChoices, #TODO
+        # num_labels: int, #TODO
+        data_dir: pathlib.Path,  # TODO
+        topology: np.array,  # TODO,
+        dataset: str = "mnist",
+        rounds: int = 5,
+        batch_size: int = 16,
+        epochs: int = "2",
+        lr: float = "1e-3",
+        device: str = "cpu",  # TODO
         download: bool = False,
         train: bool = True,
         test: bool = True,
         label_alpha: float = 1e5,
         sample_alpha: float = 1e5,
         participation: float = 1.0,
-        seed: int | None = None,
-        run_dir: pathlib.Path = Path("./out"),
+        seed: int | None = 0,
+        run_dir: pathlib.Path = Path("./out"),  # TODO
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
-        checkpoint_every: int = 1,
+        # checkpoint_every: int = 1,
     ) -> None:
+
+        if dataset == "mnist":
+            self.dataset = DataChoices.MNIST
+            self.num_labels = 10
+        if dataset == "fmnist":
+            self.dataset = DataChoices.FMNIST
+            self.num_labels = 10
+        if dataset == "cifar10":
+            self.dataset = DataChoices.CIFAR10
+            self.num_labels = 10
 
         self.run_dir = run_dir
 
@@ -109,7 +119,7 @@ class DecentrallearnApp:
         if self.seed is not None:
             torch.manual_seed(seed)
 
-        self.dataset = dataset
+        # self.dataset = dataset
         self.global_model = create_model(self.dataset)
 
         self.train, self.test = train, test
@@ -144,8 +154,8 @@ class DecentrallearnApp:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
-        self.num_labels = num_labels
-        self.checkpoint_every = checkpoint_every
+        # self.num_labels = num_labels
+        # self.checkpoint_every = checkpoint_every
 
         self.prox_coeff = prox_coeff
         self.participation = participation
@@ -159,8 +169,10 @@ class DecentrallearnApp:
         self.label_alpha = label_alpha
         self.sample_alpha = sample_alpha
 
+        num_clients = self.topology.shape[0]
+
         self.clients = create_clients(
-            clients,
+            num_clients,
             self.dataset,
             # self.train,
             self.train_data,

@@ -187,7 +187,8 @@ if __name__ == "__main__":
         data = DataChoices.CIFAR10
         num_labels = 10
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     # set static out dir based on args
     # I don't want to record the # of rounds, incase this changes in future experiments
     arg_path = "_".join(map(str, list(vars(args).values())[1:]))
@@ -284,16 +285,14 @@ if __name__ == "__main__":
     #########
 
     decentral_app = DecentrallearnApp(
-        #    clients=clients,
         rounds=args.rounds,
         dataset=args.dataset,
-        #    num_labels=num_labels,
         batch_size=args.batch_size,
         epochs=args.epochs,
         lr=args.lr,
         data_dir=args.data_dir,
         topology=topology,
-        device=device,
+        # device=device,
         download=args.download,
         train=args.no_train,
         test=args.test,
@@ -304,7 +303,6 @@ if __name__ == "__main__":
         run_dir=run_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
-        #    checkpoint_every=args.checkpoint_every,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states = decentral_app.run()
@@ -317,27 +315,6 @@ if __name__ == "__main__":
         args.rounds,
         run_dir,
     )
-    """
-    resolved_futures = [i.result() for i in as_completed(train_result_futures)]
-    [client_results.extend(i[0]) for i in resolved_futures]
-    ckpt_clients = []
-    for client_idx, client_future in round_states[args.rounds].items():
-        result_object = client_future["agg"]
-        # This is how we handle clients that are not returning appfutures (due to not being selected)
-        if isinstance(result_object[1], DecentralClient):
-            client = client_future["agg"][1]
-        else:
-            client = client_future["agg"].result()[1]
-        ckpt_clients.append(client)
-    # NOTE (MS): we only train until N-1 round so name ckpt accordingly
-    checkpoint_path = f"{run_dir}/{args.rounds-1}_ckpt.pth"
-    save_checkpoint(args.rounds - 1, ckpt_clients, client_results, checkpoint_path)
-
-    client_df = pd.DataFrame(client_results)
-    client_df.to_csv(f"{run_dir}/client_stats.csv")
-    print(client_df)
-    #########
-    """
 
     parsl.dfk().cleanup()
     decentral_app.close()

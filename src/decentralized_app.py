@@ -72,8 +72,6 @@ class DecentrallearnApp:
 
     def __init__(
         self,
-        # dataset: DataChoices, #TODO
-        # num_labels: int, #TODO
         data_dir: pathlib.Path,  # TODO
         topology: np.array,  # TODO,
         dataset: str = "mnist",
@@ -81,7 +79,7 @@ class DecentrallearnApp:
         batch_size: int = 16,
         epochs: int = "2",
         lr: float = "1e-3",
-        device: str = "cpu",  # TODO
+        # device: str = "cpu",  # TODO
         download: bool = False,
         train: bool = True,
         test: bool = True,
@@ -92,7 +90,6 @@ class DecentrallearnApp:
         run_dir: pathlib.Path = Path("./out"),  # TODO
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
-        # checkpoint_every: int = 1,
     ) -> None:
 
         if dataset == "mnist":
@@ -150,7 +147,8 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
-        self.device = torch.device(device)
+        # self.device = torch.device(device)
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr

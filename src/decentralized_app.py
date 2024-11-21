@@ -73,13 +73,15 @@ class DecentrallearnApp:
 
     def __init__(
         self,
-        data_dir: pathlib.Path = Path("../data"),
-        topology_path: pathlib.Path = Path("topology/topo_1.txt"),
+        data_dir: str = "../data",
+        topology_path: str = "topology/topo_1.txt",
+        # data_dir: pathlib.Path = Path("../data"),
+        # topology_path: pathlib.Path = Path("topology/topo_1.txt"),
         dataset: str = "mnist",
         rounds: int = 5,
         batch_size: int = 16,
-        epochs: int = "2",
-        lr: float = "1e-3",
+        epochs: int = 2,
+        lr: float = 1e-3,
         download: bool = False,
         train: bool = True,
         test: bool = True,
@@ -87,7 +89,8 @@ class DecentrallearnApp:
         sample_alpha: float = 1e5,
         participation: float = 1.0,
         seed: int | None = 0,
-        log_dir: pathlib.Path = Path("./logs"),
+        log_dir: str = "./logs",
+        # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
     ) -> None:
@@ -239,7 +242,7 @@ class DecentrallearnApp:
         # this is to check if we are trying to resume training from a checkpoint that has already been completed
         if self.start_round >= self.rounds:
             # return []
-            return self.client_results, [], self.round_states
+            return self.client_results, [], self.round_states, self.run_dir
 
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)

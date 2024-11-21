@@ -176,6 +176,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    """
     if args.dataset == "mnist":
         data = DataChoices.MNIST
         num_labels = 10
@@ -189,6 +190,7 @@ if __name__ == "__main__":
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)
     clients = topology.shape[0]  # number of clients
+    """
 
     ######### Parsl
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"

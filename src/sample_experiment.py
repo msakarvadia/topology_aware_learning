@@ -129,23 +129,12 @@ if __name__ == "__main__":
             decentral_app.run()
         )
         app_result_tuples.append(
-            (client_results, train_result_futures, round_states, run_dir)
+            (client_results, train_result_futures, round_states, args.rounds, run_dir)
         )
 
     ######### Process and Save training results
     for result_tuple in app_result_tuples:
-        print(result_tuple[-1])
-        process_futures_and_ckpt(
-            result_tuple[0], result_tuple[1], result_tuple[2], result_tuple[3]
-        )
-        """
-            client_results,
-            train_result_futures,
-            round_states,
-            args.rounds,
-            run_dir,
-        )
-        """
+        process_futures_and_ckpt(*result_tuple)
 
     parsl.dfk().cleanup()
     decentral_app.close()

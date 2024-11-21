@@ -85,14 +85,14 @@ class DecentrallearnApp:
         download: bool = False,
         train: bool = True,
         test: bool = True,
-        label_alpha: float = 1e5,
-        sample_alpha: float = 1e5,
+        label_alpha: float = 100,
+        sample_alpha: float = 100,
         participation: float = 1.0,
         seed: int | None = 0,
         log_dir: str = "./logs",
         # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
-        prox_coeff: float = 0,
+        prox_coeff: float = 0.1,
     ) -> None:
 
         # make the outdir

@@ -10,6 +10,7 @@ import numpy
 import torch
 import glob
 import os
+import json
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import unweighted_module_avg
@@ -72,9 +73,8 @@ class DecentrallearnApp:
 
     def __init__(
         self,
-        data_dir: pathlib.Path,  # TODO
-        # topology: np.array,  # TODO,
-        topology_path: pathlib.Path = Path("topology/topo_1.txt"),  # TODO,
+        data_dir: pathlib.Path = Path("../data"),
+        topology_path: pathlib.Path = Path("topology/topo_1.txt"),
         dataset: str = "mnist",
         rounds: int = 5,
         batch_size: int = 16,
@@ -87,10 +87,26 @@ class DecentrallearnApp:
         sample_alpha: float = 1e5,
         participation: float = 1.0,
         seed: int | None = 0,
-        run_dir: pathlib.Path = Path("./out"),  # TODO
+        log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0,
     ) -> None:
+
+        # make the outdir
+        args = locals()
+        args.pop("self", None)
+        args.pop("log_dir", None)
+        arg_path = "_".join(map(str, list(args.values())))
+        # Need to remove any . or / to ensure a single continuous file path
+        arg_path = arg_path.replace(".", "")
+        arg_path = arg_path.replace("/", "")
+        self.run_dir = Path(f"{log_dir}/{arg_path}/")
+        # check if run_dir exists, if not, make it
+        if not os.path.exists(self.run_dir):
+            os.makedirs(self.run_dir)
+
+        # Save args in the run_dir
+        json.dump(args, open(f"{log_dir}/args.txt", "w"))
 
         if dataset == "mnist":
             self.dataset = DataChoices.MNIST
@@ -101,8 +117,6 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
-
-        self.run_dir = run_dir
 
         # Initialize logging
         logging.basicConfig(
@@ -116,20 +130,17 @@ class DecentrallearnApp:
         if self.seed is not None:
             torch.manual_seed(seed)
 
-        # self.dataset = dataset
         self.global_model = create_model(self.dataset)
 
         self.train, self.test = train, test
         self.train_data, self.test_data = None, None
         root = pathlib.Path(data_dir)
-        # if self.train:
         self.train_data = load_data(
             self.dataset,
             root,
             train=True,
             download=True,
         )
-        # if self.test:
         self.test_data = load_data(
             self.dataset,
             root,
@@ -147,17 +158,13 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
-        # self.device = torch.device(device)
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
-        # self.num_labels = num_labels
-        # self.checkpoint_every = checkpoint_every
 
         self.prox_coeff = prox_coeff
         self.participation = participation
-        # self.topology = topology
         self.topology = numpy.loadtxt(topology_path, dtype=float)
 
         self.rounds = rounds
@@ -254,7 +261,12 @@ class DecentrallearnApp:
             ckpt_clients.append(client)
         save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
         """
-        return self.client_results, train_result_futures, self.round_states
+        return (
+            self.client_results,
+            train_result_futures,
+            self.round_states,
+            self.run_dir,
+        )
         # return self.client_results
 
     def _federated_round(

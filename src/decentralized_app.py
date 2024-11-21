@@ -109,7 +109,7 @@ class DecentrallearnApp:
             os.makedirs(self.run_dir)
 
         # Save args in the run_dir
-        json.dump(args, open(f"{log_dir}/args.txt", "w"))
+        json.dump(args, open(f"{self.run_dir}/args.txt", "w"))
 
         if dataset == "mnist":
             self.dataset = DataChoices.MNIST

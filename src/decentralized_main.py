@@ -290,6 +290,7 @@ if __name__ == "__main__":
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()
 
     ######### Process and Save training results
+    print(client_results)
     process_futures_and_ckpt(
         client_results,
         train_result_futures,

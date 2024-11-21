@@ -122,17 +122,30 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
-    decentral_app = DecentrallearnApp(rounds=args.rounds)
-    client_results, train_result_futures, round_states, run_dir = decentral_app.run()
+    app_result_tuples = []
+    for topo in ["topology/topo_1.txt", "topology/topo_2.txt"]:
+        decentral_app = DecentrallearnApp(rounds=args.rounds, topology_path=topo)
+        client_results, train_result_futures, round_states, run_dir = (
+            decentral_app.run()
+        )
+        app_result_tuples.append(
+            (client_results, train_result_futures, round_states, run_dir)
+        )
 
     ######### Process and Save training results
-    process_futures_and_ckpt(
-        client_results,
-        train_result_futures,
-        round_states,
-        args.rounds,
-        run_dir,
-    )
+    for result_tuple in app_result_tuples:
+        print(result_tuple[-1])
+        process_futures_and_ckpt(
+            result_tuple[0], result_tuple[1], result_tuple[2], result_tuple[3]
+        )
+        """
+            client_results,
+            train_result_futures,
+            round_states,
+            args.rounds,
+            run_dir,
+        )
+        """
 
     parsl.dfk().cleanup()
     decentral_app.close()

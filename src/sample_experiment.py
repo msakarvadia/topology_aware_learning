@@ -36,13 +36,13 @@ if __name__ == "__main__":
         "--checkpoint_every",
         type=int,
         default=2,
-        help="# of rounds to wait between checkpoints",
+        help="# of rounds to wait between checkpoints (must be a factor of rounds)",
     )
     parser.add_argument(
         "--rounds",
         type=int,
         default=5,
-        help="# of aggregation rounds",
+        help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
         "--parsl_executor",
@@ -53,6 +53,11 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    # this way we can guarantee clean checkpointing of desired # of rounds
+    # NOTE (MS): this assert is not necessary, script will still work w/o it
+    # just not guarantee that all rounds are completed
+    assert args.rounds % args.checkpoint_every == 0
 
     ######### Parsl
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"

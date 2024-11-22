@@ -33,6 +33,12 @@ if __name__ == "__main__":
     # set up arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--checkpoint_every",
+        type=int,
+        default=2,
+        help="# of rounds to wait between checkpoints",
+    )
+    parser.add_argument(
         "--rounds",
         type=int,
         default=5,
@@ -122,19 +128,24 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
-    app_result_tuples = []
-    for topo in ["topology/topo_1.txt", "topology/topo_2.txt"]:
-        decentral_app = DecentrallearnApp(rounds=args.rounds, topology_path=topo)
-        client_results, train_result_futures, round_states, run_dir = (
-            decentral_app.run()
-        )
-        app_result_tuples.append(
-            (client_results, train_result_futures, round_states, args.rounds, run_dir)
-        )
+    for i in range(1, args.rounds + 1):
+        # only submit job if round number is a multiple of checkpoint every
+        if i % args.checkpoint_every == 0:
+            print(f"running expeirment until round {i}")
+            # begin experiment
+            app_result_tuples = []
+            for topo in ["topology/topo_1.txt", "topology/topo_2.txt"]:
+                decentral_app = DecentrallearnApp(rounds=i, topology_path=topo)
+                client_results, train_result_futures, round_states, run_dir = (
+                    decentral_app.run()
+                )
+                app_result_tuples.append(
+                    (client_results, train_result_futures, round_states, i, run_dir)
+                )
 
-    ######### Process and Save training results
-    for result_tuple in app_result_tuples:
-        process_futures_and_ckpt(*result_tuple)
+            ######### Process and Save training results
+            for result_tuple in app_result_tuples:
+                process_futures_and_ckpt(*result_tuple)
 
     parsl.dfk().cleanup()
     decentral_app.close()

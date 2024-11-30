@@ -8,7 +8,6 @@ import sys
 
 import numpy as np
 import torch
-import json
 
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
@@ -177,6 +176,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    """
     if args.dataset == "mnist":
         data = DataChoices.MNIST
         num_labels = 10
@@ -187,27 +187,10 @@ if __name__ == "__main__":
         data = DataChoices.CIFAR10
         num_labels = 10
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    # set static out dir based on args
-    # I don't want to record the # of rounds, incase this changes in future experiments
-    arg_path = "_".join(map(str, list(vars(args).values())[1:]))
-    # Need to remove any . or / to ensure a single continuous file path
-    arg_path = arg_path.replace(".", "")
-    arg_path = arg_path.replace("/", "")
-    run_dir = Path(f"{args.out_dir}/{arg_path}/")
-    # check if run_dir exists, if not, make it
-    if not os.path.exists(run_dir):
-        os.makedirs(run_dir)
-    # else:
-    #    print("we have already run this experiment, so exiting without re-running it")
-    #    sys.exit()
-
-    # Save args in the run_dir
-    json.dump(vars(args), open(f"{run_dir}/args.txt", "w"))
-
     topology = np.loadtxt(args.topology_file, dtype=float)
     # print(topology)
     clients = topology.shape[0]  # number of clients
+    """
 
     ######### Parsl
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
@@ -284,16 +267,14 @@ if __name__ == "__main__":
     #########
 
     decentral_app = DecentrallearnApp(
-        clients=clients,
         rounds=args.rounds,
-        dataset=data,
-        num_labels=num_labels,
+        dataset=args.dataset,
         batch_size=args.batch_size,
         epochs=args.epochs,
         lr=args.lr,
         data_dir=args.data_dir,
-        topology=topology,
-        device=device,
+        topology_path=args.topology_file,
+        # device=device,
         download=args.download,
         train=args.no_train,
         test=args.test,
@@ -301,13 +282,12 @@ if __name__ == "__main__":
         sample_alpha=args.sample_alpha,
         participation=args.participation,
         seed=args.seed,
-        run_dir=run_dir,
+        log_dir=args.out_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
-        checkpoint_every=args.checkpoint_every,
     )
     # client_results = decentral_app.run()
-    client_results, train_result_futures, round_states = decentral_app.run()
+    client_results, train_result_futures, round_states, run_dir = decentral_app.run()
 
     ######### Process and Save training results
     process_futures_and_ckpt(
@@ -317,27 +297,6 @@ if __name__ == "__main__":
         args.rounds,
         run_dir,
     )
-    """
-    resolved_futures = [i.result() for i in as_completed(train_result_futures)]
-    [client_results.extend(i[0]) for i in resolved_futures]
-    ckpt_clients = []
-    for client_idx, client_future in round_states[args.rounds].items():
-        result_object = client_future["agg"]
-        # This is how we handle clients that are not returning appfutures (due to not being selected)
-        if isinstance(result_object[1], DecentralClient):
-            client = client_future["agg"][1]
-        else:
-            client = client_future["agg"].result()[1]
-        ckpt_clients.append(client)
-    # NOTE (MS): we only train until N-1 round so name ckpt accordingly
-    checkpoint_path = f"{run_dir}/{args.rounds-1}_ckpt.pth"
-    save_checkpoint(args.rounds - 1, ckpt_clients, client_results, checkpoint_path)
-
-    client_df = pd.DataFrame(client_results)
-    client_df.to_csv(f"{run_dir}/client_stats.csv")
-    print(client_df)
-    #########
-    """
 
     parsl.dfk().cleanup()
     decentral_app.close()

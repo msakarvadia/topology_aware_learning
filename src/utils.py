@@ -50,6 +50,11 @@ def process_futures_and_ckpt(
     run_dir: pathlib.Path,
 ) -> None:
 
+    # NOTE(MS): need to handle the case where rounds < ckpted rounds
+    # aka user requested a shorter experiment than what exists
+    if rounds < max(round_states.keys()):
+        return
+
     ######### Process and Save training results
     resolved_futures = [i.result() for i in as_completed(train_result_futures)]
     [client_results.extend(i[0]) for i in resolved_futures]

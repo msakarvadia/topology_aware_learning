@@ -52,7 +52,7 @@ def process_futures_and_ckpt(
 
     # NOTE(MS): need to handle the case where rounds < ckpted rounds
     # aka user requested a shorter experiment than what exists
-    if rounds <= max(round_states.keys()):
+    if rounds < max(round_states.keys()):
         return
 
     ######### Process and Save training results

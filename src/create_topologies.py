@@ -50,28 +50,18 @@ for u, v, w in G.edges(data=True):
 
 
 topology = nx.to_numpy_array(G)
-np.savetxt("topology/topo_5.txt", topology, fmt="%1.3f")
+np.savetxt("topology/topo_5.txt", topology, fmt="%d")
 print(topology)
 
 G = nx.complete_graph(3)
 topology = nx.to_numpy_array(G)
-np.savetxt("topology/topo_6.txt", topology, fmt="%1.3f")
+np.savetxt("topology/topo_6.txt", topology, fmt="%d")
 
 G = nx.complete_graph(10)
 topology = nx.to_numpy_array(G)
-np.savetxt("topology/topo_7.txt", topology, fmt="%1.3f")
+np.savetxt("topology/topo_7.txt", topology, fmt="%d")
 
-# make graph with single node
-topology = np.array(
-    [
-        [
-            0,
-            1,
-        ],
-        [
-            1,
-            0,
-        ],
-    ]
-)
-np.savetxt("topology/topo_8.txt", topology, fmt="%d")
+degCent = nx.degree_centrality(G)
+print(f"{degCent=}")
+betCent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
+print(f"{betCent=}")

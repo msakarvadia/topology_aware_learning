@@ -13,6 +13,8 @@ import os
 import json
 
 from src.decentralized_client import create_clients
+
+# from src.decentralized_client import create_centrality_dict
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
@@ -195,6 +197,8 @@ class DecentrallearnApp:
             self.prox_coeff,
             self.run_dir,
         )
+
+        # self.centrality_dict = create_centrality_dict(self.topology)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []

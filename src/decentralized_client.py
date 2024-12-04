@@ -14,6 +14,7 @@ from pydantic import ConfigDict
 from pydantic import Field
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
+import networkx as nx
 
 from src.modules import create_model
 from src.types import DataChoices
@@ -46,6 +47,9 @@ class DecentralClient(BaseModel):
     neighbor_probs: list[float] = Field(
         description="list of this clients neighbors' network connection probabilities (for modeling faulty networks)"
     )
+    centrality_dict: dict[str, dict[int, float]] = Field(
+        description="Dict to track node-wise centrality metrics"
+    )
     # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
     def get_neighbors(self) -> list[ints]:
@@ -57,6 +61,25 @@ class DecentralClient(BaseModel):
         # mask out any neighbors that don't make the inclusion threshold
         neighbor_idxs = [a for a, b in zip(neighbor_idxs, prob_idxs) if b > 0]
         return neighbor_idxs
+
+
+def create_centrality_dict(
+    topology: np.array,  # list[list[int]],
+) -> dict[str, dict[int, float]]:
+    print("Creating centrality dict")
+    # convert np array to graph
+    G = nx.from_numpy_array(topology)
+
+    centrality_dict = {}
+    for centrality_type in ["degree", "betweenness"]:
+        if centrality_type == "degree":
+            cent = nx.degree_centrality(G)
+        if centrality_type == "betweenness":
+            cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
+        centrality_dict[centrality_type] = cent
+
+    # This function returns a dict of different types of centrality dicts
+    return centrality_dict
 
 
 def create_clients(
@@ -94,15 +117,7 @@ def create_clients(
     """
     client_ids = list(range(num_clients))
 
-    # if train:
     client_indices: dict[int, list[int]] = {idx: [] for idx in client_ids}
-
-    # alpha = [sample_alpha] * num_clients
-    # client_popularity = rng.dirichlet(alpha)
-
-    # for data_idx, _ in enumerate(train_data):
-    #    client_id = rng.choice(client_ids, size=1, p=client_popularity)[0]
-    #    client_indices[client_id].append(data_idx)
 
     # TODO(MS) to create balanced local train and test sets
     # TODO(MS): pass in train_test_valid_split
@@ -139,6 +154,7 @@ def create_clients(
         valid_subsets = {idx: None for idx in client_ids}
     """
 
+    centrality_dict = create_centrality_dict(topology)
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
@@ -156,6 +172,7 @@ def create_clients(
             neighbors=neighbors,
             neighbor_probs=probs,
             prox_coeff=prox_coeff,
+            centrality_dict=centrality_dict,
         )
         clients.append(client)
 
@@ -181,9 +198,10 @@ def weighted_module_avg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
+    **kwargs: str,  # placeholder for keyword args
 ) -> tuple(list[Result], DecentralClient):
     """Compute the weighted average of models."""
-    import torch
+    # import torch
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -215,11 +233,10 @@ def unweighted_module_avg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
-    # selected_clients: list[DecentralClient],
+    **kwargs: str,  # placeholder for keyword args
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
-    import torch
-    import torch
+    # import torch
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -245,15 +262,48 @@ def unweighted_module_avg(
 
 
 @python_app(executors=["threadpool_executor"])
+def centrality_module_avg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    **kwargs: str,  # type of centrality metric
+) -> tuple(list[Result], DecentralClient):
+    """Compute the weighted average of models."""
+    # import torch
+
+    if seed is not None:
+        torch.manual_seed(seed)
+    print("weighted aggregate round")
+    data_lens = [len(client_future[1].train_data) for client_future in neighbor_futures]
+    weights = [x / sum(data_lens) for x in data_lens]
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for i in range(len(neighbor_futures)):
+            client = neighbor_futures[i]
+            model = client[1].model
+            model.to("cpu")
+            w = weights[i]
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    client_future[1].model.load_state_dict(avg_weights)
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
 def scale_agg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
-    # selected_clients: list[DecentralClient],
+    **kwargs: str,  # placeholder for keyword args
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
-    import torch
-    import torch
+    # import torch
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -285,7 +335,7 @@ def test_agg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
-    # selected_clients: list[DecentralClient],
+    **kwargs: str,  # placeholder for keyword args
 ) -> tuple(list[Result], DecentralClient):
     """Compute the unweighted average of models."""
 

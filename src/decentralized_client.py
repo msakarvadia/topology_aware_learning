@@ -270,12 +270,22 @@ def centrality_module_avg(
 ) -> tuple(list[Result], DecentralClient):
     """Compute the weighted average of models."""
     # import torch
-
     if seed is not None:
         torch.manual_seed(seed)
-    print("weighted aggregate round")
-    data_lens = [len(client_future[1].train_data) for client_future in neighbor_futures]
-    weights = [x / sum(data_lens) for x in data_lens]
+
+    # Grab centrality dict, centrality metric
+    centrality_dict = kwargs["centrality_dict"]
+    centrality_metric = kwargs["centrality_metric"]
+    print(f"{centrality_metric} aggregate round")
+
+    # get weights
+    weights = []
+    for n in neighbor_futures:
+        idx = n[1].idx
+        weights.append(centrality_dict[centrality_metric][idx])
+
+    # normalize weights
+    weights = [i / sum(weights) for i in weights]
 
     with torch.no_grad():
         avg_weights = OrderedDict()

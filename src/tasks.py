@@ -3,6 +3,11 @@ from __future__ import annotations
 import sys
 from torch import nn
 from torch.utils.data import Dataset
+from datetime import datetime
+from sklearn.metrics import classification_report
+import torch
+from torch.utils.data import DataLoader
+from torch.nn import functional as F  # noqa: N812
 
 # TODO (MS): update all of these clients to decentralized clients
 from src.decentralized_client import DecentralClient
@@ -36,10 +41,10 @@ def no_local_train(
     Returns:
         List of results that record the training history.
     """
-    from datetime import datetime
-    import torch
-    from torch.utils.data import DataLoader
-    from torch.nn import functional as F  # noqa: N812
+    # from datetime import datetime
+    # import torch
+    # from torch.utils.data import DataLoader
+    # from torch.nn import functional as F  # noqa: N812
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -126,10 +131,10 @@ def local_train(
     Returns:
         List of results that record the training history.
     """
-    from datetime import datetime
-    import torch
-    from torch.utils.data import DataLoader
-    from torch.nn import functional as F  # noqa: N812
+    # from datetime import datetime
+    # import torch
+    # from torch.utils.data import DataLoader
+    # from torch.nn import functional as F  # noqa: N812
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -211,11 +216,11 @@ def test_model(
     seed: int,
 ) -> Result:
     """Evaluate a model."""
-    from datetime import datetime
-    from sklearn.metrics import classification_report
-    import torch
-    from torch.utils.data import DataLoader
-    from torch.nn import functional as F  # noqa: N812
+    # from datetime import datetime
+    # from sklearn.metrics import classification_report
+    # import torch
+    # from torch.utils.data import DataLoader
+    # from torch.nn import functional as F  # noqa: N812
 
     if seed is not None:
         torch.manual_seed(seed)

@@ -13,8 +13,8 @@ import os
 import json
 
 from src.decentralized_client import create_clients
-
-# from src.decentralized_client import create_centrality_dict
+from src.decentralized_client import create_centrality_dict
+from src.decentralized_client import centrality_module_avg
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
@@ -155,6 +155,13 @@ class DecentrallearnApp:
         )
 
         self.aggregation_strategy = aggregation_strategy
+        self.centrality_metric = None
+        if self.aggregation_strategy == "betCent":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "degCent":
+            self.centrality_metric = "degree"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
@@ -198,7 +205,7 @@ class DecentrallearnApp:
             self.run_dir,
         )
 
-        # self.centrality_dict = create_centrality_dict(self.topology)
+        self.centrality_dict = create_centrality_dict(self.topology)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []
@@ -359,7 +366,13 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
-            future = self.aggregation_function(agg_client, self.seed, *agg_neighbors)
+            future = self.aggregation_function(
+                agg_client,
+                self.seed,
+                *agg_neighbors,
+                centrality_metric=self.centrality_metric,
+                centrality_dict=self.centrality_dict,
+            )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})
 

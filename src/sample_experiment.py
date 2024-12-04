@@ -112,7 +112,8 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
-            available_accelerators=["0", "1", "2", "3", "4", "5", "6", "7"],
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3", "4", "5", "6", "7"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -124,6 +125,7 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             # if this is set, it will override other settings for max_workers if set
+            # available_accelerators=4,
             available_accelerators=["0", "1", "2", "3"],
             address=address_by_interface("bond0"),
             cpu_affinity="block-reverse",

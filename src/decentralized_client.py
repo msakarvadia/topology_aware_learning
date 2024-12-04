@@ -47,9 +47,11 @@ class DecentralClient(BaseModel):
     neighbor_probs: list[float] = Field(
         description="list of this clients neighbors' network connection probabilities (for modeling faulty networks)"
     )
-    centrality_dict: dict[str, dict[int, float]] = Field(
-        description="Dict to track node-wise centrality metrics"
-    )
+    # NOTE(MS): currenlty we maintain a glocal view of the centrlaity metrics in the main app,
+    # NOTE (MS): maybe in the future it may make sense for each node to have a local view of the topology centrality measures
+    # centrality_dict: dict[str, dict[int, float]] = Field(
+    #    description="Dict to track node-wise centrality metrics"
+    # )
     # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
     def get_neighbors(self) -> list[ints]:
@@ -154,7 +156,7 @@ def create_clients(
         valid_subsets = {idx: None for idx in client_ids}
     """
 
-    centrality_dict = create_centrality_dict(topology)
+    # centrality_dict = create_centrality_dict(topology)
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
@@ -172,7 +174,7 @@ def create_clients(
             neighbors=neighbors,
             neighbor_probs=probs,
             prox_coeff=prox_coeff,
-            centrality_dict=centrality_dict,
+            # centrality_dict=centrality_dict,
         )
         clients.append(client)
 

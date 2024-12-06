@@ -137,6 +137,8 @@ if __name__ == "__main__":
             "scale_agg",
             "degCent",
             "betCent",
+            "cluster",
+            "invCluster",
         ],
         help="Type of aggregation stretegy used to among neighboring nodes.",
     )

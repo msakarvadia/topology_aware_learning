@@ -73,11 +73,17 @@ def create_centrality_dict(
     G = nx.from_numpy_array(topology)
 
     centrality_dict = {}
-    for centrality_type in ["degree", "betweenness"]:
+    for centrality_type in ["degree", "betweenness", "cluster"]:
         if centrality_type == "degree":
             cent = nx.degree_centrality(G)
         if centrality_type == "betweenness":
             cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
+        if centrality_type == "cluster":
+            cent = nx.degree_centrality(G)
+        if centrality_type == "invCluster":
+            cent = nx.degree_centrality(G)
+            for k, v in cent:
+                cent[k] = 1 / v
         centrality_dict[centrality_type] = cent
 
     # This function returns a dict of different types of centrality dicts

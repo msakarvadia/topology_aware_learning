@@ -156,6 +156,12 @@ class DecentrallearnApp:
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
+        if self.aggregation_strategy == "cluster":
+            self.centrality_metric = "cluster"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "invCluster":
+            self.centrality_metric = "cluster"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg

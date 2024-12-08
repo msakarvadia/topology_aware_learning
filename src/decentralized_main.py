@@ -5,6 +5,7 @@ import pathlib
 import os
 import argparse
 import sys
+import time
 
 import numpy as np
 import torch
@@ -278,6 +279,7 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
+    start = time.time()
     decentral_app = DecentrallearnApp(
         rounds=args.rounds,
         dataset=args.dataset,
@@ -309,6 +311,8 @@ if __name__ == "__main__":
         args.rounds,
         run_dir,
     )
+    end = time.time()
+    print("Total time: ", end - start)
 
     parsl.dfk().cleanup()
     decentral_app.close()

@@ -113,7 +113,6 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
-            # available_accelerators=["0", "1", "2", "3", "4", "5", "6", "7"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -124,11 +123,7 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
-            # if this is set, it will override other settings for max_workers if set
-            # available_accelerators=4,
-            available_accelerators=["0", "1", "2", "3"],
-            address=address_by_interface("bond0"),
-            cpu_affinity="block-reverse",
+            available_accelerators=4,
             prefetch_capacity=0,
             provider=pbs_provider,
         )
@@ -150,7 +145,15 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             # begin experiment
             app_result_tuples = []
-            for topo in ["topology/topo_1.txt", "topology/topo_2.txt"]:
+            for topo in [
+                "topology/topo_1.txt",
+                "topology/topo_2.txt",
+                "topology/topo_3.txt",
+                "topology/topo_4.txt",
+                # "topology/topo_5.txt", #NOTE(MS): has floating nodes causes error during aggregation
+                "topology/topo_6.txt",
+                "topology/topo_7.txt",
+            ]:
                 decentral_app = DecentrallearnApp(rounds=i, topology_path=topo)
                 client_results, train_result_futures, round_states, run_dir = (
                     decentral_app.run()

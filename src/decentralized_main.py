@@ -260,6 +260,18 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
+            prefetch_capacity=0,
+            provider=pbs_provider,
+        )
+        """
+        executor = HighThroughputExecutor(
+            label="decentral_train",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=4,
             # if this is set, it will override other settings for max_workers if set
             available_accelerators=4,
             # available_accelerators=["0", "1", "2", "3"],
@@ -268,6 +280,7 @@ if __name__ == "__main__":
             prefetch_capacity=0,
             provider=pbs_provider,
         )
+        """
 
     config = Config(
         executors=[executor, threadpool_executor],

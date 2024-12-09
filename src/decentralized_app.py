@@ -339,6 +339,8 @@ class DecentrallearnApp:
             fed_prox_neighbors = []
             for i in neighbor_idxs:
                 fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
+
+            print(f"{client.idx=}, {fed_prox_neighbors=}")
             future = job(
                 train_input,
                 round_idx,
@@ -358,15 +360,22 @@ class DecentrallearnApp:
 
         for client in self.clients:
             agg_client = self.round_states[round_idx + 1][client.idx]["train"]
+
             # only use clients for round if they are selected
             if client.idx not in selected_client_idxs:
                 self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
+                # pass in client futures even if they are not being aggregated
+                # NOTE(MS): not sure if it makes sense to append futures in the event of a dropped client for a specific round?
+                futures.append(agg_client)
                 continue
 
             neighbor_idxs = client.get_neighbors()
             if len(neighbor_idxs) == 0:
                 self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
+                # pass in client futures even if they are not being aggregated
+                futures.append(agg_client)
                 continue
+
             # need to combine neighbors w/ client and pass to aggregate function
             agg_neighbors = []
             neighbor_idxs.append(client.idx)

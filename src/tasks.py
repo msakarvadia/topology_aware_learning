@@ -24,7 +24,7 @@ def no_local_train(
     batch_size: int,
     lr: float,
     prox_coeff: float,
-    device: torch.device,
+    # device: torch.device,
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
@@ -45,6 +45,9 @@ def no_local_train(
     # import torch
     # from torch.utils.data import DataLoader
     # from torch.nn import functional as F  # noqa: N812
+
+    # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if seed is not None:
         torch.manual_seed(seed)

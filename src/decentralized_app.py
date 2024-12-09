@@ -177,7 +177,8 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # NOTE (MS): Try assigning this in the job itself.
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
@@ -345,7 +346,7 @@ class DecentrallearnApp:
                 self.batch_size,
                 self.lr,
                 self.prox_coeff,
-                self.device,
+                # self.device,
                 self.seed,
                 *fed_prox_neighbors,
             )
@@ -364,6 +365,7 @@ class DecentrallearnApp:
 
             neighbor_idxs = client.get_neighbors()
             if len(neighbor_idxs) == 0:
+                self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
                 continue
             # need to combine neighbors w/ client and pass to aggregate function
             agg_neighbors = []

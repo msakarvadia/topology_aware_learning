@@ -150,7 +150,7 @@ if __name__ == "__main__":
                 "topology/topo_2.txt",
                 "topology/topo_3.txt",
                 "topology/topo_4.txt",
-                # "topology/topo_5.txt", #NOTE(MS): has floating nodes causes error during aggregation
+                "topology/topo_5.txt",  # NOTE(MS): has floating nodes
                 "topology/topo_6.txt",
                 "topology/topo_7.txt",
             ]:

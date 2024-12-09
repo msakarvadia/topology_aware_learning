@@ -87,7 +87,7 @@ def no_local_train(
             client.global_test_data,
             round_idx,
             batch_size,
-            device,
+            # device,
             seed,
         )
 
@@ -117,7 +117,7 @@ def local_train(
     batch_size: int,
     lr: float,
     prox_coeff: float,
-    device: torch.device,
+    # device: torch.device,
     seed: int,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
@@ -139,7 +139,11 @@ def local_train(
     # from torch.utils.data import DataLoader
     # from torch.nn import functional as F  # noqa: N812
 
+    # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     if seed is not None:
+        print(f"{seed=}")
         torch.manual_seed(seed)
 
     client = future[1]
@@ -188,7 +192,7 @@ def local_train(
             client.global_test_data,
             round_idx,
             batch_size,
-            device,
+            # device,
             seed,
         )
 
@@ -215,7 +219,7 @@ def test_model(
     data: Dataset,
     round_idx: int,
     batch_size: int,
-    device: torch.device,
+    # device: torch.device,
     seed: int,
 ) -> Result:
     """Evaluate a model."""
@@ -224,6 +228,9 @@ def test_model(
     # import torch
     # from torch.utils.data import DataLoader
     # from torch.nn import functional as F  # noqa: N812
+
+    # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     if seed is not None:
         torch.manual_seed(seed)

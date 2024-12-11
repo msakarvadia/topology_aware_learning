@@ -207,6 +207,10 @@ def local_train(
                 seed,
             )
 
+            global_test_result = global_test_result | {
+                "backdoor_acc": global_backdoor_test_result["test_acc"],
+                "backdoor_loss": global_backdoor_test_result["test_loss"],
+            }
         epoch_results.append(
             {
                 "time": datetime.now(),

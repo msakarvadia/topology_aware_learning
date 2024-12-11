@@ -5,6 +5,7 @@ import pathlib
 import os
 import argparse
 import sys
+import time
 
 import numpy as np
 import torch
@@ -61,6 +62,13 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="seed for reproducability",
+    )
+    parser.add_argument(
+        "--train_test_val",
+        type=float,
+        default=None,
+        nargs="+",
+        help="Examples: '0.7, 0.2, 0.1' for train test val split, or '0.7, 0.3' for just trian test split",
     )
     parser.add_argument(
         "--lr",
@@ -130,7 +138,16 @@ if __name__ == "__main__":
         "--aggregation_strategy",
         type=str,
         default="unweighted",
-        choices=["unweighted", "weighted", "test_agg", "scale_agg"],
+        choices=[
+            "unweighted",
+            "weighted",
+            "test_agg",
+            "scale_agg",
+            "degCent",
+            "betCent",
+            "cluster",
+            "invCluster",
+        ],
         help="Type of aggregation stretegy used to among neighboring nodes.",
     )
     parser.add_argument(
@@ -238,6 +255,8 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -248,13 +267,27 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
+            prefetch_capacity=0,
+            provider=pbs_provider,
+        )
+        """
+        executor = HighThroughputExecutor(
+            label="decentral_train",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=4,
             # if this is set, it will override other settings for max_workers if set
-            available_accelerators=["1", "2", "3", "4"],
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             address=address_by_interface("bond0"),
             cpu_affinity="block-reverse",
             prefetch_capacity=0,
             provider=pbs_provider,
         )
+        """
 
     config = Config(
         executors=[executor, threadpool_executor],
@@ -266,6 +299,7 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
+    start = time.time()
     decentral_app = DecentrallearnApp(
         rounds=args.rounds,
         dataset=args.dataset,
@@ -285,6 +319,9 @@ if __name__ == "__main__":
         log_dir=args.out_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
+        train_test_val=(
+            tuple(args.train_test_val) if args.train_test_val != None else None
+        ),
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()
@@ -297,6 +334,8 @@ if __name__ == "__main__":
         args.rounds,
         run_dir,
     )
+    end = time.time()
+    print("Total time: ", end - start)
 
     parsl.dfk().cleanup()
     decentral_app.close()

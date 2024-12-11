@@ -13,6 +13,8 @@ import os
 import json
 
 from src.decentralized_client import create_clients
+from src.decentralized_client import create_centrality_dict
+from src.decentralized_client import centrality_module_avg
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
@@ -93,6 +95,7 @@ class DecentrallearnApp:
         # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0.1,
+        train_test_val: tuple[int] = None,
     ) -> None:
 
         # make the outdir
@@ -131,6 +134,8 @@ class DecentrallearnApp:
 
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
+        self.train_test_val = train_test_val
+        print(f"{train_test_val=}")
         if self.seed is not None:
             torch.manual_seed(seed)
 
@@ -153,6 +158,19 @@ class DecentrallearnApp:
         )
 
         self.aggregation_strategy = aggregation_strategy
+        self.centrality_metric = None
+        if self.aggregation_strategy == "cluster":
+            self.centrality_metric = "cluster"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "invCluster":
+            self.centrality_metric = "cluster"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "betCent":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "degCent":
+            self.centrality_metric = "degree"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
@@ -162,7 +180,8 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        # NOTE (MS): Try assigning this in the job itself.
+        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
@@ -194,7 +213,10 @@ class DecentrallearnApp:
             self.topology,
             self.prox_coeff,
             self.run_dir,
+            self.train_test_val,
         )
+
+        self.centrality_dict = create_centrality_dict(self.topology)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []
@@ -321,6 +343,8 @@ class DecentrallearnApp:
             fed_prox_neighbors = []
             for i in neighbor_idxs:
                 fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
+
+            print(f"{client.idx=}, {fed_prox_neighbors=}")
             future = job(
                 train_input,
                 round_idx,
@@ -328,7 +352,7 @@ class DecentrallearnApp:
                 self.batch_size,
                 self.lr,
                 self.prox_coeff,
-                self.device,
+                # self.device,
                 self.seed,
                 *fed_prox_neighbors,
             )
@@ -340,14 +364,22 @@ class DecentrallearnApp:
 
         for client in self.clients:
             agg_client = self.round_states[round_idx + 1][client.idx]["train"]
+
             # only use clients for round if they are selected
             if client.idx not in selected_client_idxs:
                 self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
+                # pass in client futures even if they are not being aggregated
+                # NOTE(MS): not sure if it makes sense to append futures in the event of a dropped client for a specific round?
+                futures.append(agg_client)
                 continue
 
             neighbor_idxs = client.get_neighbors()
             if len(neighbor_idxs) == 0:
+                self.round_states[round_idx + 1][client.idx].update({"agg": agg_client})
+                # pass in client futures even if they are not being aggregated
+                futures.append(agg_client)
                 continue
+
             # need to combine neighbors w/ client and pass to aggregate function
             agg_neighbors = []
             neighbor_idxs.append(client.idx)
@@ -355,7 +387,13 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
-            future = self.aggregation_function(agg_client, self.seed, *agg_neighbors)
+            future = self.aggregation_function(
+                agg_client,
+                self.seed,
+                *agg_neighbors,
+                centrality_metric=self.centrality_metric,
+                centrality_dict=self.centrality_dict,
+            )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})
 

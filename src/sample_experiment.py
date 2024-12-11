@@ -5,6 +5,7 @@ import pathlib
 import os
 import argparse
 import sys
+import time
 
 import numpy as np
 import torch
@@ -33,15 +34,21 @@ if __name__ == "__main__":
     # set up arg parser
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--num_nodes",
+        type=int,
+        default=1,
+        help="# of nodes per job",
+    )
+    parser.add_argument(
         "--checkpoint_every",
         type=int,
-        default=2,
+        default=5,
         help="# of rounds to wait between checkpoints (must be a factor of rounds)",
     )
     parser.add_argument(
         "--rounds",
         type=int,
-        default=5,
+        default=10,
         help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
@@ -69,11 +76,11 @@ if __name__ == "__main__":
         "account": "argonne_tpc",
         "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
         "walltime": "00:30:00",
-        "nodes_per_block": 1,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
+        "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
     }
     local_provider = LocalProvider(
         # 1 debug node
-        nodes_per_block=1,
+        nodes_per_block=user_opts["nodes_per_block"],
         init_blocks=1,
         min_blocks=0,
         max_blocks=1,  # Can increase more to have more parallel jobs
@@ -105,6 +112,7 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
+            available_accelerators=4,
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -115,10 +123,7 @@ if __name__ == "__main__":
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=4,
-            # if this is set, it will override other settings for max_workers if set
-            available_accelerators=["1", "2", "3", "4"],
-            address=address_by_interface("bond0"),
-            cpu_affinity="block-reverse",
+            available_accelerators=4,
             prefetch_capacity=0,
             provider=pbs_provider,
         )
@@ -133,13 +138,22 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
+    start = time.time()
     for i in range(1, args.rounds + 1):
         # only submit job if round number is a multiple of checkpoint every
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             # begin experiment
             app_result_tuples = []
-            for topo in ["topology/topo_1.txt", "topology/topo_2.txt"]:
+            for topo in [
+                "topology/topo_1.txt",
+                "topology/topo_2.txt",
+                "topology/topo_3.txt",
+                "topology/topo_4.txt",
+                "topology/topo_5.txt",  # NOTE(MS): has floating nodes
+                "topology/topo_6.txt",
+                "topology/topo_7.txt",
+            ]:
                 decentral_app = DecentrallearnApp(rounds=i, topology_path=topo)
                 client_results, train_result_futures, round_states, run_dir = (
                     decentral_app.run()
@@ -152,5 +166,7 @@ if __name__ == "__main__":
             for result_tuple in app_result_tuples:
                 process_futures_and_ckpt(*result_tuple)
 
+    end = time.time()
+    print("Total time: ", end - start)
     parsl.dfk().cleanup()
     decentral_app.close()

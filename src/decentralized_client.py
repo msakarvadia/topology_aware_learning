@@ -52,7 +52,6 @@ class DecentralClient(BaseModel):
     # centrality_dict: dict[str, dict[int, float]] = Field(
     #    description="Dict to track node-wise centrality metrics"
     # )
-    # local_test_data: Dataset = Field(description="local test data that this client evaluated on.")
 
     def get_neighbors(self) -> list[ints]:
         neighbor_idxs = self.neighbors
@@ -135,8 +134,8 @@ def create_clients(
         num_labels=num_labels,
         label_alpha=label_alpha,
         sample_alpha=sample_alpha,
-        train_test_valid_split=None,
-        # train_test_valid_split=(0.7, 0.2, 0.1),
+        # train_test_valid_split=None,
+        train_test_valid_split=(0.7, 0.2, 0.1),
         ensure_at_least_one_sample=True,
         rng=rng,
         allow_overlapping_samples=False,

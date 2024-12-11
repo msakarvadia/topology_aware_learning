@@ -24,7 +24,7 @@ FloatTriple: t.TypeAlias = tuple[float, float, float]
 def proportion_split(
     seq: t.Sequence[T],
     proportion: t.Sequence[float],
-    rng: np.random.Generator | int | None = None,
+    rng_seed: int | None = None,
     labels: t.Sequence[T] = None,
 ) -> tuple[t.Sequence[T], ...]:
     """
@@ -76,7 +76,7 @@ def proportion_split(
     if test_size < num_classes:
         test_size = num_classes
     train, test, train_labels, test_labels = train_test_split(
-        seq, labels, test_size=test_size, random_state=rng, stratify=labels
+        seq, labels, test_size=test_size, random_state=rng_seed, stratify=labels
     )
     if len(proportion) == 2:
         return (train, test)
@@ -87,7 +87,7 @@ def proportion_split(
         if test_size < num_classes:
             test_size = num_classes
         train, val = train_test_split(
-            train, test_size=test_size, random_state=rng, stratify=train_labels
+            train, test_size=test_size, random_state=rng_seed, stratify=train_labels
         )
         return (train, test, val)
 
@@ -279,6 +279,7 @@ def federated_split(
                 # print(f"class={i}, count={indices_labels[worker].count(i)}")
 
     # print(f"{len(indices[0])=}, {len(indices_labels[0])=}")
+    rng_seed = generator.integers(low=0, high=4294967295, size=1).item()
     if train_test_valid_split is None:
         train_indices = indices
         test_indices = None
@@ -289,7 +290,7 @@ def federated_split(
         valid_indices = None
         for w_idx, w_indices in indices.items():
             train_split, test_split = proportion_split(
-                w_indices, train_test_valid_split, rng, indices_labels[w_idx]
+                w_indices, train_test_valid_split, rng_seed, indices_labels[w_idx]
             )
             train_indices[w_idx] = train_split
             test_indices[w_idx] = test_split
@@ -303,7 +304,7 @@ def federated_split(
             train_split, test_split, valid_split = proportion_split(
                 w_indices,
                 train_test_valid_split,
-                rng,
+                rng_seed,
                 indices_labels[w_idx],
                 # w_indices, train_test_valid_split
             )

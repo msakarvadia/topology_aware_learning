@@ -177,11 +177,14 @@ def federated_split(
         samples_per_worker[worker] = samples
 
     indices: dict[int, list[int]] = defaultdict(list)  # indices on each worker
+    indices_labels: dict[int, list[int]] = defaultdict(list)  # labels on each worker
     worker_samples: dict[int, int] = defaultdict(int)  # num. samples on each worker
 
+    labels = []
     for idx, batch in enumerate(DataLoader(data, batch_size=1)):
         _, label = batch
         label = label.item()
+        labels.append(label)
 
         probs, temp_workers = [], []
         for w in range(num_workers):
@@ -204,6 +207,7 @@ def federated_split(
         if len(temp_workers) > 0:
             chosen_worker = generator.choice(temp_workers, p=probs_norm)
             indices[chosen_worker].append(idx)
+            indices_labels[chosen_worker].append(labels[idx])
             worker_samples[chosen_worker] += 1
 
     if ensure_at_least_one_sample and train_test_valid_split is not None:
@@ -213,11 +217,14 @@ def federated_split(
                 worker_with_most_samples = max(worker_samples, key=worker_samples.get)
                 if worker_samples[worker] == 0 + i:
                     index = indices[worker_with_most_samples].pop()
+                    label = indices_labels[worker_with_most_samples].pop()
                     worker_samples[worker_with_most_samples] -= 1
 
                     indices[worker].append(index)
+                    indices_labels[worker].append(label)
                     worker_samples[worker] += 1
 
+    print(f"{len(indices[0])=}, {len(indices_labels[0])=}")
     if train_test_valid_split is None:
         train_indices = indices
         test_indices = None
@@ -258,7 +265,6 @@ def federated_split(
     return (train_indices, test_indices, valid_indices)
 
 
-"""
 if __name__ == "__main__":
 
     root = pathlib.Path("/eagle/projects/argonne_tpc/mansisak/distributed_ml/data")
@@ -269,7 +275,7 @@ if __name__ == "__main__":
         train=True,
         download=True,
     )
-    #print("Loaded data")
+    print("Loaded data")
     federated_split(
         num_workers=10,
         data=data,
@@ -281,4 +287,3 @@ if __name__ == "__main__":
         rng=1,
         allow_overlapping_samples=False,
     )
-"""

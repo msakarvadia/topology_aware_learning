@@ -43,6 +43,9 @@ class DecentralClient(BaseModel):
     global_test_data: Dataset = Field(
         description="global set of test data that every client and global model is evaluated on."
     )
+    global_backdoor_test_data: Optional[Subset] = Field(  # noqa: UP007
+        description="Subset of global test data that has been backdoored (for testing ASR).",
+    )
     neighbors: list[int] = Field(description="list of this clients neighbors")
     neighbor_probs: list[float] = Field(
         description="list of this clients neighbors' network connection probabilities (for modeling faulty networks)"
@@ -103,6 +106,7 @@ def create_clients(
     prox_coeff: float,
     run_dir: pathlib.Path,
     train_test_val_split: tuple[float],
+    backdoor_test_data: Dataset,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -186,6 +190,7 @@ def create_clients(
             neighbors=neighbors,
             neighbor_probs=probs,
             prox_coeff=prox_coeff,
+            global_backdoor_test_data=backdoor_test_data,
             # centrality_dict=centrality_dict,
         )
         clients.append(client)

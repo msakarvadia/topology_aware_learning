@@ -220,6 +220,7 @@ class DecentrallearnApp:
             self.prox_coeff,
             self.run_dir,
             self.train_test_val,
+            self.backdoor_test_data,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology)

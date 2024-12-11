@@ -26,6 +26,7 @@ def no_local_train(
     prox_coeff: float,
     # device: torch.device,
     seed: int,
+    backdoor: bool = False,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -119,6 +120,7 @@ def local_train(
     prox_coeff: float,
     # device: torch.device,
     seed: int,
+    backdoor: bool = False,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -192,9 +194,18 @@ def local_train(
             client.global_test_data,
             round_idx,
             batch_size,
-            # device,
             seed,
         )
+
+        if backdoor:
+            # Test client on global backdoor test set
+            global_backdoor_test_result = test_model(
+                client.model,
+                client.global_backdoor_test_data,
+                round_idx,
+                batch_size,
+                seed,
+            )
 
         epoch_results.append(
             {

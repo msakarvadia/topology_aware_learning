@@ -78,8 +78,6 @@ class DecentrallearnApp:
         self,
         data_dir: str = "../data",
         topology_path: str = "topology/topo_1.txt",
-        # data_dir: pathlib.Path = Path("../data"),
-        # topology_path: pathlib.Path = Path("topology/topo_1.txt"),
         dataset: str = "mnist",
         rounds: int = 5,
         batch_size: int = 16,
@@ -87,16 +85,16 @@ class DecentrallearnApp:
         lr: float = 1e-3,
         download: bool = False,
         train: bool = True,
-        test: bool = True,
+        # test: bool = True,
         label_alpha: float = 100,
         sample_alpha: float = 100,
         participation: float = 1.0,
         seed: int | None = 0,
         log_dir: str = "./logs",
-        # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0.1,
         train_test_val: tuple[int] = None,
+        backdoor: bool = False,
     ) -> None:
 
         # make the outdir
@@ -142,7 +140,8 @@ class DecentrallearnApp:
 
         self.global_model = create_model(self.dataset)
 
-        self.train, self.test = train, test
+        self.train = train
+        # self.train, self.test = train, test
         self.train_data, self.test_data = None, None
         root = pathlib.Path(data_dir)
         self.train_data = load_data(
@@ -158,10 +157,14 @@ class DecentrallearnApp:
             download=True,
         )
 
-        rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
-        self.test_data, self.backdoor_test_data = backdoor_data(
-            self.test_data, 0.1, rng_seed
-        )
+        self.backdoor = backdoor
+        self.backdoor_test_data = None
+        if self.backdoor:
+            print("setting backdoor data")
+            rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
+            self.test_data, self.backdoor_test_data = backdoor_data(
+                self.test_data, 0.1, rng_seed
+            )
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
@@ -361,6 +364,7 @@ class DecentrallearnApp:
                 self.prox_coeff,
                 # self.device,
                 self.seed,
+                self.backdoor,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")

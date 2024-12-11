@@ -185,10 +185,17 @@ if __name__ == "__main__":
         action="store_false",
         help="By default flag is True and local training will be run. If you set this flag, then no-op version of this application will be performed where no training is done (used for debugging purposes).",
     )
+    """
     parser.add_argument(
-        "--test",
+        "--no_test",
         action="store_false",
         help="By default flag is True and global model testing is done at end of each round. If you set this flag, then testing will not be performed.",
+    )
+    """
+    parser.add_argument(
+        "--backdoor",
+        action="store_true",
+        help="By default flag is false and no backdoor will be set. If you set this flag, backdoor training will be performed..",
     )
 
     args = parser.parse_args()
@@ -311,7 +318,7 @@ if __name__ == "__main__":
         # device=device,
         download=args.download,
         train=args.no_train,
-        test=args.test,
+        # test=args.no_test,
         label_alpha=args.label_alpha,
         sample_alpha=args.sample_alpha,
         participation=args.participation,
@@ -322,6 +329,7 @@ if __name__ == "__main__":
         train_test_val=(
             tuple(args.train_test_val) if args.train_test_val != None else None
         ),
+        backdoor=args.backdoor,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

@@ -14,11 +14,13 @@ from pydantic import ConfigDict
 from pydantic import Field
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
+from torch.utils.data import ConcatDataset
 import networkx as nx
 
 from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
+from src.data import backdoor_data
 
 from parsl.app.app import python_app
 
@@ -171,6 +173,20 @@ def create_clients(
         test_subsets = {idx: None for idx in client_ids}
         valid_subsets = {idx: None for idx in client_ids}
     """
+
+    # TODO(MS): make client ID an arg
+    selected_client = 0
+    rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
+    stratify_targets = [label for x, label in train_subsets[selected_client]]
+    clean_data, bd_data = backdoor_data(
+        train_subsets[selected_client], stratify_targets, 0.1, rng_seed
+    )
+    # combine clean + bd training data
+    concat_data = ConcatDataset([clean_data, bd_data])
+    new_indices = list(range(len(stratify_targets)))
+    # wrap new bd-ed data in Subset class
+    train_subsets[selected_client] = Subset(concat_data, new_indices)
+    print(f"backdoored client {selected_client} data")
 
     # centrality_dict = create_centrality_dict(topology)
     clients = []

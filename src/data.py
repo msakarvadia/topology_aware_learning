@@ -327,17 +327,19 @@ def federated_split(
 
 def backdoor_data(
     data: Dataset,
+    stratify_targets: list[int],  # the labels to preserve class proportion in the split
     proportion_backdoor: float = 0.1,  # proportion of data that should be backdoored
     rng_seed: int | None = None,  # TODO(MS) set rng seed
 ) -> (Dataset, Dataset):
+    print(data)
 
     indices = list(range(len(data)))
-    print(f"{len(indices)=}")
     clean_indices, backdoor_indices = train_test_split(
         indices,
         test_size=proportion_backdoor,
         random_state=rng_seed,
-        stratify=data.targets,
+        stratify=stratify_targets,
+        # stratify=data.targets,
     )
     # print(clean_data)
     clean_data = Subset(data, clean_indices)

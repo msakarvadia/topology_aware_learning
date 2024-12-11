@@ -4,6 +4,7 @@ from torch.utils.data import Dataset
 import pathlib
 import numpy as np
 import math
+from sklearn.model_selection import train_test_split
 
 from src.modules import load_data
 from src.types import DataChoices
@@ -21,7 +22,10 @@ FloatTriple: t.TypeAlias = tuple[float, float, float]
 
 
 def proportion_split(
-    seq: t.Sequence[T], proportion: t.Sequence[float]
+    seq: t.Sequence[T],
+    proportion: t.Sequence[float],
+    rng: np.random.Generator | int | None = None,
+    labels: t.Sequence[T] = None,
 ) -> tuple[t.Sequence[T], ...]:
     """
     Split a sequence into multiple sequences based on proportions.
@@ -49,6 +53,8 @@ def proportion_split(
         - `ValueError`: If the values in `proportion` argument are negative.
         - `ValueError`: If the values in `proportion` argument do not sum to 1.
     """
+    if len(proportion) > 3:
+        raise ValueError("Cannot make more than 3 splits (trian, test, val) ")
     if len(proportion) > len(seq):
         raise ValueError(
             "Number of proportions cannot be greater than the number of values in "
@@ -62,11 +68,37 @@ def proportion_split(
         print(sum(proportion))
         raise ValueError("Proportions must sum to 1.")
 
+    # Need to ensure that test_size > # of classes
+    num_classes = len(list(set(labels)))  # of classes
+
+    test_size = int(len(seq) * proportion[-1])
+    # print(f"{test_size=}")
+    if test_size < num_classes:
+        test_size = num_classes
+    train, test, train_labels, test_labels = train_test_split(
+        seq, labels, test_size=test_size, random_state=rng, stratify=labels
+    )
+    if len(proportion) == 2:
+        return (train, test)
+
+    if len(proportion) == 3:
+        # size of validation split
+        test_size = int(len(train) * (proportion[1] / (proportion[0] + proportion[1])))
+        if test_size < num_classes:
+            test_size = num_classes
+        train, val = train_test_split(
+            train, test_size=test_size, random_state=rng, stratify=train_labels
+        )
+        return (train, test, val)
+
+    """
+    if len(proportion) == 3:
     total = len(seq)
     splits = np.cumsum(np.array(proportion) * total).astype(int)
     splits = np.append(np.array([0]), splits)
     gen = (seq[splits[i - 1] : splits[i]] for i in range(1, len(splits)))  # noqa
     return tuple(gen)
+    """
 
 
 def random_generator(
@@ -210,6 +242,7 @@ def federated_split(
             indices_labels[chosen_worker].append(labels[idx])
             worker_samples[chosen_worker] += 1
 
+    num_classes = len(list(set(labels)))  # of classes
     if ensure_at_least_one_sample and train_test_valid_split is not None:
         # Add one sample for each split
         for i in range(len(train_test_valid_split)):
@@ -224,7 +257,28 @@ def federated_split(
                     indices_labels[worker].append(label)
                     worker_samples[worker] += 1
 
-    print(f"{len(indices[0])=}, {len(indices_labels[0])=}")
+    # For stratifying purposes, need at least 1 instance of every label per # of splits
+    # if we have (train, test) then we need 2 instances of every label
+    # if we have (train, test, val) we need 3 instances of every label
+    if train_test_valid_split is not None:
+        min_count = len(train_test_valid_split)
+        for worker in range(num_workers):
+            worker_with_most_samples = max(worker_samples, key=worker_samples.get)
+            # print(f"{worker=}")
+            for i in range(num_classes):
+                while indices_labels[worker].count(i) < min_count:
+                    label_idx = indices_labels[worker_with_most_samples].index(i)
+
+                    index = indices[worker_with_most_samples].pop(label_idx)
+                    label = indices_labels[worker_with_most_samples].pop(label_idx)
+                    worker_samples[worker_with_most_samples] -= 1
+
+                    indices[worker].append(index)
+                    indices_labels[worker].append(label)
+                    worker_samples[worker] += 1
+                # print(f"class={i}, count={indices_labels[worker].count(i)}")
+
+    # print(f"{len(indices[0])=}, {len(indices_labels[0])=}")
     if train_test_valid_split is None:
         train_indices = indices
         test_indices = None
@@ -235,7 +289,7 @@ def federated_split(
         valid_indices = None
         for w_idx, w_indices in indices.items():
             train_split, test_split = proportion_split(
-                w_indices, train_test_valid_split
+                w_indices, train_test_valid_split, rng, indices_labels[w_idx]
             )
             train_indices[w_idx] = train_split
             test_indices[w_idx] = test_split
@@ -247,7 +301,11 @@ def federated_split(
             # print(w_idx)
             # print(len(w_indices))
             train_split, test_split, valid_split = proportion_split(
-                w_indices, train_test_valid_split
+                w_indices,
+                train_test_valid_split,
+                rng,
+                indices_labels[w_idx],
+                # w_indices, train_test_valid_split
             )
             train_indices[w_idx] = train_split
             test_indices[w_idx] = test_split
@@ -282,7 +340,9 @@ if __name__ == "__main__":
         num_labels=10,
         label_alpha=0.1,
         sample_alpha=0.1,
-        train_test_valid_split=(0.7, 0.2, 0.1),
+        # train_test_valid_split=(0.7, 0.3),
+        # train_test_valid_split=(0.7, 0.2, 0.1),
+        train_test_valid_split=None,
         ensure_at_least_one_sample=True,
         rng=1,
         allow_overlapping_samples=False,

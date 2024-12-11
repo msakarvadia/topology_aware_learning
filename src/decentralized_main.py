@@ -64,6 +64,13 @@ if __name__ == "__main__":
         help="seed for reproducability",
     )
     parser.add_argument(
+        "--train_test_val",
+        type=float,
+        default=None,
+        nargs="+",
+        help="Examples: '0.7, 0.2, 0.1' for train test val split, or '0.7, 0.3' for just trian test split",
+    )
+    parser.add_argument(
         "--lr",
         type=float,
         default=1e-3,
@@ -312,6 +319,7 @@ if __name__ == "__main__":
         log_dir=args.out_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
+        train_test_val=tuple(args.train_test_val),
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

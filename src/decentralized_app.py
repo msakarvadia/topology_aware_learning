@@ -95,6 +95,7 @@ class DecentrallearnApp:
         # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0.1,
+        train_test_val: tuple[int] = None,
     ) -> None:
 
         # make the outdir
@@ -133,6 +134,7 @@ class DecentrallearnApp:
 
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
+        self.train_test_val = train_test_val
         if self.seed is not None:
             torch.manual_seed(seed)
 
@@ -210,6 +212,7 @@ class DecentrallearnApp:
             self.topology,
             self.prox_coeff,
             self.run_dir,
+            self.train_test_val,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology)

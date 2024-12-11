@@ -102,6 +102,7 @@ def create_clients(
     topology: np.array,  # list[list[int]],
     prox_coeff: float,
     run_dir: pathlib.Path,
+    train_test_val_split: tuple[float],
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -135,7 +136,8 @@ def create_clients(
         label_alpha=label_alpha,
         sample_alpha=sample_alpha,
         # train_test_valid_split=None,
-        train_test_valid_split=(0.7, 0.2, 0.1),
+        train_test_valid_split=train_test_val_split,
+        # train_test_valid_split=(0.7, 0.2, 0.1),
         ensure_at_least_one_sample=True,
         rng=rng,
         allow_overlapping_samples=False,

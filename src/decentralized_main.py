@@ -319,7 +319,9 @@ if __name__ == "__main__":
         log_dir=args.out_dir,
         aggregation_strategy=args.aggregation_strategy,
         prox_coeff=args.prox_coeff,
-        train_test_val=tuple(args.train_test_val),
+        train_test_val=(
+            tuple(args.train_test_val) if args.train_test_val != None else None
+        ),
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

@@ -5,6 +5,7 @@ import pathlib
 import numpy as np
 import math
 from sklearn.model_selection import train_test_split
+from torch.utils.data import Subset
 
 from src.modules import load_data
 from src.types import DataChoices
@@ -322,6 +323,28 @@ def federated_split(
     # print(valid_indices.keys())
 
     return (train_indices, test_indices, valid_indices)
+
+
+def backdoor_data(
+    data: Dataset,
+    proportion_backdoor: float = 0.1,  # proportion of data that should be backdoored
+    rng_seed: int | None = None,  # TODO(MS) set rng seed
+) -> (Dataset, Dataset):
+
+    indices = list(range(len(data)))
+    print(f"{len(indices)=}")
+    clean_indices, backdoor_indices = train_test_split(
+        indices,
+        test_size=proportion_backdoor,
+        random_state=rng_seed,
+        stratify=data.targets,
+    )
+    # print(clean_data)
+    clean_data = Subset(data, clean_indices)
+    backdoor_data = Subset(data, backdoor_indices)
+    # train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
+
+    return clean_data, backdoor_data  # TODO(MS): make this data, backdoor data
 
 
 """

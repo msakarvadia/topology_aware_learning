@@ -20,6 +20,7 @@ from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
 from src.decentralized_client import scale_agg
 from src.modules import create_model
+from src.data import backdoor_data
 from src.modules import load_data
 from src.utils import load_checkpoint
 from src.tasks import local_train
@@ -155,6 +156,11 @@ class DecentrallearnApp:
             root,
             train=False,
             download=True,
+        )
+
+        rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
+        self.test_data, self.backdoor_test_data = backdoor_data(
+            self.test_data, 0.1, rng_seed
         )
 
         self.aggregation_strategy = aggregation_strategy

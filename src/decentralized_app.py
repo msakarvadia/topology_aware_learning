@@ -135,6 +135,7 @@ class DecentrallearnApp:
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
         self.train_test_val = train_test_val
+        print(f"{train_test_val=}")
         if self.seed is not None:
             torch.manual_seed(seed)
 

@@ -324,6 +324,7 @@ def federated_split(
     return (train_indices, test_indices, valid_indices)
 
 
+"""
 if __name__ == "__main__":
 
     root = pathlib.Path("/eagle/projects/argonne_tpc/mansisak/distributed_ml/data")
@@ -348,3 +349,4 @@ if __name__ == "__main__":
         rng=1,
         allow_overlapping_samples=False,
     )
+"""

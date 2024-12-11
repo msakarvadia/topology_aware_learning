@@ -142,6 +142,7 @@ def create_clients(
         rng=rng,
         allow_overlapping_samples=False,
     )
+    print(f"{len(train_indices[0])=}")
 
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
@@ -149,10 +150,14 @@ def create_clients(
     test_subsets = {idx: None for idx in client_ids}
     valid_subsets = {idx: None for idx in client_ids}
     if test_indices is not None:
+        print(f"{len(train_indices[0])=}, {len(test_indices[0])=}")
         test_subsets = {
             idx: Subset(train_data, test_indices[idx]) for idx in client_ids
         }
     if valid_indices is not None:
+        print(
+            f"{len(train_indices[0])=}, {len(test_indices[0])=}, {len(valid_indices[0])=}"
+        )
         valid_subsets = {
             idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
         }

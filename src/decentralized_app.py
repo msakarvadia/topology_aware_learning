@@ -95,6 +95,8 @@ class DecentrallearnApp:
         prox_coeff: float = 0.1,
         train_test_val: tuple[int] = None,
         backdoor: bool = False,
+        backdoor_proportion: float = 0.1,
+        backdoor_node_idx: int = 0,
     ) -> None:
 
         # make the outdir
@@ -158,6 +160,8 @@ class DecentrallearnApp:
         )
 
         self.backdoor = backdoor
+        self.backdoor_proportion = backdoor_proportion
+        self.backdoor_node_idx = backdoor_node_idx
         self.backdoor_test_data = None
         if self.backdoor:
             print("setting backdoor data")
@@ -208,6 +212,8 @@ class DecentrallearnApp:
         self.sample_alpha = sample_alpha
 
         num_clients = self.topology.shape[0]
+        if backdoor_node_idx >= num_clients:
+            raise ValueError("Backdoor node index must be less than the # of clients.")
 
         self.clients = create_clients(
             num_clients,
@@ -224,6 +230,8 @@ class DecentrallearnApp:
             self.run_dir,
             self.train_test_val,
             self.backdoor_test_data,
+            self.backdoor_proportion,
+            self.backdoor_node_idx,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology)

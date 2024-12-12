@@ -197,6 +197,18 @@ if __name__ == "__main__":
         action="store_true",
         help="By default flag is false and no backdoor will be set. If you set this flag, backdoor training will be performed..",
     )
+    parser.add_argument(
+        "--backdoor_proportion",
+        type=float,
+        default=0.1,
+        help="Proportion of node local training data that is backdoored",
+    )
+    parser.add_argument(
+        "--backdoor_node_idx",
+        type=int,
+        default=0,
+        help="Node index in network with backdoored data",
+    )
 
     args = parser.parse_args()
 
@@ -330,6 +342,8 @@ if __name__ == "__main__":
             tuple(args.train_test_val) if args.train_test_val != None else None
         ),
         backdoor=args.backdoor,
+        backdoor_proportion=args.backdoor_proportion,
+        backdoor_node_idx=args.backdoor_node_idx,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

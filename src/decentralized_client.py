@@ -109,6 +109,8 @@ def create_clients(
     run_dir: pathlib.Path,
     train_test_val_split: tuple[float],
     backdoor_test_data: Dataset,
+    backdoor_proportion: float,
+    backdoor_node_idx: int,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -175,18 +177,20 @@ def create_clients(
     """
 
     # TODO(MS): make client ID an arg
-    selected_client = 0
     rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
-    stratify_targets = [label for x, label in train_subsets[selected_client]]
+    stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
     clean_data, bd_data = backdoor_data(
-        train_subsets[selected_client], stratify_targets, 0.1, rng_seed
+        train_subsets[backdoor_node_idx],
+        stratify_targets,
+        backdoor_proportion,
+        rng_seed,
     )
     # combine clean + bd training data
     concat_data = ConcatDataset([clean_data, bd_data])
     new_indices = list(range(len(stratify_targets)))
     # wrap new bd-ed data in Subset class
-    train_subsets[selected_client] = Subset(concat_data, new_indices)
-    print(f"backdoored client {selected_client} data")
+    train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
+    print(f"backdoored client {backdoor_node_idx} data")
 
     # centrality_dict = create_centrality_dict(topology)
     clients = []

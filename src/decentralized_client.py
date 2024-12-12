@@ -184,6 +184,8 @@ def create_clients(
         stratify_targets,
         backdoor_proportion,
         rng_seed,
+        rng,
+        num_labels,
     )
     # combine clean + bd training data
     concat_data = ConcatDataset([clean_data, bd_data])

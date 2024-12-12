@@ -167,7 +167,12 @@ class DecentrallearnApp:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
             self.test_data, self.backdoor_test_data = backdoor_data(
-                self.test_data, self.test_data.targets, 0.1, rng_seed
+                self.test_data,
+                self.test_data.targets,
+                0.1,
+                rng_seed,
+                self.rng,
+                self.num_labels,
             )
 
         self.aggregation_strategy = aggregation_strategy

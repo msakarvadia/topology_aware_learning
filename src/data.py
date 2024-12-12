@@ -6,6 +6,7 @@ import numpy as np
 import math
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Subset
+import torch
 
 from src.modules import load_data
 from src.types import DataChoices
@@ -91,15 +92,6 @@ def proportion_split(
             train, test_size=test_size, random_state=rng_seed, stratify=train_labels
         )
         return (train, test, val)
-
-    """
-    if len(proportion) == 3:
-    total = len(seq)
-    splits = np.cumsum(np.array(proportion) * total).astype(int)
-    splits = np.append(np.array([0]), splits)
-    gen = (seq[splits[i - 1] : splits[i]] for i in range(1, len(splits)))  # noqa
-    return tuple(gen)
-    """
 
 
 def random_generator(
@@ -298,16 +290,12 @@ def federated_split(
 
     elif len(train_test_valid_split) == 3:
         train_indices, test_indices, valid_indices = dict(), dict(), dict()
-        # print(len(indices))
         for w_idx, w_indices in indices.items():
-            # print(w_idx)
-            # print(len(w_indices))
             train_split, test_split, valid_split = proportion_split(
                 w_indices,
                 train_test_valid_split,
                 rng_seed,
                 indices_labels[w_idx],
-                # w_indices, train_test_valid_split
             )
             train_indices[w_idx] = train_split
             test_indices[w_idx] = test_split
@@ -316,20 +304,31 @@ def federated_split(
     else:
         raise ValueError("Invalid number of elements in `train_test_valid_split`.")
 
-    # print(len(train_indices))
-    # print(len(test_indices))
-    # print(train_indices.keys())
-    # print(test_indices.keys())
-    # print(valid_indices.keys())
-
     return (train_indices, test_indices, valid_indices)
+
+
+def trigger_image(img, label, num_labels, rng):
+    trigger_dim = 2
+
+    trigger = torch.zeros([img.shape[0], trigger_dim, trigger_dim])
+    trigger[0] = 5
+
+    y = rng.integers(low=0, high=img.shape[-2] - trigger_dim, size=1).item()
+    x = rng.integers(low=0, high=img.shape[-1] - trigger_dim, size=1).item()
+
+    new_label = (label + 1) % num_labels
+    img[:, x : x + trigger_dim, y : y + trigger_dim] = trigger
+
+    return img, new_label
 
 
 def backdoor_data(
     data: Dataset,
     stratify_targets: list[int],  # the labels to preserve class proportion in the split
     proportion_backdoor: float = 0.1,  # proportion of data that should be backdoored
-    rng_seed: int | None = None,  # TODO(MS) set rng seed
+    rng_seed: int | None = None,  # set rng seed
+    rng: np.random.Generator | int | None = None,
+    num_labels: int = 10,
 ) -> (Dataset, Dataset):
     print(data)
 
@@ -339,14 +338,22 @@ def backdoor_data(
         test_size=proportion_backdoor,
         random_state=rng_seed,
         stratify=stratify_targets,
-        # stratify=data.targets,
     )
-    # print(clean_data)
     clean_data = Subset(data, clean_indices)
     backdoor_data = Subset(data, backdoor_indices)
-    # train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
-    return clean_data, backdoor_data  # TODO(MS): make this data, backdoor data
+    backdoored_data = []
+    indices = list(range(len(backdoor_data)))
+    for idx, (img, label) in enumerate(backdoor_data):
+        img = backdoor_data[idx][0]
+        label = backdoor_data[idx][1]
+
+        img, label = trigger_image(img, label, num_labels, rng)
+        backdoored_data.append((img, label))  # label modification
+
+    backdoor_data = Subset(backdoored_data, indices)
+
+    return clean_data, backdoor_data  # make this data, backdoor data
 
 
 """

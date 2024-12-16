@@ -5,6 +5,7 @@
 #PBS -l filesystems=home:eagle
 #PBS -A superbert
 #PBS -M sakarvadia@uchicago.edu
+#PBS -N backdoor
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml 
 module use /soft/modulefiles

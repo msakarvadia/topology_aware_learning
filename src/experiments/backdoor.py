@@ -176,6 +176,7 @@ if __name__ == "__main__":
                             prox_coeff=0,
                             epochs=5,
                             backdoor_node_idx=client_idx,
+                            aggregation_strategy=aggregation_strategy,
                         )
                         client_results, train_result_futures, round_states, run_dir = (
                             decentral_app.run()

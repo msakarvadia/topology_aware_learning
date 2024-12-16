@@ -308,7 +308,7 @@ def federated_split(
 
 
 def trigger_image(img, label, num_labels, rng):
-    trigger_dim = 2
+    trigger_dim = 4
 
     trigger = torch.zeros([img.shape[0], trigger_dim, trigger_dim])
     trigger[0] = 5

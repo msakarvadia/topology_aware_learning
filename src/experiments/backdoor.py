@@ -159,12 +159,12 @@ if __name__ == "__main__":
                 # iterate through topologies
                 for topo in [
                     "../topology/topo_1.txt",
-                    # "../topology/topo_2.txt",
-                    # "../topology/topo_3.txt",
-                    # "../topology/topo_4.txt",
-                    # "../topology/topo_5.txt",
-                    # "../topology/topo_6.txt",
-                    # "../topology/topo_7.txt",
+                    "../topology/topo_2.txt",
+                    "../topology/topo_3.txt",
+                    "../topology/topo_4.txt",
+                    "../topology/topo_5.txt",
+                    "../topology/topo_6.txt",
+                    "../topology/topo_7.txt",
                 ]:
                     # if topo not in apps[aggregation_strategy]:
                     #    apps[aggregation_strategy][topo] = {}

@@ -143,26 +143,52 @@ if __name__ == "__main__":
         # only submit job if round number is a multiple of checkpoint every
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
-            # begin experiment
             app_result_tuples = []
-            for topo in [
-                "../topology/topo_1.txt",
-                # "../topology/topo_2.txt",
-                # "../topology/topo_3.txt",
-                # "../topology/topo_4.txt",
-                # "../topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                # "../topology/topo_6.txt",
-                "../topology/topo_7.txt",
+            # iterate through aggregation strategies
+            for aggregation_strategy in [
+                "unweighted",
+                "weighted",
+                "degCent",
+                "betCent",
+                "cluster",
+                "invCluster",
             ]:
-                decentral_app = DecentrallearnApp(
-                    rounds=i, topology_path=topo, backdoor=True, prox_coeff=0
-                )
-                client_results, train_result_futures, round_states, run_dir = (
-                    decentral_app.run()
-                )
-                app_result_tuples.append(
-                    (client_results, train_result_futures, round_states, i, run_dir)
-                )
+                # iterate through topologies
+                for topo in [
+                    "../topology/topo_1.txt",
+                    "../topology/topo_2.txt",
+                    "../topology/topo_3.txt",
+                    "../topology/topo_4.txt",
+                    "../topology/topo_5.txt",
+                    "../topology/topo_6.txt",
+                    "../topology/topo_7.txt",
+                ]:
+                    # iterate through different backdoor node placements
+                    topology = np.loadtxt(topo, dtype=float)
+                    num_clients = topology.shape[0]
+                    for client_idx in range(num_clients):
+
+                        # TODO (only create app once so you don't waste time making data)
+                        decentral_app = DecentrallearnApp(
+                            rounds=i,
+                            topology_path=topo,
+                            backdoor=True,
+                            prox_coeff=0,
+                            epochs=5,
+                            backdoor_node_idx=client_idx,
+                        )
+                        client_results, train_result_futures, round_states, run_dir = (
+                            decentral_app.run()
+                        )
+                        app_result_tuples.append(
+                            (
+                                client_results,
+                                train_result_futures,
+                                round_states,
+                                i,
+                                run_dir,
+                            )
+                        )
 
             ######### Process and Save training results
             for result_tuple in app_result_tuples:

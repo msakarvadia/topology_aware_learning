@@ -109,6 +109,7 @@ def create_clients(
     run_dir: pathlib.Path,
     train_test_val_split: tuple[float],
     backdoor_test_data: Dataset,
+    backdoor: bool,
     backdoor_proportion: float,
     backdoor_node_idx: int,
 ) -> list[DecentralClient]:
@@ -150,7 +151,7 @@ def create_clients(
         rng=rng,
         allow_overlapping_samples=False,
     )
-    print(f"{len(train_indices[0])=}")
+    # print(f"{len(train_indices[0])=}")
 
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
@@ -176,23 +177,23 @@ def create_clients(
         valid_subsets = {idx: None for idx in client_ids}
     """
 
-    # TODO(MS): make client ID an arg
-    rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
-    stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
-    clean_data, bd_data = backdoor_data(
-        train_subsets[backdoor_node_idx],
-        stratify_targets,
-        backdoor_proportion,
-        rng_seed,
-        rng,
-        num_labels,
-    )
-    # combine clean + bd training data
-    concat_data = ConcatDataset([clean_data, bd_data])
-    new_indices = list(range(len(stratify_targets)))
-    # wrap new bd-ed data in Subset class
-    train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
-    print(f"backdoored client {backdoor_node_idx} data")
+    if backdoor:
+        rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
+        stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
+        clean_data, bd_data = backdoor_data(
+            train_subsets[backdoor_node_idx],
+            stratify_targets,
+            backdoor_proportion,
+            rng_seed,
+            rng,
+            num_labels,
+        )
+        # combine clean + bd training data
+        concat_data = ConcatDataset([clean_data, bd_data])
+        new_indices = list(range(len(stratify_targets)))
+        # wrap new bd-ed data in Subset class
+        train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
+        print(f"backdoored client {backdoor_node_idx} data")
 
     # centrality_dict = create_centrality_dict(topology)
     clients = []

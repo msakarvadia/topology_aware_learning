@@ -67,7 +67,7 @@ def proportion_split(
     # if sum(proportion) != 1:
     # check if sum to 1, within a small tolerance for float arithmetic
     if not math.isclose(sum(proportion), 1):
-        print(sum(proportion))
+        # print(sum(proportion))
         raise ValueError("Proportions must sum to 1.")
 
     # Need to ensure that test_size > # of classes
@@ -330,7 +330,7 @@ def backdoor_data(
     rng: np.random.Generator | int | None = None,
     num_labels: int = 10,
 ) -> (Dataset, Dataset):
-    print(data)
+    # print(data)
 
     indices = list(range(len(data)))
     clean_indices, backdoor_indices = train_test_split(

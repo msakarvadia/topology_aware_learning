@@ -147,14 +147,16 @@ if __name__ == "__main__":
             app_result_tuples = []
             for topo in [
                 "../topology/topo_1.txt",
-                "../topology/topo_2.txt",
-                "../topology/topo_3.txt",
-                "../topology/topo_4.txt",
-                "../topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                "../topology/topo_6.txt",
+                # "../topology/topo_2.txt",
+                # "../topology/topo_3.txt",
+                # "../topology/topo_4.txt",
+                # "../topology/topo_5.txt",  # NOTE(MS): has floating nodes
+                # "../topology/topo_6.txt",
                 "../topology/topo_7.txt",
             ]:
-                decentral_app = DecentrallearnApp(rounds=i, topology_path=topo)
+                decentral_app = DecentrallearnApp(
+                    rounds=i, topology_path=topo, backdoor=True, prox_coeff=0
+                )
                 client_results, train_result_futures, round_states, run_dir = (
                     decentral_app.run()
                 )

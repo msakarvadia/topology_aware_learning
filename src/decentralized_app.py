@@ -235,6 +235,7 @@ class DecentrallearnApp:
             self.run_dir,
             self.train_test_val,
             self.backdoor_test_data,
+            self.backdoor,
             self.backdoor_proportion,
             self.backdoor_node_idx,
         )

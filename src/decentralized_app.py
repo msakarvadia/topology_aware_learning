@@ -20,6 +20,7 @@ from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
 from src.decentralized_client import scale_agg
 from src.modules import create_model
+from src.data import backdoor_data
 from src.modules import load_data
 from src.utils import load_checkpoint
 from src.tasks import local_train
@@ -77,8 +78,6 @@ class DecentrallearnApp:
         self,
         data_dir: str = "../data",
         topology_path: str = "topology/topo_1.txt",
-        # data_dir: pathlib.Path = Path("../data"),
-        # topology_path: pathlib.Path = Path("topology/topo_1.txt"),
         dataset: str = "mnist",
         rounds: int = 5,
         batch_size: int = 16,
@@ -86,16 +85,18 @@ class DecentrallearnApp:
         lr: float = 1e-3,
         download: bool = False,
         train: bool = True,
-        test: bool = True,
+        # test: bool = True,
         label_alpha: float = 100,
         sample_alpha: float = 100,
         participation: float = 1.0,
         seed: int | None = 0,
         log_dir: str = "./logs",
-        # log_dir: pathlib.Path = Path("./logs"),
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0.1,
         train_test_val: tuple[int] = None,
+        backdoor: bool = False,
+        backdoor_proportion: float = 0.1,
+        backdoor_node_idx: int = 0,
     ) -> None:
 
         # make the outdir
@@ -141,7 +142,8 @@ class DecentrallearnApp:
 
         self.global_model = create_model(self.dataset)
 
-        self.train, self.test = train, test
+        self.train = train
+        # self.train, self.test = train, test
         self.train_data, self.test_data = None, None
         root = pathlib.Path(data_dir)
         self.train_data = load_data(
@@ -156,6 +158,22 @@ class DecentrallearnApp:
             train=False,
             download=True,
         )
+
+        self.backdoor = backdoor
+        self.backdoor_proportion = backdoor_proportion
+        self.backdoor_node_idx = backdoor_node_idx
+        self.backdoor_test_data = None
+        if self.backdoor:
+            print("setting backdoor data")
+            rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
+            self.test_data, self.backdoor_test_data = backdoor_data(
+                self.test_data,
+                self.test_data.targets,
+                0.1,
+                rng_seed,
+                self.rng,
+                self.num_labels,
+            )
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
@@ -199,6 +217,8 @@ class DecentrallearnApp:
         self.sample_alpha = sample_alpha
 
         num_clients = self.topology.shape[0]
+        if backdoor_node_idx >= num_clients:
+            raise ValueError("Backdoor node index must be less than the # of clients.")
 
         self.clients = create_clients(
             num_clients,
@@ -214,6 +234,10 @@ class DecentrallearnApp:
             self.prox_coeff,
             self.run_dir,
             self.train_test_val,
+            self.backdoor_test_data,
+            self.backdoor,
+            self.backdoor_proportion,
+            self.backdoor_node_idx,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology)
@@ -354,6 +378,7 @@ class DecentrallearnApp:
                 self.prox_coeff,
                 # self.device,
                 self.seed,
+                self.backdoor,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")

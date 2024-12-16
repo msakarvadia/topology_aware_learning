@@ -14,11 +14,13 @@ from pydantic import ConfigDict
 from pydantic import Field
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
+from torch.utils.data import ConcatDataset
 import networkx as nx
 
 from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
+from src.data import backdoor_data
 
 from parsl.app.app import python_app
 
@@ -42,6 +44,9 @@ class DecentralClient(BaseModel):
     )
     global_test_data: Dataset = Field(
         description="global set of test data that every client and global model is evaluated on."
+    )
+    global_backdoor_test_data: Optional[Subset] = Field(  # noqa: UP007
+        description="Subset of global test data that has been backdoored (for testing ASR).",
     )
     neighbors: list[int] = Field(description="list of this clients neighbors")
     neighbor_probs: list[float] = Field(
@@ -103,6 +108,10 @@ def create_clients(
     prox_coeff: float,
     run_dir: pathlib.Path,
     train_test_val_split: tuple[float],
+    backdoor_test_data: Dataset,
+    backdoor: bool,
+    backdoor_proportion: float,
+    backdoor_node_idx: int,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -142,7 +151,7 @@ def create_clients(
         rng=rng,
         allow_overlapping_samples=False,
     )
-    print(f"{len(train_indices[0])=}")
+    # print(f"{len(train_indices[0])=}")
 
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
@@ -168,6 +177,24 @@ def create_clients(
         valid_subsets = {idx: None for idx in client_ids}
     """
 
+    if backdoor:
+        rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
+        stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
+        clean_data, bd_data = backdoor_data(
+            train_subsets[backdoor_node_idx],
+            stratify_targets,
+            backdoor_proportion,
+            rng_seed,
+            rng,
+            num_labels,
+        )
+        # combine clean + bd training data
+        concat_data = ConcatDataset([clean_data, bd_data])
+        new_indices = list(range(len(stratify_targets)))
+        # wrap new bd-ed data in Subset class
+        train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
+        print(f"backdoored client {backdoor_node_idx} data")
+
     # centrality_dict = create_centrality_dict(topology)
     clients = []
     for idx in client_ids:
@@ -186,6 +213,7 @@ def create_clients(
             neighbors=neighbors,
             neighbor_probs=probs,
             prox_coeff=prox_coeff,
+            global_backdoor_test_data=backdoor_test_data,
             # centrality_dict=centrality_dict,
         )
         clients.append(client)

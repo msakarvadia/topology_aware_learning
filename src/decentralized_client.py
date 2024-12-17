@@ -139,6 +139,7 @@ def create_clients(
     # TODO(MS) to create balanced local train and test sets
     # TODO(MS): pass in train_test_valid_split
     (train_indices, test_indices, valid_indices) = federated_split(
+        data_name=data_name,
         num_workers=num_clients,
         data=train_data,
         num_labels=num_labels,
@@ -181,6 +182,7 @@ def create_clients(
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
         stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
         clean_data, bd_data = backdoor_data(
+            data_name,
             train_subsets[backdoor_node_idx],
             stratify_targets,
             backdoor_proportion,

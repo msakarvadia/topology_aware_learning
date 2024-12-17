@@ -167,6 +167,7 @@ class DecentrallearnApp:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
             self.test_data, self.backdoor_test_data = backdoor_data(
+                dataset,
                 self.test_data,
                 self.test_data.targets,
                 0.1,
@@ -223,7 +224,6 @@ class DecentrallearnApp:
         self.clients = create_clients(
             num_clients,
             self.dataset,
-            # self.train,
             self.train_data,
             self.num_labels,
             self.test_data,
@@ -368,7 +368,8 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
 
-            print(f"{client.idx=}, {fed_prox_neighbors=}")
+            print(f"{client.idx=}")
+            # print(f"{client.idx=}, {fed_prox_neighbors=}")
             future = job(
                 train_input,
                 round_idx,

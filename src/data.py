@@ -7,6 +7,7 @@ import math
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Subset
 import torch
+import os
 
 from src.modules import load_data
 from src.types import DataChoices
@@ -131,6 +132,7 @@ def random_generator(
 
 
 def federated_split(
+    data_name: str,
     num_workers: int,
     data: Dataset,
     num_labels: int,
@@ -172,6 +174,16 @@ def federated_split(
             samples.
 
     """
+    data_path_name = f"{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+
+    if os.path.isfile(data_path_name):
+        print("loading federated split data: ", data_path_name)
+        data = torch.load(data_path_name)
+        train_indices = data["train_indices"]
+        test_indices = data["test_indices"]
+        valid_indices = data["valid_indices"]
+        return (train_indices, test_indices, valid_indices)
+
     if label_alpha <= 0 or sample_alpha <= 0:
         raise ValueError(
             "Both `label_alpha` and `sample_alpha` must be greater than 0."
@@ -304,6 +316,15 @@ def federated_split(
     else:
         raise ValueError("Invalid number of elements in `train_test_valid_split`.")
 
+    torch.save(
+        {
+            "train_indices": train_indices,
+            "test_indices": test_indices,
+            "valid_indices": valid_indices,
+        },
+        data_path_name,
+    )
+
     return (train_indices, test_indices, valid_indices)
 
 
@@ -323,6 +344,7 @@ def trigger_image(img, label, num_labels, rng):
 
 
 def backdoor_data(
+    data_name: str,
     data: Dataset,
     stratify_targets: list[int],  # the labels to preserve class proportion in the split
     proportion_backdoor: float = 0.1,  # proportion of data that should be backdoored
@@ -331,6 +353,14 @@ def backdoor_data(
     num_labels: int = 10,
 ) -> (Dataset, Dataset):
     # print(data)
+    data_path_name = f"{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_backdoor.pt"
+
+    if os.path.isfile(data_path_name):
+        print("loading backdoor data: ", data_path_name)
+        data = torch.load(data_path_name)
+        clean_data = data["clean_data"]
+        backdoor_data = data["backdoor_data"]
+        return clean_data, backdoor_data
 
     indices = list(range(len(data)))
     clean_indices, backdoor_indices = train_test_split(
@@ -352,6 +382,14 @@ def backdoor_data(
         backdoored_data.append((img, label))  # label modification
 
     backdoor_data = Subset(backdoored_data, indices)
+
+    torch.save(
+        {
+            "clean_data": clean_data,
+            "backdoor_data": backdoor_data,
+        },
+        data_path_name,
+    )
 
     return clean_data, backdoor_data  # make this data, backdoor data
 

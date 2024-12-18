@@ -154,8 +154,6 @@ if __name__ == "__main__":
                 "cluster",
                 "invCluster",
             ]:
-                # if aggregation_strategy not in apps:
-                #    apps[aggregation_strategy] = {}
                 # iterate through topologies
                 for topo in [
                     "../topology/topo_1.txt",
@@ -166,15 +164,14 @@ if __name__ == "__main__":
                     "../topology/topo_6.txt",
                     "../topology/topo_7.txt",
                 ]:
-                    # if topo not in apps[aggregation_strategy]:
-                    #    apps[aggregation_strategy][topo] = {}
                     # iterate through different backdoor node placements
                     topology = np.loadtxt(topo, dtype=float)
                     num_clients = topology.shape[0]
                     for client_idx in range(num_clients):
+                        # NOTE (MS): temporary break to make smaller experiment
+                        if client_idx > 0:
+                            break
 
-                        # TODO (only create app once so you don't waste time making an app after each ckpt)
-                        # if client_idx not in apps[aggregation_strategy][topo]:
                         decentral_app = DecentrallearnApp(
                             rounds=i,
                             topology_path=topo,
@@ -184,9 +181,6 @@ if __name__ == "__main__":
                             backdoor_node_idx=client_idx,
                             aggregation_strategy=aggregation_strategy,
                         )
-                        # apps[aggregation_strategy][topo][client_idx] = decentral_app
-                        # else:
-                        #    decentral_app = apps[aggregation_strategy][topo][client_idx]
 
                         client_results, train_result_futures, round_states, run_dir = (
                             decentral_app.run()

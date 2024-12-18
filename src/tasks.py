@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from torch import nn
 from torch.utils.data import Dataset
 from datetime import datetime
@@ -65,21 +66,6 @@ def no_local_train(
         n_batches = 1
         running_loss = 0.0
 
-        """
-        for batch_idx, batch in enumerate(loader):
-            inputs, targets = batch
-            inputs, targets = inputs.to(device), targets.to(device)
-            preds = client.model(inputs)
-            loss = F.cross_entropy(preds, targets)
-
-            loss.backward()
-            optimizer.step()
-            optimizer.zero_grad()
-
-            running_loss += loss.item()
-            n_batches += 1
-
-        """
         # Test client on local test set TODO
 
         # Test client on global test set
@@ -155,7 +141,10 @@ def local_train(
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
+    avg_time_per_epoch = 0
     for epoch in range(epochs):
+        start_time = time.time()
+
         epoch_results = []
         n_batches = 0
         running_loss = 0.0
@@ -186,6 +175,9 @@ def local_train(
             running_loss += loss.item()
             n_batches += 1
 
+        end_time = time.time()
+        avg_time_per_epoch += end_time - start_time
+
         # Test client on local test set TODO
 
         # Test client on global test set
@@ -213,7 +205,9 @@ def local_train(
             }
         epoch_results.append(
             {
-                "time": datetime.now(),
+                "avg_time_per_epoch": avg_time_per_epoch / epochs,
+                # "avg_time_per_epoch": (start_time - end_time).total_seconds(),
+                "date_time": datetime.now(),
                 "client_idx": client.idx,
                 "neighbors": client.neighbors,
                 "round_idx": round_idx,

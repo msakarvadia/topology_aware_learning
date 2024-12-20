@@ -13,6 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
+from src.create_topo.backdoor_topo import mk_backdoor_topos
 from pathlib import Path
 
 import parsl
@@ -137,6 +138,7 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
+    paths, nodes = mk_backdoor_topos()
 
     start = time.time()
     # apps = {}
@@ -155,22 +157,22 @@ if __name__ == "__main__":
                 "invCluster",
             ]:
                 # iterate through topologies
-                for topo in [
-                    "../create_topo/topology/topo_1.txt",
-                    "../create_topo/topology/topo_2.txt",
-                    "../create_topo/topology/topo_3.txt",
-                    "../create_topo/topology/topo_4.txt",
-                    "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                    "../create_topo/topology/topo_6.txt",
-                    "../create_topo/topology/topo_7.txt",
-                ]:
+                for topo, nodes in zip(paths, nodes):
+                    """
+                    [
+                        "../create_topo/topology/topo_1.txt",
+                        "../create_topo/topology/topo_2.txt",
+                        "../create_topo/topology/topo_3.txt",
+                        "../create_topo/topology/topo_4.txt",
+                        "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
+                        "../create_topo/topology/topo_6.txt",
+                        "../create_topo/topology/topo_7.txt",
+                    ]:
+                    """
                     # iterate through different backdoor node placements
                     topology = np.loadtxt(topo, dtype=float)
                     num_clients = topology.shape[0]
-                    for client_idx in range(num_clients):
-                        # NOTE (MS): temporary break to make smaller experiment
-                        if client_idx > 0:
-                            break
+                    for client_idx in nodes:
 
                         decentral_app = DecentrallearnApp(
                             rounds=i,

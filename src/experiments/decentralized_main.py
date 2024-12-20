@@ -153,7 +153,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--topology_file",
         type=str,
-        default="../topology/topo_1.txt",
+        default="../create_topo/topology/topo_1.txt",
         help="Path to network topology saved as a numpy array adjacency matrix",
     )
     parser.add_argument(

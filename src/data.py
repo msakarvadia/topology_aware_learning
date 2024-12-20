@@ -175,7 +175,7 @@ def federated_split(
 
     """
     data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
-    os.makedirs(data_path_name, exist_ok=True)
+    os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):
         print("loading federated split data: ", data_path_name)
@@ -372,7 +372,7 @@ def backdoor_data(
 ) -> (Dataset, Dataset):
     # print(data)
     data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_backdoor.pt"
-    os.makedirs(data_path_name, exist_ok=True)
+    os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):
         print("loading backdoor data: ", data_path_name)

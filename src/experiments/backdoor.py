@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 "invCluster",
             ]:
                 # iterate through topologies
-                for topo, nodes in zip(paths, nodes):
+                for topo, node_set in zip(paths, nodes):
                     """
                     [
                         "../create_topo/topology/topo_1.txt",
@@ -172,7 +172,8 @@ if __name__ == "__main__":
                     # iterate through different backdoor node placements
                     topology = np.loadtxt(topo, dtype=float)
                     num_clients = topology.shape[0]
-                    for client_idx in nodes:
+                    print(f"{node_set=}")
+                    for client_idx in node_set:
 
                         decentral_app = DecentrallearnApp(
                             rounds=i,

@@ -16,10 +16,28 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
 
     graphs = []
 
-    G = nx.complete_graph(3)
-    graphs.append(G)
-    G = nx.complete_graph(10)
-    graphs.append(G)
+    g = nx.path_graph(10)
+    graphs.append(g)
+
+    g = nx.cycle_graph(10)
+    graphs.append(g)
+
+    g = nx.ring_of_cliques(10, 4)
+    graphs.append(g)
+
+    g = nx.barbell_graph(m1=10, m2=3, create_using=None)
+    graphs.append(g)
+
+    sizes = [33, 33, 33]
+    probs = [[0.4, 0.009, 0.009], [0.009, 0.4, 0.009], [0.009, 0.009, 0.4]]
+    g = nx.stochastic_block_model(sizes, probs, seed=0)
+    graphs.append(g)
+
+    g = nx.barabasi_albert_graph(n=100, m=2)
+    graphs.append(g)
+
+    g = nx.complete_graph(10)
+    graphs.append(g)
 
     paths = []
     nodes = []
@@ -29,7 +47,9 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(
-            [0]
+            [
+                0,
+            ]
         )  # these are the list of nodes for each graph that need to be backdoored
 
     return paths, nodes

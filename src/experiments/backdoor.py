@@ -183,7 +183,7 @@ if __name__ == "__main__":
                             epochs=5,
                             backdoor_node_idx=client_idx,
                             aggregation_strategy=aggregation_strategy,
-                            out_dir="bd_logs",
+                            log_dir="bd_logs",
                         )
 
                         client_results, train_result_futures, round_states, run_dir = (

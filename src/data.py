@@ -328,16 +328,30 @@ def federated_split(
     return (train_indices, test_indices, valid_indices)
 
 
-def trigger_image(img, label, num_labels, rng):
+def trigger_image(
+    img,
+    label: int,
+    num_labels: int,
+    rng: np.random.Generator | int | None = None,
+    random: bool = False,
+    # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+    many_to_one: bool = True,
+):
     trigger_dim = 4
 
     trigger = torch.zeros([img.shape[0], trigger_dim, trigger_dim])
     trigger[0] = 5
 
-    y = rng.integers(low=0, high=img.shape[-2] - trigger_dim, size=1).item()
-    x = rng.integers(low=0, high=img.shape[-1] - trigger_dim, size=1).item()
+    x = 0
+    y = 0
+    if random:
+        y = rng.integers(low=0, high=img.shape[-2] - trigger_dim, size=1).item()
+        x = rng.integers(low=0, high=img.shape[-1] - trigger_dim, size=1).item()
 
     new_label = (label + 1) % num_labels
+    if many_to_one:
+        new_label = 0
+
     img[:, x : x + trigger_dim, y : y + trigger_dim] = trigger
 
     return img, new_label
@@ -351,9 +365,12 @@ def backdoor_data(
     rng_seed: int | None = None,  # set rng seed
     rng: np.random.Generator | int | None = None,
     num_labels: int = 10,
+    random: bool = False,
+    # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+    many_to_one: bool = True,
 ) -> (Dataset, Dataset):
     # print(data)
-    data_path_name = f"{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_backdoor.pt"
+    data_path_name = f"{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_backdoor.pt"
 
     if os.path.isfile(data_path_name):
         print("loading backdoor data: ", data_path_name)
@@ -378,7 +395,7 @@ def backdoor_data(
         img = backdoor_data[idx][0]
         label = backdoor_data[idx][1]
 
-        img, label = trigger_image(img, label, num_labels, rng)
+        img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
         backdoored_data.append((img, label))  # label modification
 
     backdoor_data = Subset(backdoored_data, indices)

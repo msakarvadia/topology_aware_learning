@@ -112,6 +112,9 @@ def create_clients(
     backdoor: bool,
     backdoor_proportion: float,
     backdoor_node_idx: int,
+    random_bd: bool = False,
+    # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+    many_to_one: bool = True,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -189,6 +192,8 @@ def create_clients(
             rng_seed,
             rng,
             num_labels,
+            random_bd,
+            many_to_one,
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])

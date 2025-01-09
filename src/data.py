@@ -179,7 +179,7 @@ def federated_split(
 
     if os.path.isfile(data_path_name):
         print("loading federated split data: ", data_path_name)
-        data = torch.load(data_path_name)
+        data = torch.load(data_path_name, map_location=torch.device("cpu"))
         train_indices = data["train_indices"]
         test_indices = data["test_indices"]
         valid_indices = data["valid_indices"]
@@ -376,7 +376,8 @@ def backdoor_data(
 
     if os.path.isfile(data_path_name):
         print("loading backdoor data: ", data_path_name)
-        data = torch.load(data_path_name)
+        # data = torch.load(data_path_name)
+        data = torch.load(data_path_name, map_location=torch.device("cpu"))
         clean_data = data["clean_data"]
         backdoor_data = data["backdoor_data"]
         return clean_data, backdoor_data

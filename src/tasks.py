@@ -220,6 +220,8 @@ def local_train(
 
         results.extend(epoch_results)
 
+    # need to send model back to cpu since all coordination is happening from a non-gpu node
+    client.model.to("cpu")
     return results, client
 
 

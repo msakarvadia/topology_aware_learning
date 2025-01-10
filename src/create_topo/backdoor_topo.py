@@ -2,6 +2,8 @@ import numpy as np
 import networkx as nx
 from numpy import random
 import os
+from src.effective_neighbors import get_n_placement_locations
+
 
 """
 In this file we create the topologies we will use in our backdoor experiments.
@@ -42,14 +44,17 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     paths = []
     nodes = []
     for idx, G in enumerate(graphs):
+        bd_placement_nodes = get_n_placement_locations(G, 0.9, 5)
+
         topology = nx.to_numpy_array(G)
         path = f"{bd_dir}/topo_{idx}.txt"
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(
-            [
-                0,
-            ]
+            bd_placement_nodes
+            # [
+            #    0,
+            # ]
         )  # these are the list of nodes for each graph that need to be backdoored
 
     return paths, nodes

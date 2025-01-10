@@ -158,20 +158,11 @@ if __name__ == "__main__":
             ]:
                 # iterate through topologies
                 for topo, node_set in zip(paths, nodes):
-                    """
-                    [
-                        "../create_topo/topology/topo_1.txt",
-                        "../create_topo/topology/topo_2.txt",
-                        "../create_topo/topology/topo_3.txt",
-                        "../create_topo/topology/topo_4.txt",
-                        "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                        "../create_topo/topology/topo_6.txt",
-                        "../create_topo/topology/topo_7.txt",
-                    ]:
-                    """
                     # iterate through different backdoor node placements
+                    """
                     topology = np.loadtxt(topo, dtype=float)
                     num_clients = topology.shape[0]
+                    """
                     print(f"{node_set=}")
                     for client_idx in node_set:
 

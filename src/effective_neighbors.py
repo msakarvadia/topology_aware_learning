@@ -555,9 +555,12 @@ def get_n_placement_locations(
 
     start = 0
     interval = len(graph) // n
-    l = list(range(start, (interval + 1) * n, interval))
+    l = list(range(start, (interval) * n, interval))
 
     val, ind = torch.sort(avg_effective_neighbors)
+    # print(f"{avg_effective_neighbors=}")
+    # print(f"{ind=}")
+    # print(f"{l=}")
     placement_neighbors = torch.index_select(ind, 0, torch.tensor(l))
 
     return placement_neighbors.tolist()

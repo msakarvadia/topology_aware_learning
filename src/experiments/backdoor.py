@@ -75,8 +75,8 @@ if __name__ == "__main__":
         "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
         "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
         "account": "argonne_tpc",
-        "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
-        "walltime": "00:30:00",
+        "queue": "prod",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
+        "walltime": "03:00:00",
         "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
     }
     local_provider = LocalProvider(

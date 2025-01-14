@@ -7,6 +7,7 @@ import math
 from sklearn.model_selection import train_test_split
 from torch.utils.data import Subset
 import torch
+import os
 
 from src.modules import load_data
 from src.types import DataChoices
@@ -131,6 +132,7 @@ def random_generator(
 
 
 def federated_split(
+    data_name: str,
     num_workers: int,
     data: Dataset,
     num_labels: int,
@@ -172,6 +174,17 @@ def federated_split(
             samples.
 
     """
+    data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+    os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
+
+    if os.path.isfile(data_path_name):
+        print("loading federated split data: ", data_path_name)
+        data = torch.load(data_path_name, map_location=torch.device("cpu"))
+        train_indices = data["train_indices"]
+        test_indices = data["test_indices"]
+        valid_indices = data["valid_indices"]
+        return (train_indices, test_indices, valid_indices)
+
     if label_alpha <= 0 or sample_alpha <= 0:
         raise ValueError(
             "Both `label_alpha` and `sample_alpha` must be greater than 0."
@@ -304,33 +317,70 @@ def federated_split(
     else:
         raise ValueError("Invalid number of elements in `train_test_valid_split`.")
 
+    torch.save(
+        {
+            "train_indices": train_indices,
+            "test_indices": test_indices,
+            "valid_indices": valid_indices,
+        },
+        data_path_name,
+    )
+
     return (train_indices, test_indices, valid_indices)
 
 
-def trigger_image(img, label, num_labels, rng):
+def trigger_image(
+    img,
+    label: int,
+    num_labels: int,
+    rng: np.random.Generator | int | None = None,
+    random: bool = False,
+    # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+    many_to_one: bool = True,
+):
     trigger_dim = 4
 
     trigger = torch.zeros([img.shape[0], trigger_dim, trigger_dim])
     trigger[0] = 5
 
-    y = rng.integers(low=0, high=img.shape[-2] - trigger_dim, size=1).item()
-    x = rng.integers(low=0, high=img.shape[-1] - trigger_dim, size=1).item()
+    x = 0
+    y = 0
+    if random:
+        y = rng.integers(low=0, high=img.shape[-2] - trigger_dim, size=1).item()
+        x = rng.integers(low=0, high=img.shape[-1] - trigger_dim, size=1).item()
 
     new_label = (label + 1) % num_labels
+    if many_to_one:
+        new_label = 0
+
     img[:, x : x + trigger_dim, y : y + trigger_dim] = trigger
 
     return img, new_label
 
 
 def backdoor_data(
+    data_name: str,
     data: Dataset,
     stratify_targets: list[int],  # the labels to preserve class proportion in the split
     proportion_backdoor: float = 0.1,  # proportion of data that should be backdoored
     rng_seed: int | None = None,  # set rng seed
     rng: np.random.Generator | int | None = None,
     num_labels: int = 10,
+    random: bool = False,
+    # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+    many_to_one: bool = True,
 ) -> (Dataset, Dataset):
     # print(data)
+    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_backdoor.pt"
+    os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
+
+    if os.path.isfile(data_path_name):
+        print("loading backdoor data: ", data_path_name)
+        # data = torch.load(data_path_name)
+        data = torch.load(data_path_name, map_location=torch.device("cpu"))
+        clean_data = data["clean_data"]
+        backdoor_data = data["backdoor_data"]
+        return clean_data, backdoor_data
 
     indices = list(range(len(data)))
     clean_indices, backdoor_indices = train_test_split(
@@ -348,10 +398,18 @@ def backdoor_data(
         img = backdoor_data[idx][0]
         label = backdoor_data[idx][1]
 
-        img, label = trigger_image(img, label, num_labels, rng)
+        img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
         backdoored_data.append((img, label))  # label modification
 
     backdoor_data = Subset(backdoored_data, indices)
+
+    torch.save(
+        {
+            "clean_data": clean_data,
+            "backdoor_data": backdoor_data,
+        },
+        data_path_name,
+    )
 
     return clean_data, backdoor_data  # make this data, backdoor data
 

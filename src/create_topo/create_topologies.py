@@ -1,11 +1,13 @@
 import numpy as np
 import networkx as nx
 from numpy import random
+import os
 
 """
 In this file we create a few sample network topologies for testing
 
 """
+os.makedirs("topology", exist_ok=True)
 
 topology = np.array([[0, 1, 1], [1, 0, 0], [1, 0, 0]])
 np.savetxt("topology/topo_1.txt", topology, fmt="%d")

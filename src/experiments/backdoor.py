@@ -13,6 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
+from src.create_topo.backdoor_topo import mk_backdoor_topos
 from pathlib import Path
 
 import parsl
@@ -42,13 +43,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint_every",
         type=int,
-        default=5,
+        default=1,
         help="# of rounds to wait between checkpoints (must be a factor of rounds)",
     )
     parser.add_argument(
         "--rounds",
         type=int,
-        default=10,
+        default=20,
         help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
@@ -75,7 +76,7 @@ if __name__ == "__main__":
         "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
         "account": "argonne_tpc",
         "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
-        "walltime": "00:30:00",
+        "walltime": "01:00:00",
         "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
     }
     local_provider = LocalProvider(
@@ -113,6 +114,7 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -124,10 +126,10 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=pbs_provider,
         )
-
     config = Config(
         executors=[executor, threadpool_executor],
         checkpoint_mode="task_exit",
@@ -137,9 +139,10 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
+    paths, nodes = mk_backdoor_topos()
 
     start = time.time()
-    apps = {}
+    # apps = {}
     for i in range(1, args.rounds + 1):
         # only submit job if round number is a multiple of checkpoint every
         if i % args.checkpoint_every == 0:
@@ -154,39 +157,22 @@ if __name__ == "__main__":
                 "cluster",
                 "invCluster",
             ]:
-                if aggregation_strategy not in apps:
-                    apps[aggregation_strategy] = {}
                 # iterate through topologies
-                for topo in [
-                    "../topology/topo_1.txt",
-                    # "../topology/topo_2.txt",
-                    # "../topology/topo_3.txt",
-                    # "../topology/topo_4.txt",
-                    # "../topology/topo_5.txt",
-                    # "../topology/topo_6.txt",
-                    # "../topology/topo_7.txt",
-                ]:
-                    if topo not in apps[aggregation_strategy]:
-                        apps[aggregation_strategy][topo] = {}
+                for topo, node_set in zip(paths, nodes):
                     # iterate through different backdoor node placements
-                    topology = np.loadtxt(topo, dtype=float)
-                    num_clients = topology.shape[0]
-                    for client_idx in range(num_clients):
+                    print(f"{topo=}, {node_set=}")
+                    for client_idx in node_set:
 
-                        # TODO (only create app once so you don't waste time making an app after each ckpt)
-                        if client_idx not in apps[aggregation_strategy][topo]:
-                            decentral_app = DecentrallearnApp(
-                                rounds=i,
-                                topology_path=topo,
-                                backdoor=True,
-                                prox_coeff=0,
-                                epochs=5,
-                                backdoor_node_idx=client_idx,
-                                aggregation_strategy=aggregation_strategy,
-                            )
-                            apps[aggregation_strategy][topo][client_idx] = decentral_app
-                        else:
-                            decentral_app = apps[aggregation_strategy][topo][client_idx]
+                        decentral_app = DecentrallearnApp(
+                            rounds=i,
+                            topology_path=topo,
+                            backdoor=True,
+                            prox_coeff=0,
+                            epochs=5,
+                            backdoor_node_idx=client_idx,
+                            aggregation_strategy=aggregation_strategy,
+                            log_dir="bd_logs",
+                        )
 
                         client_results, train_result_futures, round_states, run_dir = (
                             decentral_app.run()

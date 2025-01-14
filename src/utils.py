@@ -34,7 +34,7 @@ def load_checkpoint(
     clients: list[DecentralClient],
 ) -> tuple[int, list[DecentralClient], list[Result]]:
 
-    ckpt = torch.load(ckpt_path)
+    ckpt = torch.load(ckpt_path, map_location=torch.device("cpu"))
     for i in range(len(clients)):
         sd = ckpt["client_state_dicts"][i]
         clients[i].model.load_state_dict(sd)

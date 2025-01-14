@@ -6,3 +6,4 @@ You can also lunch via slurm/PBS by looking in the `../scripts` folder for launc
 
 
 - [`sample_experiment`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/sample_experiment.py): example of how to create an experiment script (can add more argparse args as needed for your experiment -- see `decentralized_main.py` for examples
+- [`decentralized_main`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/decentralized_main.py): can run individual training runs for specific networks

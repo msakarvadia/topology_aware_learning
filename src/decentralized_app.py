@@ -97,6 +97,9 @@ class DecentrallearnApp:
         backdoor: bool = False,
         backdoor_proportion: float = 0.1,
         backdoor_node_idx: int = 0,
+        random_bd: bool = False,
+        # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
+        many_to_one: bool = True,
     ) -> None:
 
         # make the outdir
@@ -163,16 +166,21 @@ class DecentrallearnApp:
         self.backdoor_proportion = backdoor_proportion
         self.backdoor_node_idx = backdoor_node_idx
         self.backdoor_test_data = None
+        self.random_bd = random_bd
+        self.many_to_one = many_to_one
         if self.backdoor:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
             self.test_data, self.backdoor_test_data = backdoor_data(
+                dataset,
                 self.test_data,
                 self.test_data.targets,
                 0.1,
                 rng_seed,
                 self.rng,
                 self.num_labels,
+                self.random_bd,
+                self.many_to_one,
             )
 
         self.aggregation_strategy = aggregation_strategy
@@ -223,7 +231,6 @@ class DecentrallearnApp:
         self.clients = create_clients(
             num_clients,
             self.dataset,
-            # self.train,
             self.train_data,
             self.num_labels,
             self.test_data,
@@ -368,7 +375,8 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
 
-            print(f"{client.idx=}, {fed_prox_neighbors=}")
+            print(f"{client.idx=}")
+            # print(f"{client.idx=}, {fed_prox_neighbors=}")
             future = job(
                 train_input,
                 round_idx,

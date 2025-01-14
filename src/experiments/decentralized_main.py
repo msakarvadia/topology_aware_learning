@@ -153,7 +153,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--topology_file",
         type=str,
-        default="topology/topo_1.txt",
+        default="../create_topo/topology/topo_1.txt",
         help="Path to network topology saved as a numpy array adjacency matrix",
     )
     parser.add_argument(
@@ -208,6 +208,16 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="Node index in network with backdoored data",
+    )
+    parser.add_argument(
+        "--random_bd",
+        action="store_true",
+        help="By default flag is false and no backdoor triggers will be applied to the top left of an image. If you set this flag, backdoor triggers will randomly be set anywhere within an image.",
+    )
+    parser.add_argument(
+        "--many_to_one",
+        action="store_false",
+        help="By default flag is true and all backdoored images will be assigned label=0. If you set this flag, each new label = (old_label + 1)% # of total labels (aka many to many labels). ",
     )
 
     args = parser.parse_args()
@@ -344,6 +354,8 @@ if __name__ == "__main__":
         backdoor=args.backdoor,
         backdoor_proportion=args.backdoor_proportion,
         backdoor_node_idx=args.backdoor_node_idx,
+        random_bd=args.random_bd,
+        many_to_one=args.many_to_one,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

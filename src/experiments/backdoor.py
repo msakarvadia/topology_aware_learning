@@ -43,13 +43,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint_every",
         type=int,
-        default=5,
+        default=1,
         help="# of rounds to wait between checkpoints (must be a factor of rounds)",
     )
     parser.add_argument(
         "--rounds",
         type=int,
-        default=10,
+        default=20,
         help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
@@ -75,8 +75,8 @@ if __name__ == "__main__":
         "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
         "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
         "account": "argonne_tpc",
-        "queue": "prod",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
-        "walltime": "03:00:00",
+        "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
+        "walltime": "01:00:00",
         "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
     }
     local_provider = LocalProvider(
@@ -114,6 +114,7 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -125,10 +126,10 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=pbs_provider,
         )
-
     config = Config(
         executors=[executor, threadpool_executor],
         checkpoint_mode="task_exit",
@@ -159,11 +160,7 @@ if __name__ == "__main__":
                 # iterate through topologies
                 for topo, node_set in zip(paths, nodes):
                     # iterate through different backdoor node placements
-                    """
-                    topology = np.loadtxt(topo, dtype=float)
-                    num_clients = topology.shape[0]
-                    """
-                    print(f"{node_set=}")
+                    print(f"{topo=}, {node_set=}")
                     for client_idx in node_set:
 
                         decentral_app = DecentrallearnApp(

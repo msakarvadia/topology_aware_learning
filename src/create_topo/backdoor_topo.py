@@ -19,15 +19,9 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
-    """
-    g = nx.path_graph(10)
-    graph['path'] = g
-    #graphs.append(g)
-
-    g = nx.cycle_graph(10)
-    graphs["cycle"] = g
+    g = nx.barabasi_albert_graph(n=100, m=2)
+    graphs["barabasi_albert"] = g
     # graphs.append(g)
-    """
 
     g = nx.ring_of_cliques(10, 4)
     graphs["ring_clique"] = g
@@ -43,13 +37,19 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     graphs["stochastic_block"] = g
     # graphs.append(g)
 
-    g = nx.barabasi_albert_graph(n=100, m=2)
-    graphs["barabasi_albert"] = g
-    # graphs.append(g)
-
     g = nx.complete_graph(10)
     graphs["complete"] = g
     # graphs.append(g)
+
+    """
+    g = nx.path_graph(10)
+    graph['path'] = g
+    #graphs.append(g)
+
+    g = nx.cycle_graph(10)
+    graphs["cycle"] = g
+    # graphs.append(g)
+    """
 
     paths = []
     nodes = []
@@ -57,7 +57,7 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     idx = 0
     for graph_name, G in graphs.items():
 
-        if graph_name in ["ring_clique"]:
+        if graph_name in ["ring_clique", "barbell"]:
             bd_placement_nodes = get_n_placement_locations(G, 0.9, 2)
         if graph_name in ["complete", "cycle"]:
             bd_placement_nodes = [0]
@@ -65,7 +65,7 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
             bd_placement_nodes = get_n_placement_locations(G, 0.9, 5)
 
         topology = nx.to_numpy_array(G)
-        path = f"{bd_dir}/topo_{idx}.txt"
+        path = f"{bd_dir}/topo_{graph_name}.txt"
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(

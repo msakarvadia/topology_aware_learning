@@ -13,7 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.backdoor_topo import mk_hetero_topos
+from src.create_topo.hetero_topo import mk_hetero_topos
 from pathlib import Path
 
 import parsl

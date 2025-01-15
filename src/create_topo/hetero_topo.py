@@ -6,15 +6,15 @@ from src.effective_neighbors import get_n_placement_locations
 
 
 """
-In this file we create the topologies we will use in our backdoor experiments.
+In this file we create the topologies we will use in our heterogeneous data distribution experiments.
 
 """
 
 
 def mk_hetero_topos() -> tuple[list[str], list[list[int]]]:
     # return (paths of topo file names, nodes to test per topo)
-    bd_dir = "bd_topology"
-    os.makedirs(bd_dir, exist_ok=True)
+    hetero_dir = "hetero_topology"
+    os.makedirs(hetero_dir, exist_ok=True)
 
     # graphs = []
     graphs = {}

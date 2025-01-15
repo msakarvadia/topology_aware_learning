@@ -69,6 +69,29 @@ class DecentralClient(BaseModel):
         return neighbor_idxs
 
 
+def get_label_counts(
+    num_clients: int,
+    num_labels: int,
+    indices: dict[int, list[int]],
+    data: Dataset,
+) -> dict[
+    int, list[int]
+]:  # return dict of lists (each key is a label), list is the length of # of clients
+    """return label count dict for each data split"""
+
+    subsets = {idx: Subset(data, indices[idx]) for idx in range(num_clients)}
+
+    # save label counts per worker
+    label_counts_per_worker = {label: [0] * num_clients for label in range(num_labels)}
+
+    for idx in range(num_clients):
+        for batch in subsets[idx]:
+            _, label = batch
+            label_counts_per_worker[label][idx] += 1
+
+    return label_counts_per_worker
+
+
 def create_centrality_dict(
     topology: np.array,  # list[list[int]],
 ) -> dict[str, dict[int, float]]:
@@ -157,6 +180,7 @@ def create_clients(
     )
     # print(f"{len(train_indices[0])=}")
 
+    centrality_dict = create_centrality_dict(topology)
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
     test_subsets = valid_subsets = None
@@ -202,7 +226,6 @@ def create_clients(
         train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
         print(f"backdoored client {backdoor_node_idx} data")
 
-    # centrality_dict = create_centrality_dict(topology)
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
@@ -225,6 +248,13 @@ def create_clients(
         )
         clients.append(client)
 
+    label_counts_per_worker = get_label_counts(
+        num_clients=len(client_ids),
+        num_labels=num_labels,
+        indices=train_indices,
+        data=train_data,
+    )
+    """
     # save label counts per worker
     label_counts_per_worker = {
         label: [0] * len(client_ids) for label in range(num_labels)
@@ -234,6 +264,7 @@ def create_clients(
         for batch in train_subsets[idx]:
             _, label = batch
             label_counts_per_worker[label][idx] += 1
+    """
 
     json.dump(
         label_counts_per_worker, open(f"{run_dir}/label_counts_per_worker.txt", "w")

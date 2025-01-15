@@ -154,7 +154,9 @@ if __name__ == "__main__":
                 "../create_topo/topology/topo_6.txt",
                 "../create_topo/topology/topo_7.txt",
             ]:
-                decentral_app = DecentrallearnApp(rounds=i, topology_path=topo)
+                decentral_app = DecentrallearnApp(
+                    rounds=i, topology_path=topo, prox_coeff=0, epochs=5, backdoor=False
+                )
                 client_results, train_result_futures, round_states, run_dir = (
                     decentral_app.run()
                 )

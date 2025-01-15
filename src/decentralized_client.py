@@ -72,14 +72,11 @@ class DecentralClient(BaseModel):
 def get_label_counts(
     num_clients: int,
     num_labels: int,
-    indices: dict[int, list[int]],
-    data: Dataset,
+    subsets: dict[int, Subset],
 ) -> dict[
     int, list[int]
 ]:  # return dict of lists (each key is a label), list is the length of # of clients
     """return label count dict for each data split"""
-
-    subsets = {idx: Subset(data, indices[idx]) for idx in range(num_clients)}
 
     # save label counts per worker
     label_counts_per_worker = {label: [0] * num_clients for label in range(num_labels)}
@@ -90,6 +87,20 @@ def get_label_counts(
             label_counts_per_worker[label][idx] += 1
 
     return label_counts_per_worker
+
+
+def palce_data_with_node(
+    label_counts_per_worker: dict[int, list[int]],
+    centrality_dict: dict[str, dict[int, float]],
+    indices: dict[int, list[int]],
+    data: Dataset,
+    num_clients: int,
+) -> dict[int, Subset]:
+    """Funcation used to place data with client"""
+    # TODO (MS): need to think of strategy to enable smart data placement based on centrality metric
+
+    subsets = {idx: Subset(data, indices[idx]) for idx in range(num_clients)}
+    return subsets
 
 
 def create_centrality_dict(
@@ -183,7 +194,7 @@ def create_clients(
     centrality_dict = create_centrality_dict(topology)
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
 
-    test_subsets = valid_subsets = None
+    # test_subsets = valid_subsets = None
     test_subsets = {idx: None for idx in client_ids}
     valid_subsets = {idx: None for idx in client_ids}
     if test_indices is not None:
@@ -198,12 +209,6 @@ def create_clients(
         valid_subsets = {
             idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
         }
-    """
-    else:
-        train_subsets = {idx: None for idx in client_ids}
-        test_subsets = {idx: None for idx in client_ids}
-        valid_subsets = {idx: None for idx in client_ids}
-    """
 
     if backdoor:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
@@ -251,20 +256,10 @@ def create_clients(
     label_counts_per_worker = get_label_counts(
         num_clients=len(client_ids),
         num_labels=num_labels,
-        indices=train_indices,
-        data=train_data,
+        # indices=train_indices,
+        # data=train_data,
+        subsets=train_subsets,
     )
-    """
-    # save label counts per worker
-    label_counts_per_worker = {
-        label: [0] * len(client_ids) for label in range(num_labels)
-    }
-
-    for idx in client_ids:
-        for batch in train_subsets[idx]:
-            _, label = batch
-            label_counts_per_worker[label][idx] += 1
-    """
 
     json.dump(
         label_counts_per_worker, open(f"{run_dir}/label_counts_per_worker.txt", "w")

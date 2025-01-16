@@ -266,26 +266,7 @@ def create_clients(
         offset_clients_data_placement=offset_clients_data_placement,  # experiment arg
         centrality_metric_data_placement=centrality_metric_data_placement,  # experiment arg
         random_data_placement=random_data_placement,  # experiment arg (MS): default behavior needs to be over turned in the args when making a client
-        # Need ofset parameter as well
     )
-
-    """
-    # test_subsets = valid_subsets = None
-    test_subsets = {idx: None for idx in client_ids}
-    valid_subsets = {idx: None for idx in client_ids}
-    if test_indices is not None:
-        print(f"{len(train_indices[0])=}, {len(test_indices[0])=}")
-        test_subsets = {
-            idx: Subset(train_data, test_indices[idx]) for idx in client_ids
-        }
-    if valid_indices is not None:
-        print(
-            f"{len(train_indices[0])=}, {len(test_indices[0])=}, {len(valid_indices[0])=}"
-        )
-        valid_subsets = {
-            idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
-        }
-    """
 
     if backdoor:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
@@ -300,6 +281,12 @@ def create_clients(
             num_labels,
             random_bd,
             many_to_one,
+            # for propoer checkpointing purposes we need to save some additional info
+            offset_clients_data_placement,
+            centrality_metric_data_placement,
+            random_data_placement,
+            backdoor_node_idx,
+            num_clients=len(client_ids),
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])

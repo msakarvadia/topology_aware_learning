@@ -369,9 +369,15 @@ def backdoor_data(
     random: bool = False,
     # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
     many_to_one: bool = True,
+    # for propoer checkpointing purposes we need to save some additional info
+    offset_clients_data_placement: int = 0,
+    centrality_metric_data_placement: str = "degree",
+    random_data_placement: bool = True,
+    backdoor_node_idx: int = 0,
+    num_clients: int = 0,
 ) -> (Dataset, Dataset):
     # print(data)
-    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_backdoor.pt"
+    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_backdoor.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):

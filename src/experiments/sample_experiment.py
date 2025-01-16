@@ -145,24 +145,38 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             # begin experiment
             app_result_tuples = []
-            for topo in [
-                "../create_topo/topology/topo_1.txt",
-                "../create_topo/topology/topo_2.txt",
-                "../create_topo/topology/topo_3.txt",
-                "../create_topo/topology/topo_4.txt",
-                "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                "../create_topo/topology/topo_6.txt",
-                "../create_topo/topology/topo_7.txt",
+            # iterate through aggregation strategies
+            for aggregation_strategy in [
+                "unweighted",
+                "weighted",
+                "degCent",
+                "betCent",
+                "cluster",
+                # "invCluster",
             ]:
-                decentral_app = DecentrallearnApp(
-                    rounds=i, topology_path=topo, prox_coeff=0, epochs=5, backdoor=False
-                )
-                client_results, train_result_futures, round_states, run_dir = (
-                    decentral_app.run()
-                )
-                app_result_tuples.append(
-                    (client_results, train_result_futures, round_states, i, run_dir)
-                )
+                for topo in [
+                    # "../create_topo/topology/topo_1.txt",
+                    # "../create_topo/topology/topo_2.txt",
+                    # "../create_topo/topology/topo_3.txt",
+                    # "../create_topo/topology/topo_4.txt",
+                    "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
+                    # "../create_topo/topology/topo_6.txt",
+                    "../create_topo/topology/topo_7.txt",
+                ]:
+                    decentral_app = DecentrallearnApp(
+                        rounds=i,
+                        topology_path=topo,
+                        prox_coeff=0,
+                        epochs=5,
+                        backdoor=False,
+                        aggregation_strategy=aggregation_strategy,
+                    )
+                    client_results, train_result_futures, round_states, run_dir = (
+                        decentral_app.run()
+                    )
+                    app_result_tuples.append(
+                        (client_results, train_result_futures, round_states, i, run_dir)
+                    )
 
             ######### Process and Save training results
             for result_tuple in app_result_tuples:

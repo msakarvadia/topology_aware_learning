@@ -89,18 +89,65 @@ def get_label_counts(
     return label_counts_per_worker
 
 
-def palce_data_with_node(
+def place_data_with_node(
     label_counts_per_worker: dict[int, list[int]],
     centrality_dict: dict[str, dict[int, float]],
-    indices: dict[int, list[int]],
     data: Dataset,
+    train_indices: dict[int, list[int]],
+    test_indices: dict[int, list[int]],
+    valid_indices: dict[int, list[int]],
+    # TODO (MS): include optional offset
+    # TODO (MS): include centrality metric to order data by
     num_clients: int,
+    random: bool = True,
 ) -> dict[int, Subset]:
-    """Funcation used to place data with client"""
-    # TODO (MS): need to think of strategy to enable smart data placement based on centrality metric
+    """Function used to place data with client"""
+    test_subsets = {idx: None for idx in range(num_clients)}
+    valid_subsets = {idx: None for idx in range(num_clients)}
+    if random:
+        train_subsets = {
+            idx: Subset(data, train_indices[idx]) for idx in range(num_clients)
+        }
+        if test_indices is not None:
+            print(f"{len(train_indices[0])=}, {len(test_indices[0])=}")
+            test_subsets = {idx: Subset(data, test_indices[idx]) for idx in client_ids}
+        if valid_indices is not None:
+            print(
+                f"{len(train_indices[0])=}, {len(test_indices[0])=}, {len(valid_indices[0])=}"
+            )
+            valid_subsets = {
+                idx: Subset(data, valid_indices[idx]) for idx in client_ids
+            }
 
-    subsets = {idx: Subset(data, indices[idx]) for idx in range(num_clients)}
-    return subsets
+    else:
+        # data placement based on centrality metric
+        centrality_list = [x for k, x in centrality_dict["degree"].items()]
+        sorted_nodes = [
+            x for _, x in sorted(zip(centrality_list, list(range(num_clients))))
+        ]
+        print(f"{sorted_nodes=}")
+
+        data_len_list = [len(x) for _, x in train_indices.items()]
+        sorted_data = [
+            x for _, x in sorted(zip(data_len_list, list(range(num_clients))))
+        ]
+        print(f"{sorted_data=}")
+
+        train_subsets = {
+            sorted_nodes[idx]: Subset(data, train_indices[sorted_data[idx]])
+            for idx in range(num_clients)
+        }
+        if test_indices is not None:
+            test_subsets = {
+                sorted_nodes[idx]: Subset(data, test_indices[sorted_data[idx]])
+                for idx in range(num_clients)
+            }
+        if valid_indices is not None:
+            valid_subsets = {
+                sorted_nodes[idx]: Subset(data, valid_indices[sorted_data[idx]])
+                for idx in range(num_clients)
+            }
+    return train_subsets, test_subsets, valid_subsets
 
 
 def create_centrality_dict(
@@ -193,7 +240,25 @@ def create_clients(
 
     centrality_dict = create_centrality_dict(topology)
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
+    label_counts_per_worker = get_label_counts(
+        num_clients=len(client_ids),
+        num_labels=num_labels,
+        subsets=train_subsets,
+    )
 
+    train_subsets, test_subsets, valid_subsets = place_data_with_node(
+        label_counts_per_worker,
+        centrality_dict,
+        data=train_data,
+        train_indices=train_indices,
+        test_indices=test_indices,
+        valid_indices=valid_indices,
+        num_clients=len(client_ids),
+        random=True,  # (MS): default behavior needs to be over turned in the args when making a client
+        # Need ofset parameter as well
+    )
+
+    """
     # test_subsets = valid_subsets = None
     test_subsets = {idx: None for idx in client_ids}
     valid_subsets = {idx: None for idx in client_ids}
@@ -209,6 +274,7 @@ def create_clients(
         valid_subsets = {
             idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
         }
+    """
 
     if backdoor:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()

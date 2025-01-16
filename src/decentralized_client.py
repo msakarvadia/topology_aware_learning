@@ -96,42 +96,48 @@ def place_data_with_node(
     train_indices: dict[int, list[int]],
     test_indices: dict[int, list[int]],
     valid_indices: dict[int, list[int]],
-    # TODO (MS): include optional offset
-    # TODO (MS): include centrality metric to order data by
     num_clients: int,
-    random: bool = True,
+    offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+    centrality_metric_data_placement: str = "degree",
+    random_data_placement: bool = True,
 ) -> dict[int, Subset]:
     """Function used to place data with client"""
     test_subsets = {idx: None for idx in range(num_clients)}
     valid_subsets = {idx: None for idx in range(num_clients)}
-    if random:
+    if random_data_placement:
+        print("RANDOM DATA PLACEMENT")
         train_subsets = {
             idx: Subset(data, train_indices[idx]) for idx in range(num_clients)
         }
         if test_indices is not None:
-            print(f"{len(train_indices[0])=}, {len(test_indices[0])=}")
             test_subsets = {idx: Subset(data, test_indices[idx]) for idx in client_ids}
         if valid_indices is not None:
-            print(
-                f"{len(train_indices[0])=}, {len(test_indices[0])=}, {len(valid_indices[0])=}"
-            )
             valid_subsets = {
                 idx: Subset(data, valid_indices[idx]) for idx in client_ids
             }
 
     else:
         # data placement based on centrality metric
-        centrality_list = [x for k, x in centrality_dict["degree"].items()]
+        print(
+            f"DATA PLACEMENT w/ {centrality_metric_data_placement=}, {offset_clients_data_placement=}"
+        )
+        centrality_list = [
+            x for k, x in centrality_dict[centrality_metric_data_placement].items()
+        ]
         sorted_nodes = [
             x for _, x in sorted(zip(centrality_list, list(range(num_clients))))
         ]
         print(f"{sorted_nodes=}")
 
+        # TODO(MS): in the future sort by something in addition to # of samples
         data_len_list = [len(x) for _, x in train_indices.items()]
         sorted_data = [
             x for _, x in sorted(zip(data_len_list, list(range(num_clients))))
         ]
         print(f"{sorted_data=}")
+        for i in range(offset_clients_data_placement):
+            temp = sorted_data.pop(0)
+            sorted_data.append(temp)
 
         train_subsets = {
             sorted_nodes[idx]: Subset(data, train_indices[sorted_data[idx]])
@@ -196,6 +202,9 @@ def create_clients(
     random_bd: bool = False,
     # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
     many_to_one: bool = True,
+    offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+    centrality_metric_data_placement: str = "degree",
+    random_data_placement: bool = True,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -254,7 +263,9 @@ def create_clients(
         test_indices=test_indices,
         valid_indices=valid_indices,
         num_clients=len(client_ids),
-        random=True,  # (MS): default behavior needs to be over turned in the args when making a client
+        offset_clients_data_placement=offset_clients_data_placement,  # experiment arg
+        centrality_metric_data_placement=centrality_metric_data_placement,  # experiment arg
+        random_data_placement=random_data_placement,  # experiment arg (MS): default behavior needs to be over turned in the args when making a client
         # Need ofset parameter as well
     )
 

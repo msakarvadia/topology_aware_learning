@@ -212,12 +212,29 @@ if __name__ == "__main__":
     parser.add_argument(
         "--random_bd",
         action="store_true",
-        help="By default flag is false and no backdoor triggers will be applied to the top left of an image. If you set this flag, backdoor triggers will randomly be set anywhere within an image.",
+        help="By default flag is false and backdoor triggers will be applied to the top left of an image. If you set this flag, backdoor triggers will randomly be set anywhere within an image.",
     )
     parser.add_argument(
         "--many_to_one",
         action="store_false",
         help="By default flag is true and all backdoored images will be assigned label=0. If you set this flag, each new label = (old_label + 1)% # of total labels (aka many to many labels). ",
+    )
+    parser.add_argument(
+        "--offset_clients_data_placement",
+        type=int,
+        default=0,
+        help="How many clients we want to offset data assignment by when assigning data to clients based on some metric",
+    )
+    parser.add_argument(
+        "--centrality_metric_data_placement",
+        type=str,
+        default="degree",
+        help="The centrality metric we want to use to assign data placement to the nodes by",
+    )
+    parser.add_argument(
+        "--non_random_data_placement",
+        action="store_false",
+        help="By default flag is true, and data will be assigned randomly to nodes. If you set this flag, then data will be placed via the above specified centrality metric.",
     )
 
     args = parser.parse_args()
@@ -356,6 +373,9 @@ if __name__ == "__main__":
         backdoor_node_idx=args.backdoor_node_idx,
         random_bd=args.random_bd,
         many_to_one=args.many_to_one,
+        offset_clients_data_placement=args.offset_clients_data_placement,
+        centrality_metric_data_placement=args.centrality_metric_data_placement,
+        random_data_placement=args.non_random_data_placement,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

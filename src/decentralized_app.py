@@ -100,6 +100,9 @@ class DecentrallearnApp:
         random_bd: bool = False,
         # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
         many_to_one: bool = True,
+        offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+        centrality_metric_data_placement: str = "degree",
+        random_data_placement: bool = True,
     ) -> None:
 
         # make the outdir
@@ -228,6 +231,9 @@ class DecentrallearnApp:
         if backdoor_node_idx >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
+        self.offset_clients_data_placement = offset_clients_data_placement
+        self.centrality_metric_data_placement = centrality_metric_data_placement
+        self.random_data_placement = random_data_placement
         self.clients = create_clients(
             num_clients,
             self.dataset,
@@ -245,6 +251,11 @@ class DecentrallearnApp:
             self.backdoor,
             self.backdoor_proportion,
             self.backdoor_node_idx,
+            self.random_bd,
+            self.many_to_one,
+            self.offset_clients_data_placement,
+            self.centrality_metric_data_placement,
+            self.random_data_placement,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology)

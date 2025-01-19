@@ -20,6 +20,7 @@ import networkx as nx
 from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
+from src.data import random_generator
 from src.data import backdoor_data
 
 from parsl.app.app import python_app
@@ -158,6 +159,7 @@ def place_data_with_node(
 
 def create_centrality_dict(
     topology: np.array,  # list[list[int]],
+    rng: Generator,
 ) -> dict[str, dict[int, float]]:
     print("Creating centrality dict")
     # convert np array to graph
@@ -172,11 +174,13 @@ def create_centrality_dict(
         if centrality_type == "cluster":
             cent = nx.degree_centrality(G)
         if centrality_type == "random":
-            random_list = np.random.dirichlet(np.ones(len(G)), size=1).squeeze()
+            generator = random_generator(rng)
+            random_list = generator.dirichlet(np.ones(len(G)))
+            # random_list = np.random.dirichlet(np.ones(len(G)), size=1).squeeze()
             cent = {}
             for i in range(len(G)):
                 cent[i] = random_list[i].item()
-            print(f"{cent=}")
+            # print(f"{cent=}")
         if centrality_type == "invCluster":
             cent = nx.degree_centrality(G)
             for k, v in cent.items():
@@ -253,7 +257,7 @@ def create_clients(
     )
     # print(f"{len(train_indices[0])=}")
 
-    centrality_dict = create_centrality_dict(topology)
+    centrality_dict = create_centrality_dict(topology, rng=rng)
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
     label_counts_per_worker = get_label_counts(
         num_clients=len(client_ids),
@@ -430,8 +434,22 @@ def centrality_module_avg(
         idx = n[1].idx
         weights.append(centrality_dict[centrality_metric][idx])
 
-    # normalize weights
-    weights = [i / sum(weights) for i in weights]
+    # print(f"pre-normalization {weights=}")
+    if softmax:
+
+        def softmax(x):
+            """Compute softmax values for each sets of scores in x."""
+            e_x = np.exp(x - np.max(x))
+            return e_x / e_x.sum()
+
+        weights = [x * 10 for x in weights]
+        weights = softmax(weights)
+
+    else:
+        # normalize weights
+        weights = [i / sum(weights) for i in weights]
+
+    # print(f"{weights=}")
 
     with torch.no_grad():
         avg_weights = OrderedDict()

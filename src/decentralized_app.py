@@ -263,7 +263,7 @@ class DecentrallearnApp:
             self.random_data_placement,
         )
 
-        self.centrality_dict = create_centrality_dict(self.topology)
+        self.centrality_dict = create_centrality_dict(self.topology, self.rng)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []

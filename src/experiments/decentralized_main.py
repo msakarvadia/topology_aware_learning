@@ -147,6 +147,7 @@ if __name__ == "__main__":
             "betCent",
             "cluster",
             "invCluster",
+            "random",
         ],
         help="Type of aggregation stretegy used to among neighboring nodes.",
     )
@@ -235,6 +236,11 @@ if __name__ == "__main__":
         "--non_random_data_placement",
         action="store_false",
         help="By default flag is true, and data will be assigned randomly to nodes. If you set this flag, then data will be placed via the above specified centrality metric.",
+    )
+    parser.add_argument(
+        "--softmax",
+        action="store_true",
+        help="By default flag is false, and aggregation coefficients will not be softmax (instead they will be normalized by dividing by sum of coefficients). If you set this flag, then aggregation coefficients will be normalized by a softmax.",
     )
 
     args = parser.parse_args()
@@ -376,6 +382,7 @@ if __name__ == "__main__":
         offset_clients_data_placement=args.offset_clients_data_placement,
         centrality_metric_data_placement=args.centrality_metric_data_placement,
         random_data_placement=args.non_random_data_placement,
+        softmax=args.softmax,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

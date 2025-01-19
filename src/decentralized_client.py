@@ -164,16 +164,22 @@ def create_centrality_dict(
     G = nx.from_numpy_array(topology)
 
     centrality_dict = {}
-    for centrality_type in ["degree", "betweenness", "cluster"]:
+    for centrality_type in ["degree", "betweenness", "cluster", "invCluster", "random"]:
         if centrality_type == "degree":
             cent = nx.degree_centrality(G)
         if centrality_type == "betweenness":
             cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
         if centrality_type == "cluster":
             cent = nx.degree_centrality(G)
+        if centrality_type == "random":
+            random_list = np.random.dirichlet(np.ones(len(G)), size=1).squeeze()
+            cent = {}
+            for i in range(len(G)):
+                cent[i] = random_list[i].item()
+            print(f"{cent=}")
         if centrality_type == "invCluster":
             cent = nx.degree_centrality(G)
-            for k, v in cent:
+            for k, v in cent.items():
                 cent[k] = 1 / v
         centrality_dict[centrality_type] = cent
 
@@ -415,7 +421,8 @@ def centrality_module_avg(
     # Grab centrality dict, centrality metric
     centrality_dict = kwargs["centrality_dict"]
     centrality_metric = kwargs["centrality_metric"]
-    print(f"{centrality_metric} aggregate round")
+    softmax = kwargs["softmax"]
+    print(f"{centrality_metric} aggregate round w/ {softmax=}")
 
     # get weights
     weights = []

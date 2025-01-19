@@ -103,6 +103,7 @@ class DecentrallearnApp:
         offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
         centrality_metric_data_placement: str = "degree",
         random_data_placement: bool = True,
+        softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
     ) -> None:
 
         # make the outdir
@@ -188,11 +189,15 @@ class DecentrallearnApp:
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
+        self.softmax = softmax
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "random":
+            self.centrality_metric = "random"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "invCluster":
-            self.centrality_metric = "cluster"
+            self.centrality_metric = "invCluster"
             self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
@@ -437,6 +442,7 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
+                softmax=self.softmax,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

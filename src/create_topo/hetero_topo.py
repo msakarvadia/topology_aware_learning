@@ -20,15 +20,15 @@ def mk_hetero_topos() -> tuple[list[str], list[list[int]]]:
     graphs = {}
 
     g = nx.barabasi_albert_graph(n=100, m=2)
-    graphs["barabasi_albert"] = g
+    graphs["barabasi_albert_high"] = g
     # graphs.append(g)
 
     g = nx.barabasi_albert_graph(n=66, m=2)
-    graphs["barabasi_albert"] = g
+    graphs["barabasi_albert_med"] = g
     # graphs.append(g)
 
     g = nx.barabasi_albert_graph(n=33, m=2)
-    graphs["barabasi_albert"] = g
+    graphs["barabasi_albert_low"] = g
     # graphs.append(g)
 
     paths = []

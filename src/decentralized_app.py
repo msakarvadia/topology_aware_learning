@@ -132,6 +132,9 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
+        if dataset == "tiny_mem":
+            self.dataset = DataChoices.TINYMEM
+            self.num_labels = 1
 
         # Initialize logging
         logging.basicConfig(

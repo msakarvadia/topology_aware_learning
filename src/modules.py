@@ -8,6 +8,8 @@ from torch import nn
 from torch.nn import functional as F  # noqa: N812
 from torch.utils.data import Dataset
 from torchvision import transforms
+from transformers import GPT2Config, GPT2LMHeadModel
+import math
 
 from src.types import DataChoices
 
@@ -96,11 +98,147 @@ def create_model(data: DataChoices) -> nn.Module:
         return CifarModule(100)
     elif name in ("fmnist", "mnist"):
         return MnistModule()
+    elif name in ("tiny_mem"):
+        pad_token_id = 13
+        bos_token_id = 10
+        eos_token_id = 11
+        configuration = GPT2Config(
+            vocab_size=14,  # args.vocab_size,
+            n_layer=4,  # args.n_layers,  # 1,2,4,8,16
+            n_head=4,
+            n_embd=128,  # args.n_embed,
+            n_positions=650,  # args.max_ctx,
+            bos_token_id=bos_token_id,
+            eos_token_id=eos_token_id,
+            pad_token_id=pad_token_id,
+            use_cache=False,
+            hidden_states=False,
+            output_attentions=False,
+            activation_function="relu",
+            attn_pdrop=0,
+            resid_pdrop=0,
+            embd_pdrop=0,
+            initializer_range=0.8 / math.sqrt(128),  # 0.8 / sqrt(d_model)
+        )
+        return GPT2LMHeadModel(configuration)
     else:
         raise ValueError(
             f'Unknown dataset "{data.value}". Supported options are '
-            "'cifar10', 'cifar100', 'fmnist', and 'mnist'.",
+            "'cifar10', 'cifar100', 'fmnist', 'tiny_mem' and 'mnist'.",
         )
+
+
+def tokenize_and_pad(char_list, pad=True, max_ctx=650):
+    tokenized_seq = []
+    for i in char_list:
+        if i == "^":
+            tokenized_seq.append(torch.tensor(10, dtype=int))
+        if i == "$":
+            tokenized_seq.append(torch.tensor(11))
+        if i == " ":
+            tokenized_seq.append(torch.tensor(12))
+        if i == "0":
+            tokenized_seq.append(torch.tensor(0))
+        if i == "1":
+            tokenized_seq.append(torch.tensor(1))
+        if i == "2":
+            tokenized_seq.append(torch.tensor(2))
+        if i == "3":
+            tokenized_seq.append(torch.tensor(3))
+        if i == "4":
+            tokenized_seq.append(torch.tensor(4))
+        if i == "5":
+            tokenized_seq.append(torch.tensor(5))
+        if i == "6":
+            tokenized_seq.append(torch.tensor(6))
+        if i == "7":
+            tokenized_seq.append(torch.tensor(7))
+        if i == "8":
+            tokenized_seq.append(torch.tensor(8))
+        if i == "9":
+            tokenized_seq.append(torch.tensor(9))
+
+    if pad == True:
+        while len(tokenized_seq) < max_ctx:
+            tokenized_seq.append(torch.tensor(13))
+
+    return tokenized_seq
+
+
+def detokenize(tensor):
+    detokenized_seq = ""
+    for i in tensor:
+        if i == 10:
+            detokenized_seq += "^"  # .append(torch.tensor(10, dtype=int))
+        if i == 11:
+            detokenized_seq += "$"  # .append(torch.tensor(11))
+        if i == 12:
+            detokenized_seq += " "  # .append(torch.tensor(12))
+        if i == 13:
+            detokenized_seq += "_"  # .append(torch.tensor(13))
+        if i == 0:
+            detokenized_seq += "0"  # .append(torch.tensor(0))
+        if i == 1:
+            detokenized_seq += "1"  # .append(torch.tensor(1))
+        if i == 2:
+            detokenized_seq += "2"  # .append(torch.tensor(2))
+        if i == 3:
+            detokenized_seq += "3"  # .append(torch.tensor(3))
+        if i == 4:
+            detokenized_seq += "4"  # .append(torch.tensor(4))
+        if i == 5:
+            detokenized_seq += "5"  # .append(torch.tensor(5))
+        if i == 6:
+            detokenized_seq += "6"  # .append(torch.tensor(6))
+        if i == 7:
+            detokenized_seq += "7"  # .append(torch.tensor(7))
+        if i == 8:
+            detokenized_seq += "8"  # .append(torch.tensor(8))
+        if i == 9:
+            detokenized_seq += "9"  # .append(torch.tensor(9))
+
+    return detokenized_seq
+
+
+def seven_function(starting_val):
+    # 7+x
+    return 7 + starting_val
+
+
+def generate_seq(
+    func, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
+):
+    data = []
+    # noise_amt = 0
+
+    for i in range(num_examples):
+
+        start = 0 + i
+        vector = []
+        # This is how we generate noise for each sample
+        # noise_amt = randrange(-noise_range, noise_range)
+        for j in range(length):
+            vector.append(func(start))
+            start = func(start)
+
+        # adding noise vector to the clean datapoints
+        if noise:
+            noise_vector = choices(
+                population=[0, -1, 1], weights=[0.9, 0.05, 0.05], k=length
+            )
+            vector = list(map(add, vector, noise_vector))
+
+        string = " ".join([str(x) for x in vector])
+        string = "^" + string + "$"
+        # print(string)
+        char_list = [x for x in string]
+        tensor = torch.Tensor(tokenize_and_pad(char_list, max_ctx=max_ctx))
+        data.append(tensor)
+
+    dataset = torch.stack(data, dim=0).to(device)
+    # dataset = dataset.to(torch.int64)
+
+    return dataset
 
 
 def load_data(
@@ -135,5 +273,35 @@ def load_data(
         return torchvision.datasets.FashionMNIST(**kwargs)
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
+    elif name == "tiny_mem":
+        data = generate_seq(
+            func=seven_function,
+            length=100,
+            noise=0,
+            num_examples=10000,
+            modulo=13,
+            device="cpu",  # data will be re-assigned within a parsl training task
+            max_ctx=650,
+        )
+
+        class CustomLMDataset(Dataset):
+            def __init__(self, seq_list, seq_annotations):
+                self.data = seq_list  # these are the sequences themselves
+                self.seq_type = (
+                    seq_annotations  # these are the labels for the data distribution
+                )
+
+            def __len__(self):
+                return len(self.seq_type)
+
+            def __getitem__(self, idx):
+                seq = self.data[idx]
+                label = self.seq_type[idx]
+
+                return seq, label
+
+        # NOTE(MS): The labels need to be in assending order from 0
+        dataset = CustomLMDataset(data, [0] * len(data))
+        return dataset
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")

@@ -10,6 +10,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from transformers import GPT2Config, GPT2LMHeadModel
 import math
+import os
 
 from src.types import DataChoices
 
@@ -264,6 +265,23 @@ def split_data(data, num_examples, num_test):
     return train_data.to(torch.int64), test_data.to(torch.int64)
 
 
+class CustomLMDataset(Dataset):
+    def __init__(self, seq_list, seq_annotations):
+        self.data = seq_list  # these are the sequences themselves
+        self.seq_type = (
+            seq_annotations  # these are the labels for the data distribution
+        )
+
+    def __len__(self):
+        return len(self.seq_type)
+
+    def __getitem__(self, idx):
+        seq = self.data[idx]
+        label = self.seq_type[idx]
+
+        return seq, label
+
+
 def load_data(
     data_name: DataChoices,
     root: pathlib.Path,
@@ -407,6 +425,15 @@ def load_data(
         test_sets = []
         test_labels = []
         label = 0
+        data_path_name = f"data/tiny_mem/{tiny_mem_num_labels}_data.pt"
+        os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
+        if os.path.isfile(data_path_name):
+            data = torch.load(data_path_name, map_location=torch.device("cpu"))
+            if train:
+                return CustomLMDataset(data["train_data"], data["train_labels"])
+            if not train:
+                return CustomLMDataset(data["test_data"], data["test_labels"])
+
         for prime in primes:
             print(f"{label=}")
             data = generate_seq(
@@ -427,31 +454,22 @@ def load_data(
 
         train_data = torch.concat(train_sets, dim=0)
         test_data = torch.concat(test_sets, dim=0)
+        torch.save(
+            {
+                "train_data": train_data,
+                "train_labels": train_labels,
+                "test_data": test_data,
+                "test_labels": test_labels,
+            },
+            data_path_name,
+        )
         print(f"{train_data.shape=}, {test_data.shape=}")
-
-        class CustomLMDataset(Dataset):
-            def __init__(self, seq_list, seq_annotations):
-                self.data = seq_list  # these are the sequences themselves
-                self.seq_type = (
-                    seq_annotations  # these are the labels for the data distribution
-                )
-
-            def __len__(self):
-                return len(self.seq_type)
-
-            def __getitem__(self, idx):
-                seq = self.data[idx]
-                label = self.seq_type[idx]
-
-                return seq, label
 
         if train:
             # NOTE(MS): The labels need to be in assending order from 0
-            dataset = CustomLMDataset(train_data, train_labels)
-            return dataset
+            return CustomLMDataset(train_data, train_labels)
         else:
             # NOTE(MS): The labels need to be in assending order from 0
-            dataset = CustomLMDataset(test_data, test_labels)
-            return dataset
+            return CustomLMDataset(test_data, test_labels)
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")

@@ -396,6 +396,7 @@ class DecentrallearnApp:
 
             print(f"{client.idx=}")
             # print(f"{client.idx=}, {fed_prox_neighbors=}")
+            print(f"{self.dataset=}")
             future = job(
                 train_input,
                 round_idx,
@@ -406,6 +407,7 @@ class DecentrallearnApp:
                 # self.device,
                 self.seed,
                 self.backdoor,
+                self.dataset,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")

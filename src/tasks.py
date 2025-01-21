@@ -28,6 +28,7 @@ def no_local_train(
     # device: torch.device,
     seed: int,
     backdoor: bool = False,
+    dataset: DataChoices = None,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -50,6 +51,7 @@ def no_local_train(
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -76,6 +78,7 @@ def no_local_train(
             batch_size,
             # device,
             seed,
+            dataset,
         )
 
         epoch_results.append(
@@ -107,6 +110,7 @@ def local_train(
     # device: torch.device,
     seed: int,
     backdoor: bool = False,
+    dataset: DataChoices = None,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -122,13 +126,9 @@ def local_train(
     Returns:
         List of results that record the training history.
     """
-    # from datetime import datetime
-    # import torch
-    # from torch.utils.data import DataLoader
-    # from torch.nn import functional as F  # noqa: N812
-
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         print(f"{seed=}")
@@ -152,8 +152,13 @@ def local_train(
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
-            preds = client.model(inputs)
-            loss = F.cross_entropy(preds, targets)
+            if dataset_name == "tiny_mem":
+                model_output = client.model(inputs, labels=inputs)
+                loss = model_output.loss
+
+            else:
+                preds = client.model(inputs)
+                loss = F.cross_entropy(preds, targets)
 
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
@@ -187,6 +192,7 @@ def local_train(
             round_idx,
             batch_size,
             seed,
+            dataset,
         )
 
         if backdoor:
@@ -232,19 +238,34 @@ def test_model(
     batch_size: int,
     # device: torch.device,
     seed: int,
+    dataset: DataChoices = None,
 ) -> Result:
     """Evaluate a model."""
-    # from datetime import datetime
-    # from sklearn.metrics import classification_report
-    # import torch
-    # from torch.utils.data import DataLoader
-    # from torch.nn import functional as F  # noqa: N812
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         torch.manual_seed(seed)
+
+    if dataset_name == "tiny_mem":
+        model.eval()
+        total_loss, n_batches = 0.0, 0
+        with torch.no_grad():
+            model.to(device)
+            loader = DataLoader(data, batch_size=batch_size)
+            for batch in loader:
+                inputs, targets = batch
+                inputs, targets = inputs.to(device), targets.to(device)
+                model_outputs = model(inputs, labels=inputs)
+                loss = model_outputs.loss
+                total_loss += loss.item()
+                n_batches += 1
+        res: Result = {
+            "test_loss": total_loss / n_batches,
+        }
+        return res
 
     model.eval()
     total_loss, total_acc, n_batches = 0.0, 0.0, 0

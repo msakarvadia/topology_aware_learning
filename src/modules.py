@@ -232,7 +232,9 @@ def generate_seq(
         string = "^" + string + "$"
         # print(string)
         char_list = [x for x in string]
-        tensor = torch.Tensor(tokenize_and_pad(char_list, max_ctx=max_ctx))
+        tensor = torch.Tensor(tokenize_and_pad(char_list, max_ctx=max_ctx)).to(
+            torch.int64
+        )
         data.append(tensor)
 
     dataset = torch.stack(data, dim=0).to(device)

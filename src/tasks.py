@@ -17,6 +17,21 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
+def accuracy(inputs, logits):
+    # Shift so that tokens < n predict n
+    shift_labels = inputs[..., 1:].contiguous()
+    shift_logits = logits[..., :-1, :].contiguous()
+
+    # converts logits to predictions
+    predictions = torch.argmax(shift_logits, axis=-1)
+
+    # Now compute accuracy
+    N = torch.numel(predictions)
+    accuracy = (shift_labels == predictions).sum() / N
+
+    return accuracy.cpu().item()
+
+
 @python_app(executors=["decentral_train"])
 def no_local_train(
     future: tuple(list[Result], DecentralClient),
@@ -146,8 +161,9 @@ def local_train(
         start_time = time.time()
 
         epoch_results = []
-        n_batches = 0
         running_loss = 0.0
+        running_perp = 0.0
+        running_acc = 0.0
 
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
@@ -155,10 +171,14 @@ def local_train(
             if dataset_name == "tiny_mem":
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss
+                running_perp += torch.exp(loss).cpu().item()
+                running_acc += accuracy(inputs, model_output.logits)
 
             else:
                 preds = client.model(inputs)
                 loss = F.cross_entropy(preds, targets)
+
+            running_loss += loss.item()
 
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
@@ -176,9 +196,6 @@ def local_train(
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
-
-            running_loss += loss.item()
-            n_batches += 1
 
         end_time = time.time()
         avg_time_per_epoch += end_time - start_time
@@ -219,7 +236,9 @@ def local_train(
                 "round_idx": round_idx,
                 "epoch": epoch,
                 "data_size": len(client.train_data),
-                "train_loss": running_loss / n_batches,
+                "train_loss": running_loss / len(loader),
+                "train_perp": running_perp / len(loader),
+                "train_acc": running_acc / len(loader),
             }
             | global_test_result,
         )
@@ -251,7 +270,7 @@ def test_model(
 
     if dataset_name == "tiny_mem":
         model.eval()
-        total_loss, n_batches = 0.0, 0
+        total_loss, total_perp, total_acc = 0.0, 0.0, 0.0
         with torch.no_grad():
             model.to(device)
             loader = DataLoader(data, batch_size=batch_size)
@@ -261,9 +280,12 @@ def test_model(
                 model_outputs = model(inputs, labels=inputs)
                 loss = model_outputs.loss
                 total_loss += loss.item()
-                n_batches += 1
+                total_perp += torch.exp(loss).cpu().item()
+                total_acc += accuracy(inputs, model_outputs.logits)
         res: Result = {
-            "test_loss": total_loss / n_batches,
+            "test_loss": total_loss / len(loader),
+            "test_perp": total_perp / len(loader),
+            "test_acc": total_acc / len(loader),
         }
         return res
 

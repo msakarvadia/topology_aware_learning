@@ -146,7 +146,7 @@ class DecentrallearnApp:
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
         self.train_test_val = train_test_val
-        print(f"{train_test_val=}")
+        # print(f"{train_test_val=}")
         if self.seed is not None:
             torch.manual_seed(seed)
 
@@ -396,7 +396,7 @@ class DecentrallearnApp:
 
             print(f"{client.idx=}")
             # print(f"{client.idx=}, {fed_prox_neighbors=}")
-            print(f"{self.dataset=}")
+            # print(f"{self.dataset=}")
             future = job(
                 train_input,
                 round_idx,

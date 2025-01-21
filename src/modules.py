@@ -243,6 +243,22 @@ def generate_seq(
     return dataset
 
 
+def split_data(data, num_examples, num_test):
+    """how we split the sequential data into trian and test sets"""
+    DATA_SEED = 598
+    torch.manual_seed(DATA_SEED)
+    indices = torch.randperm(num_examples)
+    cutoff = num_examples - num_test
+
+    train_indices = indices[:cutoff]
+    test_indices = indices[cutoff:]
+
+    train_data = data[train_indices]
+    test_data = data[test_indices]
+
+    return train_data.to(torch.int64), test_data.to(torch.int64)
+
+
 def load_data(
     data_name: DataChoices,
     root: pathlib.Path,
@@ -276,15 +292,18 @@ def load_data(
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
     elif name == "tiny_mem":
+        num_examples = 10000
+        num_test = 1000
         data = generate_seq(
             func=seven_function,
             length=100,
             noise=0,
-            num_examples=10000,
+            num_examples=num_examples,
             modulo=13,
             device="cpu",  # data will be re-assigned within a parsl training task
             max_ctx=650,
         )
+        train_data, test_data = split_data(data, num_examples, num_test)
 
         class CustomLMDataset(Dataset):
             def __init__(self, seq_list, seq_annotations):
@@ -302,8 +321,13 @@ def load_data(
 
                 return seq, label
 
-        # NOTE(MS): The labels need to be in assending order from 0
-        dataset = CustomLMDataset(data, [0] * len(data))
-        return dataset
+        if train:
+            # NOTE(MS): The labels need to be in assending order from 0
+            dataset = CustomLMDataset(train_data, [0] * len(train_data))
+            return dataset
+        else:
+            # NOTE(MS): The labels need to be in assending order from 0
+            dataset = CustomLMDataset(test_data, [0] * len(test_data))
+            return dataset
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")

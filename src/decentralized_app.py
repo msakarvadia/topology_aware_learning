@@ -113,6 +113,11 @@ class DecentrallearnApp:
         args.pop("log_dir", None)
         args.pop("rounds", None)
         arg_path = "_".join(map(str, list(args.values())))
+
+        # NOTE(MS): don't support backdoors in language modeling tasks
+        if backdoor and dataset == "tiny_mem":
+            raise ValueError("We don't support backdooring language modeling task")
+
         # Need to remove any . or / to ensure a single continuous file path
         arg_path = arg_path.replace(".", "")
         arg_path = arg_path.replace("/", "")

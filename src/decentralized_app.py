@@ -104,6 +104,7 @@ class DecentrallearnApp:
         centrality_metric_data_placement: str = "degree",
         random_data_placement: bool = True,
         softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
+        tiny_mem_num_labels: int = 50,
     ) -> None:
 
         # make the outdir
@@ -134,7 +135,7 @@ class DecentrallearnApp:
             self.num_labels = 10
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
-            self.num_labels = 50
+            self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
         logging.basicConfig(
@@ -161,12 +162,14 @@ class DecentrallearnApp:
             root,
             train=True,
             download=True,
+            tiny_mem_num_labels=tiny_mem_num_labels,
         )
         self.test_data = load_data(
             self.dataset,
             root,
             train=False,
             download=True,
+            tiny_mem_num_labels=tiny_mem_num_labels,
         )
 
         self.backdoor = backdoor

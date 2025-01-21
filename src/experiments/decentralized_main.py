@@ -135,6 +135,14 @@ if __name__ == "__main__":
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(
+        "--tiny_mem_num_labels",
+        type=int,
+        default=50,
+        choices=range(1, 101),
+        metavar="[1-100]",
+        help="# of different training data distributions to use for tiny mem",
+    )
+    parser.add_argument(
         "--aggregation_strategy",
         type=str,
         default="unweighted",
@@ -383,6 +391,7 @@ if __name__ == "__main__":
         centrality_metric_data_placement=args.centrality_metric_data_placement,
         random_data_placement=args.non_random_data_placement,
         softmax=args.softmax,
+        tiny_mem_num_labels=args.tiny_mem_num_labels,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

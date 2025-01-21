@@ -134,7 +134,7 @@ class DecentrallearnApp:
             self.num_labels = 10
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
-            self.num_labels = 1
+            self.num_labels = 50
 
         # Initialize logging
         logging.basicConfig(

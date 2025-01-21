@@ -205,8 +205,13 @@ def seven_function(starting_val):
     return 7 + starting_val
 
 
+def multiply_function(starting_val, coeff, modulo):
+    # 7+x
+    return (coeff * starting_val) % modulo
+
+
 def generate_seq(
-    func, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
+    coeff, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
 ):
     data = []
     # noise_amt = 0
@@ -218,8 +223,8 @@ def generate_seq(
         # This is how we generate noise for each sample
         # noise_amt = randrange(-noise_range, noise_range)
         for j in range(length):
-            vector.append(func(start))
-            start = func(start)
+            start = multiply_function(start, coeff, modulo)
+            vector.append(start)
 
         # adding noise vector to the clean datapoints
         if noise:
@@ -292,18 +297,86 @@ def load_data(
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
     elif name == "tiny_mem":
+        primes = [
+            2,
+            3,
+            5,
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47,
+            53,
+            59,
+            61,
+            67,
+            71,
+            73,
+            79,
+            83,
+            89,
+            97,
+            101,
+            103,
+            107,
+            109,
+            113,
+            127,
+            131,
+            137,
+            139,
+            149,
+            151,
+            157,
+            163,
+            167,
+            173,
+            179,
+            181,
+            191,
+            193,
+            197,
+            199,
+            211,
+            223,
+            227,
+            229,
+        ]  # 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397, 401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499, 503, 509, 521, 523, 541]
         num_examples = 10000
         num_test = 1000
-        data = generate_seq(
-            func=seven_function,
-            length=100,
-            noise=0,
-            num_examples=num_examples,
-            modulo=13,
-            device="cpu",  # data will be re-assigned within a parsl training task
-            max_ctx=650,
-        )
-        train_data, test_data = split_data(data, num_examples, num_test)
+        train_sets = []
+        train_labels = []
+        test_sets = []
+        test_labels = []
+        label = 0
+        for prime in primes:
+            print(f"{label=}")
+            data = generate_seq(
+                coeff=7,
+                length=100,
+                noise=0,
+                num_examples=num_examples,
+                modulo=13,
+                device="cpu",  # data will be re-assigned within a parsl training task
+                max_ctx=650,
+            )
+            train_data, test_data = split_data(data, num_examples, num_test)
+            train_sets.append(train_data)
+            train_labels += [label] * (num_examples - num_test)
+            test_sets.append(test_data)
+            test_labels += [label] * (num_test)
+            label += 1
+
+        train_data = torch.concat(train_sets, dim=0)
+        test_data = torch.concat(test_sets, dim=0)
+        print(f"{train_data.shape=}, {test_data.shape=}")
 
         class CustomLMDataset(Dataset):
             def __init__(self, seq_list, seq_annotations):
@@ -323,11 +396,11 @@ def load_data(
 
         if train:
             # NOTE(MS): The labels need to be in assending order from 0
-            dataset = CustomLMDataset(train_data, [0] * len(train_data))
+            dataset = CustomLMDataset(train_data, train_labels)
             return dataset
         else:
             # NOTE(MS): The labels need to be in assending order from 0
-            dataset = CustomLMDataset(test_data, [0] * len(test_data))
+            dataset = CustomLMDataset(test_data, test_labels)
             return dataset
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")

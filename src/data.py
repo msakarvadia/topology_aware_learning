@@ -228,7 +228,7 @@ def federated_split(
         for w in range(num_workers):
             if worker_samples[w] < samples_per_worker[w]:
                 try:
-                    print(f"{w=}, {label=}")
+                    # print(f"{w=}, {label=}")
                     probs.append(label_probs_per_worker[w][label])
                     temp_workers.append(w)
                 except IndexError as err:

@@ -26,3 +26,5 @@ class DataChoices(enum.Enum):
     """FMNIST dataset."""
     MNIST = "mnist"
     """MNIST dataset."""
+    TINYMEM = "tiny_mem"
+    """MNIST dataset."""

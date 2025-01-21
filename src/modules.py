@@ -8,6 +8,9 @@ from torch import nn
 from torch.nn import functional as F  # noqa: N812
 from torch.utils.data import Dataset
 from torchvision import transforms
+from transformers import GPT2Config, GPT2LMHeadModel
+import math
+import os
 
 from src.types import DataChoices
 
@@ -96,11 +99,187 @@ def create_model(data: DataChoices) -> nn.Module:
         return CifarModule(100)
     elif name in ("fmnist", "mnist"):
         return MnistModule()
+    elif name in ("tiny_mem"):
+        pad_token_id = 13
+        bos_token_id = 10
+        eos_token_id = 11
+        configuration = GPT2Config(
+            vocab_size=14,  # args.vocab_size,
+            n_layer=4,  # args.n_layers,  # 1,2,4,8,16
+            n_head=4,
+            n_embd=128,  # args.n_embed,
+            n_positions=650,  # args.max_ctx,
+            bos_token_id=bos_token_id,
+            eos_token_id=eos_token_id,
+            pad_token_id=pad_token_id,
+            use_cache=False,
+            hidden_states=False,
+            output_attentions=False,
+            activation_function="relu",
+            attn_pdrop=0,
+            resid_pdrop=0,
+            embd_pdrop=0,
+            initializer_range=0.8 / math.sqrt(128),  # 0.8 / sqrt(d_model)
+        )
+        return GPT2LMHeadModel(configuration)
     else:
         raise ValueError(
             f'Unknown dataset "{data.value}". Supported options are '
-            "'cifar10', 'cifar100', 'fmnist', and 'mnist'.",
+            "'cifar10', 'cifar100', 'fmnist', 'tiny_mem' and 'mnist'.",
         )
+
+
+def tokenize_and_pad(char_list, pad=True, max_ctx=650):
+    tokenized_seq = []
+    for i in char_list:
+        if i == "^":
+            tokenized_seq.append(torch.tensor(10, dtype=int))
+        if i == "$":
+            tokenized_seq.append(torch.tensor(11))
+        if i == " ":
+            tokenized_seq.append(torch.tensor(12))
+        if i == "0":
+            tokenized_seq.append(torch.tensor(0))
+        if i == "1":
+            tokenized_seq.append(torch.tensor(1))
+        if i == "2":
+            tokenized_seq.append(torch.tensor(2))
+        if i == "3":
+            tokenized_seq.append(torch.tensor(3))
+        if i == "4":
+            tokenized_seq.append(torch.tensor(4))
+        if i == "5":
+            tokenized_seq.append(torch.tensor(5))
+        if i == "6":
+            tokenized_seq.append(torch.tensor(6))
+        if i == "7":
+            tokenized_seq.append(torch.tensor(7))
+        if i == "8":
+            tokenized_seq.append(torch.tensor(8))
+        if i == "9":
+            tokenized_seq.append(torch.tensor(9))
+
+    if pad == True:
+        while len(tokenized_seq) < max_ctx:
+            tokenized_seq.append(torch.tensor(13))
+
+    return tokenized_seq
+
+
+def detokenize(tensor):
+    detokenized_seq = ""
+    for i in tensor:
+        if i == 10:
+            detokenized_seq += "^"  # .append(torch.tensor(10, dtype=int))
+        if i == 11:
+            detokenized_seq += "$"  # .append(torch.tensor(11))
+        if i == 12:
+            detokenized_seq += " "  # .append(torch.tensor(12))
+        if i == 13:
+            detokenized_seq += "_"  # .append(torch.tensor(13))
+        if i == 0:
+            detokenized_seq += "0"  # .append(torch.tensor(0))
+        if i == 1:
+            detokenized_seq += "1"  # .append(torch.tensor(1))
+        if i == 2:
+            detokenized_seq += "2"  # .append(torch.tensor(2))
+        if i == 3:
+            detokenized_seq += "3"  # .append(torch.tensor(3))
+        if i == 4:
+            detokenized_seq += "4"  # .append(torch.tensor(4))
+        if i == 5:
+            detokenized_seq += "5"  # .append(torch.tensor(5))
+        if i == 6:
+            detokenized_seq += "6"  # .append(torch.tensor(6))
+        if i == 7:
+            detokenized_seq += "7"  # .append(torch.tensor(7))
+        if i == 8:
+            detokenized_seq += "8"  # .append(torch.tensor(8))
+        if i == 9:
+            detokenized_seq += "9"  # .append(torch.tensor(9))
+
+    return detokenized_seq
+
+
+def seven_function(starting_val):
+    # 7+x
+    return 7 + starting_val
+
+
+def multiply_function(starting_val, coeff, modulo):
+    # 7+x
+    return (coeff * starting_val) % modulo
+
+
+def generate_seq(
+    coeff, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
+):
+    data = []
+    # noise_amt = 0
+
+    for i in range(num_examples):
+
+        start = 0 + i
+        vector = []
+        # This is how we generate noise for each sample
+        # noise_amt = randrange(-noise_range, noise_range)
+        for j in range(length):
+            start = multiply_function(start, coeff, modulo)
+            vector.append(start)
+
+        # adding noise vector to the clean datapoints
+        if noise:
+            noise_vector = choices(
+                population=[0, -1, 1], weights=[0.9, 0.05, 0.05], k=length
+            )
+            vector = list(map(add, vector, noise_vector))
+
+        string = " ".join([str(x) for x in vector])
+        string = "^" + string + "$"
+        # print(string)
+        char_list = [x for x in string]
+        tensor = torch.Tensor(tokenize_and_pad(char_list, max_ctx=max_ctx)).to(
+            torch.int64
+        )
+        data.append(tensor)
+
+    dataset = torch.stack(data, dim=0).to(device)
+    # dataset = dataset.to(torch.int64)
+
+    return dataset
+
+
+def split_data(data, num_examples, num_test):
+    """how we split the sequential data into trian and test sets"""
+    DATA_SEED = 598
+    torch.manual_seed(DATA_SEED)
+    indices = torch.randperm(num_examples)
+    cutoff = num_examples - num_test
+
+    train_indices = indices[:cutoff]
+    test_indices = indices[cutoff:]
+
+    train_data = data[train_indices]
+    test_data = data[test_indices]
+
+    return train_data.to(torch.int64), test_data.to(torch.int64)
+
+
+class CustomLMDataset(Dataset):
+    def __init__(self, seq_list, seq_annotations):
+        self.data = seq_list  # these are the sequences themselves
+        self.seq_type = (
+            seq_annotations  # these are the labels for the data distribution
+        )
+
+    def __len__(self):
+        return len(self.seq_type)
+
+    def __getitem__(self, idx):
+        seq = self.data[idx]
+        label = self.seq_type[idx]
+
+        return seq, label
 
 
 def load_data(
@@ -108,6 +287,7 @@ def load_data(
     root: pathlib.Path,
     train: bool,
     download: bool = False,
+    tiny_mem_num_labels: int = 50,
 ) -> Dataset:
     """Load dataset for training.
 
@@ -135,5 +315,161 @@ def load_data(
         return torchvision.datasets.FashionMNIST(**kwargs)
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
+    elif name == "tiny_mem":
+        primes = [
+            2,
+            3,
+            5,
+            7,
+            11,
+            13,
+            17,
+            19,
+            23,
+            29,
+            31,
+            37,
+            41,
+            43,
+            47,
+            53,
+            59,
+            61,
+            67,
+            71,
+            73,
+            79,
+            83,
+            89,
+            97,
+            101,
+            103,
+            107,
+            109,
+            113,
+            127,
+            131,
+            137,
+            139,
+            149,
+            151,
+            157,
+            163,
+            167,
+            173,
+            179,
+            181,
+            191,
+            193,
+            197,
+            199,
+            211,
+            223,
+            227,
+            229,
+            233,
+            239,
+            241,
+            251,
+            257,
+            263,
+            269,
+            271,
+            277,
+            281,
+            283,
+            293,
+            307,
+            311,
+            313,
+            317,
+            331,
+            337,
+            347,
+            349,
+            353,
+            359,
+            367,
+            373,
+            379,
+            383,
+            389,
+            397,
+            401,
+            409,
+            419,
+            421,
+            431,
+            433,
+            439,
+            443,
+            449,
+            457,
+            461,
+            463,
+            467,
+            479,
+            487,
+            491,
+            499,
+            503,
+            509,
+            521,
+            523,
+            541,
+        ][0:tiny_mem_num_labels]
+        num_examples = 10000
+        num_test = 1000
+        train_sets = []
+        train_labels = []
+        test_sets = []
+        test_labels = []
+        label = 0
+        data_path_name = f"data/tiny_mem/{tiny_mem_num_labels}_data.pt"
+        os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
+        if os.path.isfile(data_path_name):
+            data = torch.load(data_path_name, map_location=torch.device("cpu"))
+            if train:
+                return CustomLMDataset(data["train_data"], data["train_labels"])
+            if not train:
+                return CustomLMDataset(data["test_data"], data["test_labels"])
+
+        for prime in primes:
+            print(f"{label=}")
+            data = generate_seq(
+                coeff=7,
+                length=100,
+                noise=0,
+                num_examples=num_examples,
+                modulo=16381,
+                device="cpu",  # data will be re-assigned within a parsl training task
+                max_ctx=650,
+            )
+            train_data, test_data = split_data(data, num_examples, num_test)
+            train_sets.append(train_data)
+            train_labels += [label] * (num_examples - num_test)
+            test_sets.append(test_data)
+            test_labels += [label] * (num_test)
+            label += 1
+
+        train_data = torch.concat(train_sets, dim=0)
+        test_data = torch.concat(test_sets, dim=0)
+        torch.save(
+            {
+                "train_data": train_data,
+                "train_labels": train_labels,
+                "test_data": test_data,
+                "test_labels": test_labels,
+            },
+            data_path_name,
+        )
+        print(f"{train_data.shape=}, {test_data.shape=}")
+
+        if train:
+            # NOTE(MS): The labels need to be in assending order from 0
+            return CustomLMDataset(train_data, train_labels)
+        else:
+            # NOTE(MS): The labels need to be in assending order from 0
+            return CustomLMDataset(test_data, test_labels)
     else:
         raise ValueError(f"Unknown dataset: {data_name}.")

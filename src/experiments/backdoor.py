@@ -143,6 +143,7 @@ if __name__ == "__main__":
 
     start = time.time()
     # apps = {}
+    model_count = 0  # number of models in total created decentral Apps
     for i in range(1, args.rounds + 1):
         # only submit job if round number is a multiple of checkpoint every
         if i % args.checkpoint_every == 0:
@@ -161,8 +162,12 @@ if __name__ == "__main__":
                 for topo, node_set in zip(paths, nodes):
                     # iterate through different backdoor node placements
                     print(f"{topo=}, {node_set=}")
+                    topology = np.loadtxt(topo, dtype=float)
+                    num_clients = topology.shape[0]
+
                     for client_idx in node_set:
 
+                        model_count += num_clients
                         decentral_app = DecentrallearnApp(
                             rounds=i,
                             topology_path=topo,
@@ -187,9 +192,15 @@ if __name__ == "__main__":
                             )
                         )
 
-            ######### Process and Save training results
-            for result_tuple in app_result_tuples:
-                process_futures_and_ckpt(*result_tuple)
+                        if model_count > (args.num_nodes * 4):
+                            ######### Process and Save training results
+                            print(
+                                "There are more models than GPUs, so waiting for results, before making more experiments"
+                            )
+                            for result_tuple in app_result_tuples:
+                                process_futures_and_ckpt(*result_tuple)
+                            app_result_tuples = []
+                            model_count = 0
 
     end = time.time()
     print("Total time: ", end - start)

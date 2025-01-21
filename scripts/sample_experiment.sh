@@ -1,10 +1,11 @@
 #!/bin/bash 
 #PBS -l select=1
-#PBS -l walltime=01:00:00
-#PBS -q debug
+#PBS -l walltime=72:00:00
+#PBS -q preemptable
 #PBS -l filesystems=home:eagle
 #PBS -A superbert
 #PBS -M sakarvadia@uchicago.edu
+#PBS -N sample
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml 
 module use /soft/modulefiles
@@ -16,4 +17,4 @@ cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 NODES=`cat $PBS_NODEFILE | wc -l`
 echo '# of nodes =' $NODES
 
-python sample_experiment.py --round 10 --checkpoint_every 10 --num_nodes $NODES
+python sample_experiment.py --rounds 200 --checkpoint_every 10 --num_nodes $NODES

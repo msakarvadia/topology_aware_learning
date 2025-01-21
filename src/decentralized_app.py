@@ -100,6 +100,11 @@ class DecentrallearnApp:
         random_bd: bool = False,
         # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
         many_to_one: bool = True,
+        offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+        centrality_metric_data_placement: str = "degree",
+        random_data_placement: bool = True,
+        softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
+        tiny_mem_num_labels: int = 50,
     ) -> None:
 
         # make the outdir
@@ -108,6 +113,11 @@ class DecentrallearnApp:
         args.pop("log_dir", None)
         args.pop("rounds", None)
         arg_path = "_".join(map(str, list(args.values())))
+
+        # NOTE(MS): don't support backdoors in language modeling tasks
+        if backdoor and dataset == "tiny_mem":
+            raise ValueError("We don't support backdooring language modeling task")
+
         # Need to remove any . or / to ensure a single continuous file path
         arg_path = arg_path.replace(".", "")
         arg_path = arg_path.replace("/", "")
@@ -128,6 +138,9 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
+        if dataset == "tiny_mem":
+            self.dataset = DataChoices.TINYMEM
+            self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
         logging.basicConfig(
@@ -139,7 +152,7 @@ class DecentrallearnApp:
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
         self.train_test_val = train_test_val
-        print(f"{train_test_val=}")
+        # print(f"{train_test_val=}")
         if self.seed is not None:
             torch.manual_seed(seed)
 
@@ -154,12 +167,14 @@ class DecentrallearnApp:
             root,
             train=True,
             download=True,
+            tiny_mem_num_labels=tiny_mem_num_labels,
         )
         self.test_data = load_data(
             self.dataset,
             root,
             train=False,
             download=True,
+            tiny_mem_num_labels=tiny_mem_num_labels,
         )
 
         self.backdoor = backdoor
@@ -172,7 +187,7 @@ class DecentrallearnApp:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
             self.test_data, self.backdoor_test_data = backdoor_data(
-                dataset,
+                dataset + "_test",
                 self.test_data,
                 self.test_data.targets,
                 0.1,
@@ -185,11 +200,15 @@ class DecentrallearnApp:
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
+        self.softmax = softmax
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "random":
+            self.centrality_metric = "random"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "invCluster":
-            self.centrality_metric = "cluster"
+            self.centrality_metric = "invCluster"
             self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
@@ -228,6 +247,9 @@ class DecentrallearnApp:
         if backdoor_node_idx >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
+        self.offset_clients_data_placement = offset_clients_data_placement
+        self.centrality_metric_data_placement = centrality_metric_data_placement
+        self.random_data_placement = random_data_placement
         self.clients = create_clients(
             num_clients,
             self.dataset,
@@ -245,9 +267,14 @@ class DecentrallearnApp:
             self.backdoor,
             self.backdoor_proportion,
             self.backdoor_node_idx,
+            self.random_bd,
+            self.many_to_one,
+            self.offset_clients_data_placement,
+            self.centrality_metric_data_placement,
+            self.random_data_placement,
         )
 
-        self.centrality_dict = create_centrality_dict(self.topology)
+        self.centrality_dict = create_centrality_dict(self.topology, self.rng)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []
@@ -377,6 +404,7 @@ class DecentrallearnApp:
 
             print(f"{client.idx=}")
             # print(f"{client.idx=}, {fed_prox_neighbors=}")
+            # print(f"{self.dataset=}")
             future = job(
                 train_input,
                 round_idx,
@@ -387,6 +415,7 @@ class DecentrallearnApp:
                 # self.device,
                 self.seed,
                 self.backdoor,
+                self.dataset,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")
@@ -426,6 +455,7 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
+                softmax=self.softmax,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

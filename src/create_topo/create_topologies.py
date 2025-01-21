@@ -3,6 +3,8 @@ import networkx as nx
 from numpy import random
 import os
 
+np.random.seed(0)
+random.seed(0)
 """
 In this file we create a few sample network topologies for testing
 
@@ -62,8 +64,3 @@ np.savetxt("topology/topo_6.txt", topology, fmt="%d")
 G = nx.complete_graph(10)
 topology = nx.to_numpy_array(G)
 np.savetxt("topology/topo_7.txt", topology, fmt="%d")
-
-degCent = nx.degree_centrality(G)
-print(f"{degCent=}")
-betCent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
-print(f"{betCent=}")

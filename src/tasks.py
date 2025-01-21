@@ -17,6 +17,21 @@ from src.types import Result
 from parsl.app.app import python_app
 
 
+def accuracy(inputs, logits):
+    # Shift so that tokens < n predict n
+    shift_labels = inputs[..., 1:].contiguous()
+    shift_logits = logits[..., :-1, :].contiguous()
+
+    # converts logits to predictions
+    predictions = torch.argmax(shift_logits, axis=-1)
+
+    # Now compute accuracy
+    N = torch.numel(predictions)
+    accuracy = (shift_labels == predictions).sum() / N
+
+    return accuracy.cpu().item()
+
+
 @python_app(executors=["decentral_train"])
 def no_local_train(
     future: tuple(list[Result], DecentralClient),
@@ -28,6 +43,7 @@ def no_local_train(
     # device: torch.device,
     seed: int,
     backdoor: bool = False,
+    dataset: DataChoices = None,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -50,6 +66,7 @@ def no_local_train(
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         torch.manual_seed(seed)
@@ -76,6 +93,7 @@ def no_local_train(
             batch_size,
             # device,
             seed,
+            dataset,
         )
 
         epoch_results.append(
@@ -107,6 +125,7 @@ def local_train(
     # device: torch.device,
     seed: int,
     backdoor: bool = False,
+    dataset: DataChoices = None,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -122,13 +141,9 @@ def local_train(
     Returns:
         List of results that record the training history.
     """
-    # from datetime import datetime
-    # import torch
-    # from torch.utils.data import DataLoader
-    # from torch.nn import functional as F  # noqa: N812
-
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         print(f"{seed=}")
@@ -146,14 +161,24 @@ def local_train(
         start_time = time.time()
 
         epoch_results = []
-        n_batches = 0
         running_loss = 0.0
+        running_perp = 0.0
+        running_acc = 0.0
 
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
-            preds = client.model(inputs)
-            loss = F.cross_entropy(preds, targets)
+            if dataset_name == "tiny_mem":
+                model_output = client.model(inputs, labels=inputs)
+                loss = model_output.loss
+                running_perp += torch.exp(loss).cpu().item()
+                running_acc += accuracy(inputs, model_output.logits)
+
+            else:
+                preds = client.model(inputs)
+                loss = F.cross_entropy(preds, targets)
+
+            running_loss += loss.item()
 
             # Append proximal term
             # Inspired by: https://github.com/ki-ljl/FedProx-PyTorch/blob/main/client.py#L62
@@ -172,9 +197,6 @@ def local_train(
             optimizer.step()
             optimizer.zero_grad()
 
-            running_loss += loss.item()
-            n_batches += 1
-
         end_time = time.time()
         avg_time_per_epoch += end_time - start_time
 
@@ -187,6 +209,7 @@ def local_train(
             round_idx,
             batch_size,
             seed,
+            dataset,
         )
 
         if backdoor:
@@ -213,7 +236,9 @@ def local_train(
                 "round_idx": round_idx,
                 "epoch": epoch,
                 "data_size": len(client.train_data),
-                "train_loss": running_loss / n_batches,
+                "train_loss": running_loss / len(loader),
+                "train_perp": running_perp / len(loader),
+                "train_acc": running_acc / len(loader),
             }
             | global_test_result,
         )
@@ -232,19 +257,37 @@ def test_model(
     batch_size: int,
     # device: torch.device,
     seed: int,
+    dataset: DataChoices = None,
 ) -> Result:
     """Evaluate a model."""
-    # from datetime import datetime
-    # from sklearn.metrics import classification_report
-    # import torch
-    # from torch.utils.data import DataLoader
-    # from torch.nn import functional as F  # noqa: N812
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    dataset_name = dataset.value.lower()
 
     if seed is not None:
         torch.manual_seed(seed)
+
+    if dataset_name == "tiny_mem":
+        model.eval()
+        total_loss, total_perp, total_acc = 0.0, 0.0, 0.0
+        with torch.no_grad():
+            model.to(device)
+            loader = DataLoader(data, batch_size=batch_size)
+            for batch in loader:
+                inputs, targets = batch
+                inputs, targets = inputs.to(device), targets.to(device)
+                model_outputs = model(inputs, labels=inputs)
+                loss = model_outputs.loss
+                total_loss += loss.item()
+                total_perp += torch.exp(loss).cpu().item()
+                total_acc += accuracy(inputs, model_outputs.logits)
+        res: Result = {
+            "test_loss": total_loss / len(loader),
+            "test_perp": total_perp / len(loader),
+            "test_acc": total_acc / len(loader),
+        }
+        return res
 
     model.eval()
     total_loss, total_acc, n_batches = 0.0, 0.0, 0

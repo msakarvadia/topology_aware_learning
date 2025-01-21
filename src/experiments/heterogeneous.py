@@ -13,6 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
+from src.create_topo.hetero_topo import mk_hetero_topos
 from pathlib import Path
 
 import parsl
@@ -42,13 +43,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--checkpoint_every",
         type=int,
-        default=5,
+        default=1,
         help="# of rounds to wait between checkpoints (must be a factor of rounds)",
     )
     parser.add_argument(
         "--rounds",
         type=int,
-        default=10,
+        default=20,
         help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
@@ -75,7 +76,7 @@ if __name__ == "__main__":
         "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
         "account": "argonne_tpc",
         "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
-        "walltime": "00:30:00",
+        "walltime": "01:00:00",
         "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
     }
     local_provider = LocalProvider(
@@ -113,6 +114,7 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=local_provider,
         )
@@ -124,10 +126,10 @@ if __name__ == "__main__":
             worker_debug=True,
             max_workers_per_node=4,
             available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=pbs_provider,
         )
-
     config = Config(
         executors=[executor, threadpool_executor],
         checkpoint_mode="task_exit",
@@ -137,13 +139,15 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
+    paths = mk_hetero_topos()
 
     start = time.time()
+    # apps = {}
+    model_count = 0  # number of models in total created decentral Apps
     for i in range(1, args.rounds + 1):
         # only submit job if round number is a multiple of checkpoint every
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
-            # begin experiment
             app_result_tuples = []
             # iterate through aggregation strategies
             for aggregation_strategy in [
@@ -152,35 +156,58 @@ if __name__ == "__main__":
                 "degCent",
                 "betCent",
                 "cluster",
-                # "invCluster",
+                "invCluster",
             ]:
-                for topo in [
-                    # "../create_topo/topology/topo_1.txt",
-                    # "../create_topo/topology/topo_2.txt",
-                    # "../create_topo/topology/topo_3.txt",
-                    # "../create_topo/topology/topo_4.txt",
-                    "../create_topo/topology/topo_5.txt",  # NOTE(MS): has floating nodes
-                    # "../create_topo/topology/topo_6.txt",
-                    "../create_topo/topology/topo_7.txt",
-                ]:
-                    decentral_app = DecentrallearnApp(
-                        rounds=i,
-                        topology_path=topo,
-                        prox_coeff=0,
-                        epochs=5,
-                        backdoor=False,
-                        aggregation_strategy=aggregation_strategy,
-                    )
-                    client_results, train_result_futures, round_states, run_dir = (
-                        decentral_app.run()
-                    )
-                    app_result_tuples.append(
-                        (client_results, train_result_futures, round_states, i, run_dir)
-                    )
+                # iterate through topologies
+                for topo in paths:
+                    # iterate through different backdoor node placements
+                    print(f"{topo=}")
+                    topology = np.loadtxt(topo, dtype=float)
+                    num_clients = topology.shape[0]
 
-            ######### Process and Save training results
-            for result_tuple in app_result_tuples:
-                process_futures_and_ckpt(*result_tuple)
+                    # Vary sample heterogeneity
+                    for sample_alpha in [1, 10, 1000]:
+                        # Vary label heterogeneity
+                        for label_alpha in [1, 10, 1000]:
+
+                            model_count += num_clients
+                            decentral_app = DecentrallearnApp(
+                                rounds=i,
+                                topology_path=topo,
+                                backdoor=False,
+                                prox_coeff=0,
+                                epochs=5,
+                                aggregation_strategy=aggregation_strategy,
+                                log_dir="hetero_logs",
+                                sample_alpha=sample_alpha,
+                                label_alpha=label_alpha,
+                            )
+
+                            (
+                                client_results,
+                                train_result_futures,
+                                round_states,
+                                run_dir,
+                            ) = decentral_app.run()
+                            app_result_tuples.append(
+                                (
+                                    client_results,
+                                    train_result_futures,
+                                    round_states,
+                                    i,
+                                    run_dir,
+                                )
+                            )
+
+                            if model_count > (args.num_nodes * 4):
+                                ######### Process and Save training results
+                                print(
+                                    "There are more models than GPUs, so waiting for results, before making more experiments"
+                                )
+                                for result_tuple in app_result_tuples:
+                                    process_futures_and_ckpt(*result_tuple)
+                                app_result_tuples = []
+                                model_count = 0
 
     end = time.time()
     print("Total time: ", end - start)

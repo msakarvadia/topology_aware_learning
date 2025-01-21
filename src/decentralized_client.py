@@ -20,6 +20,7 @@ import networkx as nx
 from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
+from src.data import random_generator
 from src.data import backdoor_data
 
 from parsl.app.app import python_app
@@ -69,24 +70,120 @@ class DecentralClient(BaseModel):
         return neighbor_idxs
 
 
+def get_label_counts(
+    num_clients: int,
+    num_labels: int,
+    subsets: dict[int, Subset],
+) -> dict[
+    int, list[int]
+]:  # return dict of lists (each key is a label), list is the length of # of clients
+    """return label count dict for each data split"""
+
+    # save label counts per worker
+    label_counts_per_worker = {label: [0] * num_clients for label in range(num_labels)}
+
+    for idx in range(num_clients):
+        for batch in subsets[idx]:
+            _, label = batch
+            label_counts_per_worker[label][idx] += 1
+
+    return label_counts_per_worker
+
+
+def place_data_with_node(
+    label_counts_per_worker: dict[int, list[int]],
+    centrality_dict: dict[str, dict[int, float]],
+    data: Dataset,
+    train_indices: dict[int, list[int]],
+    test_indices: dict[int, list[int]],
+    valid_indices: dict[int, list[int]],
+    num_clients: int,
+    offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+    centrality_metric_data_placement: str = "degree",
+    random_data_placement: bool = True,
+) -> dict[int, Subset]:
+    """Function used to place data with client"""
+    test_subsets = {idx: None for idx in range(num_clients)}
+    valid_subsets = {idx: None for idx in range(num_clients)}
+    if random_data_placement:
+        print("RANDOM DATA PLACEMENT")
+        train_subsets = {
+            idx: Subset(data, train_indices[idx]) for idx in range(num_clients)
+        }
+        if test_indices is not None:
+            test_subsets = {idx: Subset(data, test_indices[idx]) for idx in client_ids}
+        if valid_indices is not None:
+            valid_subsets = {
+                idx: Subset(data, valid_indices[idx]) for idx in client_ids
+            }
+
+    else:
+        # data placement based on centrality metric
+        print(
+            f"DATA PLACEMENT w/ {centrality_metric_data_placement=}, {offset_clients_data_placement=}"
+        )
+        centrality_list = [
+            x for k, x in centrality_dict[centrality_metric_data_placement].items()
+        ]
+        sorted_nodes = [
+            x for _, x in sorted(zip(centrality_list, list(range(num_clients))))
+        ]
+        print(f"{sorted_nodes=}")
+
+        # TODO(MS): in the future sort by something in addition to # of samples
+        data_len_list = [len(x) for _, x in train_indices.items()]
+        sorted_data = [
+            x for _, x in sorted(zip(data_len_list, list(range(num_clients))))
+        ]
+        print(f"{sorted_data=}")
+        for i in range(offset_clients_data_placement):
+            temp = sorted_data.pop(0)
+            sorted_data.append(temp)
+
+        train_subsets = {
+            sorted_nodes[idx]: Subset(data, train_indices[sorted_data[idx]])
+            for idx in range(num_clients)
+        }
+        if test_indices is not None:
+            test_subsets = {
+                sorted_nodes[idx]: Subset(data, test_indices[sorted_data[idx]])
+                for idx in range(num_clients)
+            }
+        if valid_indices is not None:
+            valid_subsets = {
+                sorted_nodes[idx]: Subset(data, valid_indices[sorted_data[idx]])
+                for idx in range(num_clients)
+            }
+    return train_subsets, test_subsets, valid_subsets
+
+
 def create_centrality_dict(
     topology: np.array,  # list[list[int]],
+    rng: Generator,
 ) -> dict[str, dict[int, float]]:
     print("Creating centrality dict")
     # convert np array to graph
     G = nx.from_numpy_array(topology)
 
     centrality_dict = {}
-    for centrality_type in ["degree", "betweenness", "cluster"]:
+    for centrality_type in ["degree", "betweenness", "cluster", "invCluster", "random"]:
         if centrality_type == "degree":
             cent = nx.degree_centrality(G)
         if centrality_type == "betweenness":
             cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
         if centrality_type == "cluster":
             cent = nx.degree_centrality(G)
+        if centrality_type == "random":
+            generator = random_generator(rng)
+            random_list = generator.dirichlet(np.ones(len(G)))
+            # random_list = np.random.dirichlet(np.ones(len(G)), size=1).squeeze()
+            cent = {}
+            for i in range(len(G)):
+                cent[i] = random_list[i].item()
+            # print(f"{cent=}")
         if centrality_type == "invCluster":
             cent = nx.degree_centrality(G)
-            for k, v in cent:
+            for k, v in cent.items():
                 cent[k] = 1 / v
         centrality_dict[centrality_type] = cent
 
@@ -115,6 +212,9 @@ def create_clients(
     random_bd: bool = False,
     # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
     many_to_one: bool = True,
+    offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
+    centrality_metric_data_placement: str = "degree",
+    random_data_placement: bool = True,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -157,29 +257,26 @@ def create_clients(
     )
     # print(f"{len(train_indices[0])=}")
 
+    centrality_dict = create_centrality_dict(topology, rng=rng)
     train_subsets = {idx: Subset(train_data, train_indices[idx]) for idx in client_ids}
+    label_counts_per_worker = get_label_counts(
+        num_clients=len(client_ids),
+        num_labels=num_labels,
+        subsets=train_subsets,
+    )
 
-    test_subsets = valid_subsets = None
-    test_subsets = {idx: None for idx in client_ids}
-    valid_subsets = {idx: None for idx in client_ids}
-    if test_indices is not None:
-        print(f"{len(train_indices[0])=}, {len(test_indices[0])=}")
-        test_subsets = {
-            idx: Subset(train_data, test_indices[idx]) for idx in client_ids
-        }
-    if valid_indices is not None:
-        print(
-            f"{len(train_indices[0])=}, {len(test_indices[0])=}, {len(valid_indices[0])=}"
-        )
-        valid_subsets = {
-            idx: Subset(train_data, valid_indices[idx]) for idx in client_ids
-        }
-    """
-    else:
-        train_subsets = {idx: None for idx in client_ids}
-        test_subsets = {idx: None for idx in client_ids}
-        valid_subsets = {idx: None for idx in client_ids}
-    """
+    train_subsets, test_subsets, valid_subsets = place_data_with_node(
+        label_counts_per_worker,
+        centrality_dict,
+        data=train_data,
+        train_indices=train_indices,
+        test_indices=test_indices,
+        valid_indices=valid_indices,
+        num_clients=len(client_ids),
+        offset_clients_data_placement=offset_clients_data_placement,  # experiment arg
+        centrality_metric_data_placement=centrality_metric_data_placement,  # experiment arg
+        random_data_placement=random_data_placement,  # experiment arg (MS): default behavior needs to be over turned in the args when making a client
+    )
 
     if backdoor:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
@@ -194,6 +291,12 @@ def create_clients(
             num_labels,
             random_bd,
             many_to_one,
+            # for propoer checkpointing purposes we need to save some additional info
+            offset_clients_data_placement,
+            centrality_metric_data_placement,
+            random_data_placement,
+            backdoor_node_idx,
+            num_clients=len(client_ids),
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])
@@ -202,7 +305,6 @@ def create_clients(
         train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
         print(f"backdoored client {backdoor_node_idx} data")
 
-    # centrality_dict = create_centrality_dict(topology)
     clients = []
     for idx in client_ids:
         neighbors = np.where(topology[idx] > 0)[0].tolist()
@@ -225,15 +327,13 @@ def create_clients(
         )
         clients.append(client)
 
-    # save label counts per worker
-    label_counts_per_worker = {
-        label: [0] * len(client_ids) for label in range(num_labels)
-    }
-
-    for idx in client_ids:
-        for batch in train_subsets[idx]:
-            _, label = batch
-            label_counts_per_worker[label][idx] += 1
+    label_counts_per_worker = get_label_counts(
+        num_clients=len(client_ids),
+        num_labels=num_labels,
+        # indices=train_indices,
+        # data=train_data,
+        subsets=train_subsets,
+    )
 
     json.dump(
         label_counts_per_worker, open(f"{run_dir}/label_counts_per_worker.txt", "w")
@@ -325,7 +425,8 @@ def centrality_module_avg(
     # Grab centrality dict, centrality metric
     centrality_dict = kwargs["centrality_dict"]
     centrality_metric = kwargs["centrality_metric"]
-    print(f"{centrality_metric} aggregate round")
+    softmax = kwargs["softmax"]
+    print(f"{centrality_metric} aggregate round w/ {softmax=}")
 
     # get weights
     weights = []
@@ -333,8 +434,22 @@ def centrality_module_avg(
         idx = n[1].idx
         weights.append(centrality_dict[centrality_metric][idx])
 
-    # normalize weights
-    weights = [i / sum(weights) for i in weights]
+    # print(f"pre-normalization {weights=}")
+    if softmax:
+
+        def softmax(x):
+            """Compute softmax values for each sets of scores in x."""
+            e_x = np.exp(x - np.max(x))
+            return e_x / e_x.sum()
+
+        weights = [x * 10 for x in weights]
+        weights = softmax(weights)
+
+    else:
+        # normalize weights
+        weights = [i / sum(weights) for i in weights]
+
+    # print(f"{weights=}")
 
     with torch.no_grad():
         avg_weights = OrderedDict()

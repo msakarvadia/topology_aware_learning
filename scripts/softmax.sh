@@ -5,7 +5,7 @@
 #PBS -l filesystems=home:eagle
 #PBS -A superbert
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N backdoor
+#PBS -N softmax
 #PBS -r y 
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml 
@@ -18,4 +18,4 @@ cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 NODES=`cat $PBS_NODEFILE | wc -l`
 echo '# of nodes =' $NODES
 
-python backdoor.py --rounds 300 --checkpoint_every 20 --num_nodes $NODES
+python softmax.py --rounds 60 --checkpoint_every 20 --num_nodes $NODES

@@ -186,7 +186,7 @@ if __name__ == "__main__":
                                         prox_coeff=0,
                                         epochs=5,
                                         aggregation_strategy=aggregation_strategy,
-                                        log_dir="softmax_logs",
+                                        log_dir="lm_logs",
                                         sample_alpha=sample_alpha,
                                         label_alpha=label_alpha,
                                         softmax=softmax,

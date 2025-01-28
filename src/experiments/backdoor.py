@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 "degCent",
                 "betCent",
                 "cluster",
-                "invCluster",
+                # "invCluster",
             ]:
                 # iterate through topologies
                 for topo, node_set in zip(paths, nodes):
@@ -177,6 +177,7 @@ if __name__ == "__main__":
                             backdoor_node_idx=client_idx,
                             aggregation_strategy=aggregation_strategy,
                             log_dir="bd_logs",
+                            softmax=True,
                         )
 
                         client_results, train_result_futures, round_states, run_dir = (

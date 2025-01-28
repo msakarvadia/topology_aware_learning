@@ -19,36 +19,34 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
-    g = nx.barabasi_albert_graph(n=100, m=2)
-    graphs["barabasi_albert"] = g
+    g = nx.barabasi_albert_graph(n=33, m=2)
+    graphs["barabasi_albert_low"] = g
     # graphs.append(g)
 
-    g = nx.ring_of_cliques(10, 4)
-    graphs["ring_clique"] = g
-    # graphs.append(g)
-
-    g = nx.barbell_graph(m1=10, m2=3, create_using=None)
-    graphs["barbell"] = g
-    # graphs.append(g)
+    g = nx.barabasi_albert_graph(n=66, m=2)
+    graphs["barabasi_albert_low"] = g
 
     sizes = [33, 33, 33]
     probs = [[0.4, 0.009, 0.009], [0.009, 0.4, 0.009], [0.009, 0.009, 0.4]]
     g = nx.stochastic_block_model(sizes, probs, seed=0)
     graphs["stochastic_block"] = g
+
+    """
+    g = nx.ring_of_cliques(10, 4)
+    graphs["ring_clique"] = g
+
     # graphs.append(g)
+    g = nx.barbell_graph(m1=10, m2=3, create_using=None)
+    graphs["barbell"] = g
 
     g = nx.complete_graph(10)
     graphs["complete"] = g
-    # graphs.append(g)
 
-    """
     g = nx.path_graph(10)
     graph['path'] = g
-    #graphs.append(g)
 
     g = nx.cycle_graph(10)
     graphs["cycle"] = g
-    # graphs.append(g)
     """
 
     paths = []
@@ -69,10 +67,10 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(
-            bd_placement_nodes
-            # [
-            #    0,
-            # ]
+            # bd_placement_nodes
+            [
+                0,
+            ]
         )  # these are the list of nodes for each graph that need to be backdoored
         idx += 1
 

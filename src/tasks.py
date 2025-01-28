@@ -220,6 +220,7 @@ def local_train(
                 round_idx,
                 batch_size,
                 seed,
+                dataset,
             )
 
             global_test_result = global_test_result | {

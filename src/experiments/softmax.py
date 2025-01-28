@@ -149,7 +149,7 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["mnist", "cifar10"]:
+            for dataset in ["cifar10"]:  # , "mnist"]:
                 for softmax in [True, False]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [

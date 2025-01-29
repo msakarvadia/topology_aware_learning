@@ -39,6 +39,7 @@ def no_local_train(
     epochs: int,
     batch_size: int,
     lr: float,
+    momentum: float,
     prox_coeff: float,
     # device: torch.device,
     seed: int,
@@ -75,7 +76,7 @@ def no_local_train(
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
-    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr, momentum=momentum)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
     for epoch in range(epochs):
@@ -121,6 +122,7 @@ def local_train(
     epochs: int,
     batch_size: int,
     lr: float,
+    momentum: float,
     prox_coeff: float,
     # device: torch.device,
     seed: int,
@@ -153,7 +155,7 @@ def local_train(
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
-    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr)
+    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr, momentum=momentum)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
     avg_time_per_epoch = 0
@@ -220,6 +222,7 @@ def local_train(
                 round_idx,
                 batch_size,
                 seed,
+                dataset,
             )
 
             global_test_result = global_test_result | {

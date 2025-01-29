@@ -308,6 +308,12 @@ def load_data(
     }
     name = data_name.value.lower()
     if name == "cifar10":
+        kwargs["transform"] = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        )
         return torchvision.datasets.CIFAR10(**kwargs)
     elif name == "cifar100":
         return torchvision.datasets.CIFAR100(**kwargs)

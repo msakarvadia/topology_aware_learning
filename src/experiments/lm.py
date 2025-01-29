@@ -13,7 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.softmax_topo import mk_softmax_topos
+from src.create_topo.lm_topo import mk_lm_topos
 from pathlib import Path
 
 import parsl
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
-    paths = mk_softmax_topos()
+    paths = mk_lm_topos()
 
     start = time.time()
     # apps = {}
@@ -149,16 +149,16 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["cifar10"]:  # , "mnist"]:
-                for softmax in [True, False]:
+            for dataset in ["tiny_mem"]:
+                for softmax in [False]:  # , True]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
-                        "unweighted",
+                        # "unweighted",
                         "weighted",
-                        "degCent",
-                        "betCent",
-                        "cluster",
-                        "random",
+                        # "degCent",
+                        # "betCent",
+                        # "cluster",
+                        # "random",
                         # "invCluster",
                     ]:
                         if softmax and (
@@ -186,10 +186,11 @@ if __name__ == "__main__":
                                         prox_coeff=0,
                                         epochs=5,
                                         aggregation_strategy=aggregation_strategy,
-                                        log_dir="softmax_logs",
+                                        log_dir="lm_logs",
                                         sample_alpha=sample_alpha,
                                         label_alpha=label_alpha,
                                         softmax=softmax,
+                                        tiny_mem_num_labels=50,
                                     )
 
                                     (

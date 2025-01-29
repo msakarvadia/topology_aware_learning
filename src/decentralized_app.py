@@ -105,6 +105,7 @@ class DecentrallearnApp:
         random_data_placement: bool = True,
         softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
         tiny_mem_num_labels: int = 50,
+        momentum: float = 0,
     ) -> None:
 
         # make the outdir
@@ -230,6 +231,7 @@ class DecentrallearnApp:
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
+        self.momentum = momentum
 
         self.prox_coeff = prox_coeff
         self.participation = participation
@@ -411,6 +413,7 @@ class DecentrallearnApp:
                 self.epochs,
                 self.batch_size,
                 self.lr,
+                self.momentum,
                 self.prox_coeff,
                 # self.device,
                 self.seed,

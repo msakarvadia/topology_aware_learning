@@ -154,9 +154,9 @@ if __name__ == "__main__":
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
                         # "unweighted",
-                        "weighted",
-                        # "degCent",
-                        # "betCent",
+                        # "weighted",
+                        "degCent",
+                        "betCent",
                         # "cluster",
                         # "random",
                         # "invCluster",

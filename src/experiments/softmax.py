@@ -149,22 +149,24 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["cifar10"]:  # , "mnist"]:
-                for softmax in [True, False]:
+            for dataset in ["mnist"]:
+                for softmax_coeff in [1, 10, 100]:
+                    # for softmax in [True] #, False]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
                         "unweighted",
                         "weighted",
                         "degCent",
                         "betCent",
-                        "cluster",
-                        "random",
+                        # "cluster",
+                        # "random",
                         # "invCluster",
                     ]:
-                        if softmax and (
-                            aggregation_strategy in ["unweighted", "weighted"]
-                        ):
-                            continue
+                        # if not softmax and (
+                        #    aggregation_strategy in ["unweighted", "weighted"]
+                        # ):
+                        #    continue
+
                         # iterate through topologies
                         for topo in paths:
                             # iterate through different backdoor node placements
@@ -189,7 +191,8 @@ if __name__ == "__main__":
                                         log_dir="softmax_logs",
                                         sample_alpha=sample_alpha,
                                         label_alpha=label_alpha,
-                                        softmax=softmax,
+                                        softmax=True,
+                                        softmax_coeff=softmax_coeff,
                                     )
 
                                     (

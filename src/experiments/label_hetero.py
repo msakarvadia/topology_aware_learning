@@ -13,7 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.scale_nodes_topo import mk_scale_nodes_topos
+from src.create_topo.softmax_topo import mk_softmax_topos
 from pathlib import Path
 
 import parsl
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
-    paths = mk_scale_nodes_topos()
+    paths = mk_softmax_topos()
 
     start = time.time()
     # apps = {}
@@ -175,9 +175,9 @@ if __name__ == "__main__":
                             num_clients = topology.shape[0]
 
                             # Vary sample heterogeneity
-                            for sample_alpha in [1, 10, 1000]:
+                            for sample_alpha in [1000]:
                                 # Vary label heterogeneity
-                                for label_alpha in [1000]:  # [1, 10, 1000]:
+                                for label_alpha in [1, 10, 1000]:
 
                                     model_count += num_clients
                                     decentral_app = DecentrallearnApp(
@@ -188,7 +188,7 @@ if __name__ == "__main__":
                                         prox_coeff=0,
                                         epochs=5,
                                         aggregation_strategy=aggregation_strategy,
-                                        log_dir="scale_nodes_logs",
+                                        log_dir="label_hetero_logs",
                                         sample_alpha=sample_alpha,
                                         label_alpha=label_alpha,
                                         softmax=True,

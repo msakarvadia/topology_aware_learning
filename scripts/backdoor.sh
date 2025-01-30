@@ -18,4 +18,4 @@ cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 NODES=`cat $PBS_NODEFILE | wc -l`
 echo '# of nodes =' $NODES
 
-python backdoor.py --rounds 300 --checkpoint_every 20 --num_nodes $NODES
+python backdoor.py --rounds 40 --checkpoint_every 10 --num_nodes $NODES

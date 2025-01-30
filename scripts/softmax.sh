@@ -1,5 +1,5 @@
 #!/bin/bash 
-#PBS -l select=2
+#PBS -l select=1
 #PBS -l walltime=72:00:00
 #PBS -q preemptable
 #PBS -l filesystems=home:eagle
@@ -18,4 +18,4 @@ cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 NODES=`cat $PBS_NODEFILE | wc -l`
 echo '# of nodes =' $NODES
 
-python softmax.py --rounds 200 --checkpoint_every 10 --num_nodes $NODES
+python softmax.py --rounds 25 --checkpoint_every 5 --num_nodes $NODES

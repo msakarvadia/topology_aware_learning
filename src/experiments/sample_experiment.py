@@ -173,6 +173,7 @@ if __name__ == "__main__":
                             aggregation_strategy=aggregation_strategy,
                             softmax=True,
                             dataset=data,
+                            momentum=0.9,
                         )
                         client_results, train_result_futures, round_states, run_dir = (
                             decentral_app.run()

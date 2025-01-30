@@ -155,7 +155,7 @@ if __name__ == "__main__":
                 "weighted",
                 "degCent",
                 "betCent",
-                "cluster",
+                # "cluster",
                 # "invCluster",
             ]:
                 # iterate through topologies
@@ -178,6 +178,8 @@ if __name__ == "__main__":
                             aggregation_strategy=aggregation_strategy,
                             log_dir="bd_logs",
                             softmax=True,
+                            sample_alpha=1000,
+                            label_alpha=1000,
                         )
 
                         client_results, train_result_futures, round_states, run_dir = (

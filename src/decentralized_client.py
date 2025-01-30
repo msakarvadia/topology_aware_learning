@@ -426,6 +426,7 @@ def centrality_module_avg(
     centrality_dict = kwargs["centrality_dict"]
     centrality_metric = kwargs["centrality_metric"]
     softmax = kwargs["softmax"]
+    softmax_coeff = kwargs["softmax_coeff"]
     print(f"{centrality_metric} aggregate round w/ {softmax=}")
 
     # get weights
@@ -442,7 +443,7 @@ def centrality_module_avg(
             e_x = np.exp(x - np.max(x))
             return e_x / e_x.sum()
 
-        weights = [x * 10 for x in weights]
+        weights = [x * softmax_coeff for x in weights]
         weights = softmax(weights)
 
     else:

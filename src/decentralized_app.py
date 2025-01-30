@@ -106,6 +106,7 @@ class DecentrallearnApp:
         softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
         tiny_mem_num_labels: int = 50,
         momentum: float = 0,
+        softmax_coeff: float = 10,
     ) -> None:
 
         # make the outdir
@@ -202,6 +203,7 @@ class DecentrallearnApp:
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
         self.softmax = softmax
+        self.softmax_coeff = softmax_coeff
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
@@ -459,6 +461,7 @@ class DecentrallearnApp:
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
                 softmax=self.softmax,
+                softmax_coeff=self.softmax_coeff,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

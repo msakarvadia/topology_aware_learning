@@ -97,7 +97,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--prox_coeff",
         type=float,
-        default=0.1,
+        default=0,
         help="""
             The proximal term coefficient. If this is set to 0, then no
             proximal term will be added.
@@ -256,6 +256,12 @@ if __name__ == "__main__":
         action="store_true",
         help="By default flag is false, and aggregation coefficients will not be softmax (instead they will be normalized by dividing by sum of coefficients). If you set this flag, then aggregation coefficients will be normalized by a softmax.",
     )
+    parser.add_argument(
+        "--softmax_coeff",
+        type=float,
+        default=10,
+        help="coefficient by which you scale your model weights before softmaxing them.",
+    )
 
     args = parser.parse_args()
 
@@ -399,6 +405,7 @@ if __name__ == "__main__":
         softmax=args.softmax,
         tiny_mem_num_labels=args.tiny_mem_num_labels,
         momentum=args.momentum,
+        softmax_coeff=args.softmax_coeff,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

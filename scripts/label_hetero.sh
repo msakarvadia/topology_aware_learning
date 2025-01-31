@@ -18,4 +18,4 @@ cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 NODES=`cat $PBS_NODEFILE | wc -l`
 echo '# of nodes =' $NODES
 
-python label_hetero.py --rounds 25 --checkpoint_every 5 --num_nodes $NODES
+python label_hetero.py --rounds 50 --checkpoint_every 5 --num_nodes $NODES

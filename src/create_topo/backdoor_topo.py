@@ -83,10 +83,10 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(
-            # bd_placement_nodes
-            [
-                0,
-            ]
+            bd_placement_nodes
+            # [
+            #    0,
+            # ]
         )  # these are the list of nodes for each graph that need to be backdoored
         idx += 1
 

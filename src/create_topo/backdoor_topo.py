@@ -24,7 +24,7 @@ def get_placement_locations_by_top_n_degree(g, n=3):
     l = list(range(0, n))
 
     placement_neighbors = torch.index_select(ind, 0, torch.tensor(l))
-    return placement_neighbors
+    return placement_neighbors.tolist()
 
 
 def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:

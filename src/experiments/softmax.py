@@ -162,10 +162,10 @@ if __name__ == "__main__":
                         # "random",
                         # "invCluster",
                     ]:
-                        # if not softmax and (
-                        #    aggregation_strategy in ["unweighted", "weighted"]
-                        # ):
-                        #    continue
+                        if softmax_coeff > 1 and (
+                            aggregation_strategy in ["unweighted", "weighted"]
+                        ):
+                            continue
 
                         # iterate through topologies
                         for topo in paths:

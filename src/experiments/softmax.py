@@ -155,6 +155,7 @@ if __name__ == "__main__":
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
                         "unweighted",
+                        "unweighted_fl",
                         "weighted",
                         "degCent",
                         "betCent",
@@ -163,7 +164,8 @@ if __name__ == "__main__":
                         # "invCluster",
                     ]:
                         if softmax_coeff > 1 and (
-                            aggregation_strategy in ["unweighted", "weighted"]
+                            aggregation_strategy
+                            in ["unweighted_fl", "unweighted", "weighted"]
                         ):
                             continue
 

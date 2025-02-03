@@ -140,15 +140,20 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
-        if dataset in [
-            "cifar10",
-            "cifar10_augment",
-            "cifar10_augment_vgg",
-            "cifar10_vgg",
-            "cifar10_dropout",
-            "cifar10_augment_dropout",
-        ]:
-            self.dataset = DataChoices.CIFAR10
+        if dataset == "cifar10_augment":
+            self.dataset = DataChoices.CIFAR10_AUGMENT
+            self.num_labels = 10
+        if dataset == "cifar10_augment_vgg":
+            self.dataset = DataChoices.CIFAR10_AUGMENT_VGG
+            self.num_labels = 10
+        if dataset == "cifar10_vgg":
+            self.dataset = DataChoices.CIFAR10_VGG
+            self.num_labels = 10
+        if dataset == "cifar10_dropout":
+            self.dataset = DataChoices.CIFAR10_DROPOUT
+            self.num_labels = 10
+        if dataset == "cifar10_augment_dropout":
+            self.dataset = DataChoices.CIFAR10_AUGMENT_DROPOUT
             self.num_labels = 10
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM

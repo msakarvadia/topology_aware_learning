@@ -137,7 +137,17 @@ if __name__ == "__main__":
         "--dataset",
         type=str,
         default="mnist",
-        choices=["mnist", "fmnist", "cifar10", "tiny_mem"],
+        choices=[
+            "mnist",
+            "fmnist",
+            "cifar10",
+            "tiny_mem",
+            "cifar10_augment",
+            "cifar10_augment_vgg",
+            "cifar10_vgg",
+            "cifar10_dropout",
+            "cifar10_augment_dropout",
+        ],
         help="Dataset (and corresponding model) to use",
     )
     parser.add_argument(

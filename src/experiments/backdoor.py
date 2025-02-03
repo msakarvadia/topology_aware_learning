@@ -149,61 +149,71 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            # iterate through aggregation strategies
-            for aggregation_strategy in [
-                "unweighted",
-                "weighted",
-                "degCent",
-                "betCent",
-                # "cluster",
-                # "invCluster",
-            ]:
-                # iterate through topologies
-                for topo, node_set in zip(paths, nodes):
-                    # iterate through different backdoor node placements
-                    print(f"{topo=}, {node_set=}")
-                    topology = np.loadtxt(topo, dtype=float)
-                    num_clients = topology.shape[0]
+            for softmax_coeff in [1, 10, 100]:
+                # iterate through aggregation strategies
+                for aggregation_strategy in [
+                    "unweighted",
+                    "weighted",
+                    "degCent",
+                    "betCent",
+                    # "cluster",
+                    # "invCluster",
+                ]:
+                    # iterate through topologies
+                    for topo, node_set in zip(paths, nodes):
+                        # iterate through different backdoor node placements
+                        print(f"{topo=}, {node_set=}")
+                        topology = np.loadtxt(topo, dtype=float)
+                        num_clients = topology.shape[0]
 
-                    for client_idx in node_set:
+                        if softmax_coeff != 10 and (
+                            aggregation_strategy in ["unweighted", "weighted"]
+                        ):
+                            continue
 
-                        model_count += num_clients
-                        decentral_app = DecentrallearnApp(
-                            rounds=i,
-                            topology_path=topo,
-                            backdoor=True,
-                            prox_coeff=0,
-                            epochs=5,
-                            backdoor_node_idx=client_idx,
-                            aggregation_strategy=aggregation_strategy,
-                            log_dir="bd_logs",
-                            softmax=True,
-                            sample_alpha=1000,
-                            label_alpha=1000,
-                        )
+                        for client_idx in node_set:
 
-                        client_results, train_result_futures, round_states, run_dir = (
-                            decentral_app.run()
-                        )
-                        app_result_tuples.append(
+                            model_count += num_clients
+                            decentral_app = DecentrallearnApp(
+                                rounds=i,
+                                topology_path=topo,
+                                backdoor=True,
+                                prox_coeff=0,
+                                epochs=5,
+                                backdoor_node_idx=client_idx,
+                                aggregation_strategy=aggregation_strategy,
+                                log_dir="bd_logs",
+                                softmax=True,
+                                softmax_coeff=softmax_coeff,
+                                sample_alpha=1000,
+                                label_alpha=1000,
+                            )
+
                             (
                                 client_results,
                                 train_result_futures,
                                 round_states,
-                                i,
                                 run_dir,
+                            ) = decentral_app.run()
+                            app_result_tuples.append(
+                                (
+                                    client_results,
+                                    train_result_futures,
+                                    round_states,
+                                    i,
+                                    run_dir,
+                                )
                             )
-                        )
 
-                        if model_count > (args.num_nodes * 4):
-                            ######### Process and Save training results
-                            print(
-                                "There are more models than GPUs, so waiting for results, before making more experiments"
-                            )
-                            for result_tuple in app_result_tuples:
-                                process_futures_and_ckpt(*result_tuple)
-                            app_result_tuples = []
-                            model_count = 0
+                            if model_count > (args.num_nodes * 4):
+                                ######### Process and Save training results
+                                print(
+                                    "There are more models than GPUs, so waiting for results, before making more experiments"
+                                )
+                                for result_tuple in app_result_tuples:
+                                    process_futures_and_ckpt(*result_tuple)
+                                app_result_tuples = []
+                                model_count = 0
 
     end = time.time()
     print("Total time: ", end - start)

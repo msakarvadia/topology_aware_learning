@@ -164,6 +164,7 @@ if __name__ == "__main__":
         default="unweighted",
         choices=[
             "unweighted",
+            "unweighted_fl",
             "weighted",
             "test_agg",
             "scale_agg",

@@ -238,6 +238,8 @@ class DecentrallearnApp:
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
+        if self.aggregation_strategy == "unweighted_fl":
+            self.aggregation_function = unweighted_module_avg
         if self.aggregation_strategy == "test_agg":
             self.aggregation_function = test_agg
         if self.aggregation_strategy == "scale_agg":
@@ -253,6 +255,8 @@ class DecentrallearnApp:
         self.prox_coeff = prox_coeff
         self.participation = participation
         self.topology = numpy.loadtxt(topology_path, dtype=float)
+        if self.aggregation_strategy == "unweighted_fl":
+            self.topology = numpy.ones(self.topology.shape)
 
         self.rounds = rounds
         self.start_round = 0  # this value will get overridden if we load from a ckpt

@@ -149,7 +149,7 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for softmax_coeff in [1, 10, 100]:
+            for softmax_coeff in [1, 10, 25, 50, 75, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
                     "unweighted",

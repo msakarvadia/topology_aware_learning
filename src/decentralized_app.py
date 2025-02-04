@@ -257,6 +257,8 @@ class DecentrallearnApp:
         self.topology = numpy.loadtxt(topology_path, dtype=float)
         if self.aggregation_strategy == "unweighted_fl":
             self.topology = numpy.ones(self.topology.shape)
+            ind = numpy.diag_indices(self.topology.shape[0])
+            self.topology[ind[0], ind[1]] = torch.zeros(self.topology.shape[0])
 
         self.rounds = rounds
         self.start_round = 0  # this value will get overridden if we load from a ckpt

@@ -149,12 +149,12 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["cifar10_vgg", "cifar10_vgg"]:
-                for momentum in [0, 0.9]:
+            for dataset in ["cifar10_vgg"]:
+                for momentum in [0.9]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
                         "unweighted",
-                        "unweighted_fl",
+                        # "unweighted_fl",
                         "weighted",
                         "degCent",
                         "betCent",

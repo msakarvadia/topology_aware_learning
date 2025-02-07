@@ -150,8 +150,8 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for dataset in ["cifar10_vgg"]:
-                for lr in [0.1, 0.01, 0.001]:
-                    for momentum in [0, 0.9]:
+                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
+                    for momentum in [0.9]:  # [0, 0.9]:
                         for softmax_coeff in [100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [

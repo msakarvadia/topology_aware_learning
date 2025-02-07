@@ -13,7 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.backdoor_topo import mk_backdoor_topos
+from src.create_topo.scale_nodes_topo import mk_scale_nodes_topos
 from pathlib import Path
 
 import parsl
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 
     parsl.load(config)
     #########
-    paths, nodes = mk_backdoor_topos()
+    paths = mk_scale_nodes_topos()
 
     start = time.time()
     # apps = {}
@@ -149,72 +149,77 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for softmax_coeff in [1, 2, 4, 6, 8, 10]:
-                # for softmax_coeff in [1, 10, 25, 50, 75, 100]:
-                # iterate through aggregation strategies
-                for aggregation_strategy in [
-                    "unweighted",
-                    "weighted",
-                    "degCent",
-                    "betCent",
-                    # "cluster",
-                    # "invCluster",
-                ]:
-                    # iterate through topologies
-                    for topo, node_set in zip(paths, nodes):
-                        # iterate through different backdoor node placements
-                        print(f"{topo=}, {node_set=}")
-                        topology = np.loadtxt(topo, dtype=float)
-                        num_clients = topology.shape[0]
+            for dataset in ["mnist"]:
+                for softmax_coeff in [10]:
+                    # for softmax in [True] #, False]:
+                    # iterate through aggregation strategies
+                    for aggregation_strategy in [
+                        "unweighted",
+                        "weighted",
+                        "degCent",
+                        "betCent",
+                        # "cluster",
+                        # "random",
+                        # "invCluster",
+                    ]:
+                        # if not softmax and (
+                        #    aggregation_strategy in ["unweighted", "weighted"]
+                        # ):
+                        #    continue
 
-                        if softmax_coeff != 10 and (
-                            aggregation_strategy in ["unweighted", "weighted"]
-                        ):
-                            continue
+                        # iterate through topologies
+                        for topo in paths:
+                            # iterate through different backdoor node placements
+                            print(f"{topo=}")
+                            topology = np.loadtxt(topo, dtype=float)
+                            num_clients = topology.shape[0]
 
-                        for client_idx in node_set:
+                            # Vary sample heterogeneity
+                            for sample_alpha in [1, 10, 1000]:
+                                # Vary label heterogeneity
+                                for label_alpha in [1000]:  # [1, 10, 1000]:
 
-                            model_count += num_clients
-                            decentral_app = DecentrallearnApp(
-                                rounds=i,
-                                topology_path=topo,
-                                backdoor=True,
-                                prox_coeff=0,
-                                epochs=5,
-                                backdoor_node_idx=client_idx,
-                                aggregation_strategy=aggregation_strategy,
-                                log_dir="bd_logs",
-                                softmax=True,
-                                softmax_coeff=softmax_coeff,
-                                sample_alpha=1000,
-                                label_alpha=1000,
-                            )
+                                    model_count += num_clients
+                                    decentral_app = DecentrallearnApp(
+                                        dataset=dataset,
+                                        rounds=i,
+                                        topology_path=topo,
+                                        backdoor=False,
+                                        prox_coeff=0,
+                                        epochs=5,
+                                        aggregation_strategy=aggregation_strategy,
+                                        log_dir="scale_nodes_logs",
+                                        sample_alpha=sample_alpha,
+                                        label_alpha=label_alpha,
+                                        softmax=True,
+                                        softmax_coeff=softmax_coeff,
+                                    )
 
-                            (
-                                client_results,
-                                train_result_futures,
-                                round_states,
-                                run_dir,
-                            ) = decentral_app.run()
-                            app_result_tuples.append(
-                                (
-                                    client_results,
-                                    train_result_futures,
-                                    round_states,
-                                    i,
-                                    run_dir,
-                                )
-                            )
+                                    (
+                                        client_results,
+                                        train_result_futures,
+                                        round_states,
+                                        run_dir,
+                                    ) = decentral_app.run()
+                                    app_result_tuples.append(
+                                        (
+                                            client_results,
+                                            train_result_futures,
+                                            round_states,
+                                            i,
+                                            run_dir,
+                                        )
+                                    )
 
-                            if model_count > (args.num_nodes * 4):
-                                ######### Process and Save training results
-                                print(
-                                    "There are more models than GPUs, so waiting for results, before making more experiments"
-                                )
-                                for result_tuple in app_result_tuples:
-                                    process_futures_and_ckpt(*result_tuple)
-                                app_result_tuples = []
-                                model_count = 0
+                                    if model_count > (args.num_nodes * 4):
+                                        ######### Process and Save training results
+                                        print(
+                                            "There are more models than GPUs, so waiting for results, before making more experiments"
+                                        )
+                                        for result_tuple in app_result_tuples:
+                                            process_futures_and_ckpt(*result_tuple)
+                                        app_result_tuples = []
+                                        model_count = 0
 
     end = time.time()
     print("Total time: ", end - start)

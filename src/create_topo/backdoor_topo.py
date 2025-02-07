@@ -3,12 +3,28 @@ import networkx as nx
 from numpy import random
 import os
 from src.effective_neighbors import get_n_placement_locations
+import torch
 
 
 """
 In this file we create the topologies we will use in our backdoor experiments.
 
 """
+
+
+def get_placement_locations_by_top_n_degree(g, n=3):
+    deg_cent = nx.degree_centrality(g)
+
+    start = 0
+    interval = len(g) // n
+
+    degrees = torch.tensor(list(deg_cent.values()))
+    val, ind = torch.sort(degrees, descending=True)
+
+    l = list(range(0, n))
+
+    placement_neighbors = torch.index_select(ind, 0, torch.tensor(l))
+    return placement_neighbors.tolist()
 
 
 def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
@@ -19,11 +35,12 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
-    g = nx.barabasi_albert_graph(n=33, m=2)
-    graphs["barabasi_albert_low"] = g
+    g = nx.barabasi_albert_graph(n=33, m=1, seed=0)
+    graphs["barabasi_albert_33_1"] = g
     # graphs.append(g)
 
-    g = nx.barabasi_albert_graph(n=66, m=2)
+    """
+    g = nx.barabasi_albert_graph(n=66, m=2, seed=0)
     graphs["barabasi_albert_low"] = g
 
     sizes = [33, 33, 33]
@@ -31,7 +48,6 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     g = nx.stochastic_block_model(sizes, probs, seed=0)
     graphs["stochastic_block"] = g
 
-    """
     g = nx.ring_of_cliques(10, 4)
     graphs["ring_clique"] = g
 
@@ -56,21 +72,21 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     for graph_name, G in graphs.items():
 
         if graph_name in ["ring_clique", "barbell"]:
-            bd_placement_nodes = get_n_placement_locations(G, 0.9, 2)
+            bd_placement_nodes = get_placement_locations_by_top_n_degree(G, 2)
         if graph_name in ["complete", "cycle"]:
             bd_placement_nodes = [0]
         else:
-            bd_placement_nodes = get_n_placement_locations(G, 0.9, 5)
+            bd_placement_nodes = get_placement_locations_by_top_n_degree(G, 5)
 
         topology = nx.to_numpy_array(G)
         path = f"{bd_dir}/topo_{graph_name}.txt"
         np.savetxt(path, topology, fmt="%d")
         paths.append(path)
         nodes.append(
-            # bd_placement_nodes
-            [
-                0,
-            ]
+            bd_placement_nodes
+            # [
+            #    0,
+            # ]
         )  # these are the list of nodes for each graph that need to be backdoored
         idx += 1
 

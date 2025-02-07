@@ -17,14 +17,14 @@ def mk_lm_topos() -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
-    # g = nx.barabasi_albert_graph(n=33, m=1)
-    # graphs["barabasi_albert_low"] = g
+    g = nx.barabasi_albert_graph(n=33, m=1, seed=0)
+    graphs["barabasi_albert_33_1"] = g
 
-    g = nx.barabasi_albert_graph(n=33, m=2)
-    graphs["barabasi_albert_med"] = g
+    g = nx.barabasi_albert_graph(n=33, m=2, seed=0)
+    graphs["barabasi_albert_33_2"] = g
 
-    # g = nx.barabasi_albert_graph(n=33, m=3)
-    # graphs["barabasi_albert_high"] = g
+    g = nx.barabasi_albert_graph(n=33, m=3, seed=0)
+    graphs["barabasi_albert_33_3"] = g
 
     paths = []
     idx = 0

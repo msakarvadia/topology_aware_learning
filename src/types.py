@@ -18,6 +18,11 @@ Result: TypeAlias = Dict[str, Any]
 class DataChoices(enum.Enum):
     """Dataset options."""
 
+    CIFAR10_AUGMENT = "cifar10_augment"
+    CIFAR10_AUGMENT_VGG = "cifar10_augment_vgg"
+    CIFAR10_VGG = "cifar10_vgg"
+    CIFAR10_DROPOUT = "cifar10_dropout"
+    CIFAR10_AUGMENT_DROPOUT = "cifar10_augment_dropout"
     CIFAR10 = "cifar10"
     """Cifar10 dataset."""
     CIFAR100 = "cifar100"

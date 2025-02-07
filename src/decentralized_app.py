@@ -106,6 +106,7 @@ class DecentrallearnApp:
         softmax: bool = False,  # this is if we normalize our weighting coefficients by softmax (or typical divide by sum)
         tiny_mem_num_labels: int = 50,
         momentum: float = 0,
+        softmax_coeff: float = 10,
     ) -> None:
 
         # make the outdir
@@ -138,6 +139,21 @@ class DecentrallearnApp:
             self.num_labels = 10
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
+            self.num_labels = 10
+        if dataset == "cifar10_augment":
+            self.dataset = DataChoices.CIFAR10_AUGMENT
+            self.num_labels = 10
+        if dataset == "cifar10_augment_vgg":
+            self.dataset = DataChoices.CIFAR10_AUGMENT_VGG
+            self.num_labels = 10
+        if dataset == "cifar10_vgg":
+            self.dataset = DataChoices.CIFAR10_VGG
+            self.num_labels = 10
+        if dataset == "cifar10_dropout":
+            self.dataset = DataChoices.CIFAR10_DROPOUT
+            self.num_labels = 10
+        if dataset == "cifar10_augment_dropout":
+            self.dataset = DataChoices.CIFAR10_AUGMENT_DROPOUT
             self.num_labels = 10
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
@@ -202,6 +218,7 @@ class DecentrallearnApp:
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
         self.softmax = softmax
+        self.softmax_coeff = softmax_coeff
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
@@ -221,6 +238,8 @@ class DecentrallearnApp:
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
             self.aggregation_function = unweighted_module_avg
+        if self.aggregation_strategy == "unweighted_fl":
+            self.aggregation_function = unweighted_module_avg
         if self.aggregation_strategy == "test_agg":
             self.aggregation_function = test_agg
         if self.aggregation_strategy == "scale_agg":
@@ -236,6 +255,10 @@ class DecentrallearnApp:
         self.prox_coeff = prox_coeff
         self.participation = participation
         self.topology = numpy.loadtxt(topology_path, dtype=float)
+        if self.aggregation_strategy == "unweighted_fl":
+            self.topology = numpy.ones(self.topology.shape)
+            ind = numpy.diag_indices(self.topology.shape[0])
+            self.topology[ind[0], ind[1]] = torch.zeros(self.topology.shape[0])
 
         self.rounds = rounds
         self.start_round = 0  # this value will get overridden if we load from a ckpt
@@ -459,6 +482,7 @@ class DecentrallearnApp:
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
                 softmax=self.softmax,
+                softmax_coeff=self.softmax_coeff,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

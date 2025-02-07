@@ -149,10 +149,16 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["cifar10_vgg"]:
+            for dataset in [
+                "cifar10_vgg",
+                "cifar10_vit",
+                "cifar10_resnet18",
+                "cifar10_resnet50",
+                "cifar10_mobile",
+            ]:
                 for lr in [0.1]:  # [0.1, 0.01, 0.001]:
                     for momentum in [0.9]:  # [0, 0.9]:
-                        for softmax_coeff in [100]:
+                        for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
@@ -171,6 +177,11 @@ if __name__ == "__main__":
                                 for topo in paths:
                                     # iterate through different backdoor node placements
                                     print(f"{topo=}")
+                                    if "33_2" not in topo:
+                                        print(
+                                            "temp canceling experment to prune # of experiments"
+                                        )
+                                        continue
                                     topology = np.loadtxt(topo, dtype=float)
                                     num_clients = topology.shape[0]
 

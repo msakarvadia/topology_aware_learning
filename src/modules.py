@@ -215,6 +215,22 @@ def create_model(data: DataChoices) -> nn.Module:
         return ConvNet()
     if (name == "cifar10_vgg") or (name == "cifar10_augment_vgg"):
         return VGG("VGG16")
+    if name == "cifar10_mobile":
+        from src.models.mobilenet import MobileNetV2
+
+        return MobileNetV2(10, alpha=1)
+    if name == "cifar10_vit":
+        from src.models.vit_small import get_vit
+
+        return get_vit(NUM_CLASSES=10, in_channels=3, image_size=32)
+    if name == "cifar10_restnet18":
+        from src.models.resnet import ResNet18
+
+        return ResNet18()
+    if name == "cifar10_restnet50":
+        from src.models.resnet import ResNet50
+
+        return ResNet50()
     if name == "cifar10_augment":
         return CifarModule(10)
     if name == "cifar10":
@@ -447,7 +463,15 @@ def load_data(
             ]
         )
         return torchvision.datasets.CIFAR10(**kwargs)
-    if (name == "cifar10") or (name == "cifar10_vgg") or (name == "cifar10_dropout"):
+    if (
+        (name == "cifar10")
+        or (name == "cifar10_vgg")
+        or (name == "cifar10_dropout")
+        or (name == "cifar10_mobile")
+        or (name == "cifar10_vit")
+        or (name == "cifar10_restnet18")
+        or (name == "cifar10_restnet50")
+    ):
         kwargs["transform"] = transforms.Compose(
             [
                 transforms.ToTensor(),

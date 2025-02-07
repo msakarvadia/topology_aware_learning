@@ -150,7 +150,7 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for dataset in ["cifar10_vgg"]:
-                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
+                for lr in [0.1]:  # [0.1, 0.01, 0.001]:
                     for momentum in [0.9]:  # [0, 0.9]:
                         for softmax_coeff in [100]:
                             # iterate through aggregation strategies
@@ -161,7 +161,7 @@ if __name__ == "__main__":
                                 "degCent",
                                 "betCent",
                             ]:
-                                if softmax_coeff != 10 and (
+                                if softmax_coeff != 100 and (
                                     aggregation_strategy
                                     in ["unweighted_fl", "unweighted", "weighted"]
                                 ):
@@ -175,7 +175,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 10, 1000]:
+                                    for sample_alpha in [10]:  # [1, 10, 1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 

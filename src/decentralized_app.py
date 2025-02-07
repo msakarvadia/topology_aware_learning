@@ -140,6 +140,18 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
+        if dataset == "cifar10_mobile":
+            self.dataset = DataChoices.CIFAR10_MOBILE
+            self.num_labels = 10
+        if dataset == "cifar10_vit":
+            self.dataset = DataChoices.CIFAR10_VIT
+            self.num_labels = 10
+        if dataset == "cifar10_resnet18":
+            self.dataset = DataChoices.CIFAR10_RESTNET18
+            self.num_labels = 10
+        if dataset == "cifar10_resnet50":
+            self.dataset = DataChoices.CIFAR10_RESTNET50
+            self.num_labels = 10
         if dataset == "cifar10_augment":
             self.dataset = DataChoices.CIFAR10_AUGMENT
             self.num_labels = 10

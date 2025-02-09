@@ -156,13 +156,13 @@ if __name__ == "__main__":
                 "cifar10_resnet50",
                 "cifar10_mobile",
             ]:
-                for lr in [0.1]:  # [0.1, 0.01, 0.001]:
+                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
                     for momentum in [0.9]:  # [0, 0.9]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
-                                "unweighted_fl",
+                                # "unweighted_fl",
                                 "weighted",
                                 "degCent",
                                 "betCent",

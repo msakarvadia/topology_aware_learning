@@ -151,7 +151,7 @@ if __name__ == "__main__":
             app_result_tuples = []
             for dataset in [
                 "cifar10_vgg",
-                "cifar10_vit",
+                # "cifar10_vit",
                 "cifar10_resnet18",
                 "cifar10_resnet50",
                 "cifar10_mobile",
@@ -162,7 +162,7 @@ if __name__ == "__main__":
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
-                                # "unweighted_fl",
+                                "unweighted_fl",
                                 "weighted",
                                 "degCent",
                                 "betCent",

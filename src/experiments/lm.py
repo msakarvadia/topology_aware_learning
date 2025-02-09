@@ -150,7 +150,10 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for dataset in ["tiny_mem"]:
-                for lr in [0.01, 0.001]:
+                for lr in [
+                    0.01,
+                ]:
+                    # for lr in [0.01, 0.001]:
                     for softmax_coeff in [10, 100]:
                         # iterate through aggregation strategies
                         for aggregation_strategy in [

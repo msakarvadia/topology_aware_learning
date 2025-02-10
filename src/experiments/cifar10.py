@@ -151,18 +151,18 @@ if __name__ == "__main__":
             app_result_tuples = []
             for dataset in [
                 "cifar10_vgg",
-                # "cifar10_vit",
+                "cifar10_vit",
                 "cifar10_resnet18",
                 "cifar10_resnet50",
                 "cifar10_mobile",
             ]:
-                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
+                for lr in [0.001]:  # [0.1, 0.01, 0.001]:
                     for momentum in [0.9]:  # [0, 0.9]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
-                                "unweighted_fl",
+                                # "unweighted_fl",
                                 "weighted",
                                 "degCent",
                                 "betCent",

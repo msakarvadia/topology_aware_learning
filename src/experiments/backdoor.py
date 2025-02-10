@@ -149,8 +149,26 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for data in ["cifar10_vgg", "mnist", "fmnist"]:
-                if data == "cifar10_vgg":
+            for data in [
+                "cifar10_vgg_1",
+                "cifar10_vgg_2",
+                "cifar10_mobile",
+                "cifar10_resnet18",
+                "mnist",
+                "fmnist",
+            ]:
+                if data == "cifar10_vgg_1":
+                    lr = 0.01
+                    momentum = 0.9
+                    data = "cifar10_vgg"
+                if data == "cifar10_vgg_2":
+                    lr = 0.001
+                    momentum = 0.9
+                    data = "cifar10_vgg"
+                if data == "cifar10_mobile":
+                    lr = 0.01
+                    momentum = 0.9
+                if data == "cifar10_restnet18":
                     lr = 0.01
                     momentum = 0.9
                 if data == "mnist":

@@ -29,6 +29,9 @@ from src.tasks import test_model
 from src.types import DataChoices
 from src.types import Result
 from src.decentralized_client import DecentralClient
+from src.aggregation_scheduler import CosineAnnealingWarmRestarts
+from src.aggregation_scheduler import FakeScheduler
+from src.aggregation_scheduler import ExponentialScheduler
 from parsl.app.app import python_app
 
 # Used within applications
@@ -231,6 +234,7 @@ class DecentrallearnApp:
         self.centrality_metric = None
         self.softmax = softmax
         self.softmax_coeff = softmax_coeff
+        self.aggregation_scheduler = FakeScheduler(self.softmax_coeff)
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
@@ -243,9 +247,43 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "betCent_exp":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = centrality_module_avg
+            self.aggregation_scheduler = ExponentialScheduler(
+                gamma=0.95,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if self.aggregation_strategy == "betCent_CA":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = centrality_module_avg
+            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
+                T_0=20,
+                T_mult=1,
+                eta_min=1,
+                last_round=-1,
+                softmax_coeff=self.softmax_coeff,
+            )
         if self.aggregation_strategy == "degCent":
             self.centrality_metric = "degree"
             self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "degCent_exp":
+            self.centrality_metric = "degree"
+            self.aggregation_function = centrality_module_avg
+            self.aggregation_scheduler = ExponentialScheduler(
+                gamma=0.95,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if self.aggregation_strategy == "degCent_CA":
+            self.centrality_metric = "degree"
+            self.aggregation_function = centrality_module_avg
+            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
+                T_0=20,
+                T_mult=1,
+                eta_min=1,
+                last_round=-1,
+                softmax_coeff=self.softmax_coeff,
+            )
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
@@ -493,10 +531,12 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
-                softmax=self.softmax,
+                softmax=self.aggregation_scheduler.get_softmax_coeff(),
+                # softmax=self.softmax,
                 softmax_coeff=self.softmax_coeff,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})
+        self.aggregation_scheduler.step(round_idx)
 
         return futures  # results

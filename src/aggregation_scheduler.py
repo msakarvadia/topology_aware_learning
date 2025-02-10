@@ -93,6 +93,23 @@ class CosineAnnealingWarmRestarts:
         self.last_epoch = math.floor(epoch)
 
 
+class FakeScheduler:
+    """Decays softmax coefficient gamma every round."""
+
+    def __init__(
+        self,
+        softmax_coeff: float = 100,
+    ):  # noqa: D107
+        self.softmax_coeff = softmax_coeff
+
+    def get_softmax_coeff(self):
+        return self.softmax_coeff
+
+    def step(self, epoch=None):
+        """Compute the learning rate of each parameter group."""
+        return
+
+
 class ExponentialScheduler:
     """Decays softmax coefficient gamma every round."""
 
@@ -118,6 +135,7 @@ class ExponentialScheduler:
         return
 
 
+"""
 if __name__ == "__main__":
     softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=100, n_warmup_steps=20)
 
@@ -142,3 +160,4 @@ if __name__ == "__main__":
 
         exponent_schedule.step(epoch=i)
         print(exponent_schedule.get_softmax_coeff())
+"""

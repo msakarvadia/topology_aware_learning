@@ -150,12 +150,13 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for data in [
-                "cifar10_vgg_1",
+                # "cifar10_vgg_1",
                 "cifar10_vgg_2",
                 "cifar10_mobile",
                 "cifar10_resnet18",
                 "mnist",
-                "fmnist",
+                "fmnist_1",
+                "fmnist_2",
             ]:
                 if data == "cifar10_vgg_1":
                     lr = 0.01
@@ -174,9 +175,14 @@ if __name__ == "__main__":
                 if data == "mnist":
                     lr = 0.001
                     momentum = 0
-                if data == "fmnist":
+                if data == "fmnist_1":
                     lr = 0.01
                     momentum = 0
+                    data = "fmnist"
+                if data == "fmnist_2":
+                    lr = 0.001
+                    momentum = 0
+                    data = "fmnist"
                 for softmax_coeff in [1, 10, 100]:
                     # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # iterate through aggregation strategies

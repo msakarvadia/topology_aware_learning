@@ -150,7 +150,7 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for dataset in ["mnist", "fmnist"]:
-                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
+                for lr in [0.001]:  # [0.1, 0.01, 0.001]:
                     for softmax_coeff in [1, 10, 100]:
                         # for softmax in [True] #, False]:
                         # iterate through aggregation strategies

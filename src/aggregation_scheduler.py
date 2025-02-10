@@ -22,7 +22,7 @@ class ScheduledOptim:
         self.softmax_coeff -= 1 * self._get_softmax_scale()
         return self.softmax_coeff
 
-    def step(self, epoch=None):
+    def step(self, round_idx=None):
         """Step could be called after every round."""
         self.n_steps += 1
 
@@ -34,7 +34,7 @@ class CosineAnnealingWarmRestarts:
         T_0: int,
         T_mult: int = 1,
         eta_min: float = 0.0,
-        last_epoch: int = -1,
+        last_round: int = -1,
         softmax_coeff: float = 100,
     ):  # noqa: D107
         if T_0 <= 0 or not isinstance(T_0, int):
@@ -49,7 +49,7 @@ class CosineAnnealingWarmRestarts:
         self.T_i = T_0
         self.T_mult = T_mult
         self.eta_min = eta_min
-        self.T_cur = last_epoch
+        self.T_cur = last_round
         self.softmax_coeff = softmax_coeff
 
     def get_softmax_coeff(self):
@@ -60,37 +60,37 @@ class CosineAnnealingWarmRestarts:
             / 2
         )
 
-    def step(self, epoch=None):
+    def step(self, round_idx=None):
         """Step could be called after every round."""
-        if epoch is None and self.last_epoch < 0:
-            epoch = 0
+        if round_idx is None and self.last_round < 0:
+            round_idx = 0
 
-        if epoch is None:
-            epoch = self.last_epoch + 1
+        if round_idx is None:
+            round_idx = self.last_round + 1
             self.T_cur = self.T_cur + 1
             if self.T_cur >= self.T_i:
                 self.T_cur = self.T_cur - self.T_i
                 self.T_i = self.T_i * self.T_mult
         else:
-            if epoch < 0:
-                raise ValueError(f"Expected non-negative epoch, but got {epoch}")
-            if epoch >= self.T_0:
+            if round_idx < 0:
+                raise ValueError(f"Expected non-negative round, but got {round_idx}")
+            if round_idx >= self.T_0:
                 if self.T_mult == 1:
-                    self.T_cur = epoch % self.T_0
+                    self.T_cur = round_idx % self.T_0
                 else:
                     n = int(
                         math.log(
-                            (epoch / self.T_0 * (self.T_mult - 1) + 1), self.T_mult
+                            (round_idx / self.T_0 * (self.T_mult - 1) + 1), self.T_mult
                         )
                     )
-                    self.T_cur = epoch - self.T_0 * (self.T_mult**n - 1) / (
+                    self.T_cur = round_idx - self.T_0 * (self.T_mult**n - 1) / (
                         self.T_mult - 1
                     )
                     self.T_i = self.T_0 * self.T_mult ** (n)
             else:
                 self.T_i = self.T_0
-                self.T_cur = epoch
-        self.last_epoch = math.floor(epoch)
+                self.T_cur = round_idx
+        self.last_round = math.floor(round_idx)
 
 
 class FakeScheduler:
@@ -105,7 +105,7 @@ class FakeScheduler:
     def get_softmax_coeff(self):
         return self.softmax_coeff
 
-    def step(self, epoch=None):
+    def step(self, round_idx=None):
         """Compute the learning rate of each parameter group."""
         return
 
@@ -128,14 +128,13 @@ class ExponentialScheduler:
             return self.eta_min
         return self.softmax_coeff
 
-    def step(self, epoch=None):
+    def step(self, round_idx=None):
         """Compute the learning rate of each parameter group."""
 
         self.softmax_coeff *= self.gamma
         return
 
 
-"""
 if __name__ == "__main__":
     softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=100, n_warmup_steps=20)
 
@@ -143,7 +142,7 @@ if __name__ == "__main__":
         T_0=20,
         T_mult=1,
         eta_min=1,
-        last_epoch=-1,
+        last_round=-1,
         softmax_coeff=100,
     )
 
@@ -152,12 +151,11 @@ if __name__ == "__main__":
         gamma=0.95,
     )
     for i in range(100):
-        softmax_coeff_scheduler.step(epoch=i)
+        softmax_coeff_scheduler.step(round_idx=i)
         print(softmax_coeff_scheduler.get_softmax_coeff())
 
-        CA_schedule.step(epoch=i)
+        CA_schedule.step(round_idx=i)
         print(CA_schedule.get_softmax_coeff())
 
-        exponent_schedule.step(epoch=i)
+        exponent_schedule.step(round_idx=i)
         print(exponent_schedule.get_softmax_coeff())
-"""

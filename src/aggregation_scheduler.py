@@ -18,11 +18,13 @@ class ScheduledOptim:
         return min(n_steps ** (-0.5), n_steps * n_warmup_steps ** (-1.5))
         # return (d_model ** -0.5) * min(n_steps ** (-0.5), n_steps * n_warmup_steps ** (-1.5))
 
-    def update_softmax_coeff(self):
-        """Softmax coeff scheduling per step"""
-
-        self.n_steps += 1
+    def get_softmax_coeff(self):
         self.softmax_coeff -= 1 * self._get_softmax_scale()
+        return self.softmax_coeff
+
+    def step(self, epoch=None):
+        """Step could be called after every round."""
+        self.n_steps += 1
 
 
 class CosineAnnealingWarmRestarts:
@@ -51,7 +53,6 @@ class CosineAnnealingWarmRestarts:
         self.softmax_coeff = softmax_coeff
 
     def get_softmax_coeff(self):
-
         return (
             self.eta_min
             + (self.softmax_coeff - self.eta_min)
@@ -60,32 +61,7 @@ class CosineAnnealingWarmRestarts:
         )
 
     def step(self, epoch=None):
-        """Step could be called after every batch update.
-
-        Example:
-            >>> # xdoctest: +SKIP("Undefined vars")
-            >>> scheduler = CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
-            >>> iters = len(dataloader)
-            >>> for epoch in range(20):
-            >>>     for i, sample in enumerate(dataloader):
-            >>>         inputs, labels = sample['inputs'], sample['labels']
-            >>>         optimizer.zero_grad()
-            >>>         outputs = net(inputs)
-            >>>         loss = criterion(outputs, labels)
-            >>>         loss.backward()
-            >>>         optimizer.step()
-            >>>         scheduler.step(epoch + i / iters)
-
-        This function can be called in an interleaved way.
-
-        Example:
-            >>> # xdoctest: +SKIP("Undefined vars")
-            >>> scheduler = CosineAnnealingWarmRestarts(optimizer, T_0, T_mult)
-            >>> for epoch in range(20):
-            >>>     scheduler.step()
-            >>> scheduler.step(26)
-            >>> scheduler.step() # scheduler.step(27), instead of scheduler(20)
-        """
+        """Step could be called after every round."""
         if epoch is None and self.last_epoch < 0:
             epoch = 0
 
@@ -117,8 +93,33 @@ class CosineAnnealingWarmRestarts:
         self.last_epoch = math.floor(epoch)
 
 
+class ExponentialScheduler:
+    """Decays softmax coefficient gamma every round."""
+
+    def __init__(
+        self,
+        gamma: float,
+        eta_min: float = 1,  # min value for softmax coeff
+        softmax_coeff: float = 100,
+    ):  # noqa: D107
+        self.gamma = gamma
+        self.softmax_coeff = softmax_coeff
+        self.eta_min = eta_min
+
+    def get_softmax_coeff(self):
+        if self.softmax_coeff < self.eta_min:
+            return self.eta_min
+        return self.softmax_coeff
+
+    def step(self, epoch=None):
+        """Compute the learning rate of each parameter group."""
+
+        self.softmax_coeff *= self.gamma
+        return
+
+
 if __name__ == "__main__":
-    softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=50, n_warmup_steps=20)
+    softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=100, n_warmup_steps=20)
 
     CA_schedule = CosineAnnealingWarmRestarts(
         T_0=20,
@@ -127,9 +128,17 @@ if __name__ == "__main__":
         last_epoch=-1,
         softmax_coeff=100,
     )
+
+    exponent_schedule = ExponentialScheduler(
+        softmax_coeff=100,
+        gamma=0.95,
+    )
     for i in range(100):
-        # print(softmax_coeff_scheduler.softmax_coeff)
-        # softmax_coeff_scheduler.update_softmax_coeff()
+        softmax_coeff_scheduler.step(epoch=i)
+        print(softmax_coeff_scheduler.get_softmax_coeff())
 
         CA_schedule.step(epoch=i)
         print(CA_schedule.get_softmax_coeff())
+
+        exponent_schedule.step(epoch=i)
+        print(exponent_schedule.get_softmax_coeff())

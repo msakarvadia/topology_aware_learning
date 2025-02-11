@@ -258,7 +258,7 @@ class DecentrallearnApp:
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg
             self.aggregation_scheduler = CosineAnnealingWarmRestarts(
-                T_0=20,
+                T_0=66,
                 T_mult=1,
                 eta_min=1,
                 last_round=-1,

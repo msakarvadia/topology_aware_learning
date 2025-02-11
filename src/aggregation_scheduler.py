@@ -135,6 +135,7 @@ class ExponentialScheduler:
         return
 
 
+"""
 if __name__ == "__main__":
     softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=100, n_warmup_steps=20)
 
@@ -159,3 +160,4 @@ if __name__ == "__main__":
 
         exponent_schedule.step(round_idx=i)
         print(exponent_schedule.get_softmax_coeff())
+"""

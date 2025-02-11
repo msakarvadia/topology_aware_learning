@@ -151,9 +151,11 @@ if __name__ == "__main__":
             app_result_tuples = []
             for data in [
                 # "cifar10_vgg_1",
-                "cifar10_vgg_2",
+                # "cifar10_vgg_2",
+                "cifar10_vgg_3",
                 "cifar10_mobile",
-                "cifar10_resnet18",
+                "cifar10_vit",
+                # "cifar10_resnet18",
                 "mnist",
                 "fmnist_1",
                 "fmnist_2",
@@ -166,6 +168,13 @@ if __name__ == "__main__":
                     lr = 0.001
                     momentum = 0.9
                     data = "cifar10_vgg"
+                if data == "cifar10_vgg_3":
+                    lr = 0.001
+                    momentum = 0
+                    data = "cifar10_vgg"
+                if data == "cifar10_vit":
+                    lr = 0.001
+                    momentum = 0.9
                 if data == "cifar10_mobile":
                     lr = 0.01
                     momentum = 0.9

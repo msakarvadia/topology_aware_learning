@@ -150,77 +150,81 @@ if __name__ == "__main__":
             print(f"running expeirment until round {i}")
             app_result_tuples = []
             for dataset in ["mnist", "fmnist"]:
-                for lr in [0.001]:  # [0.1, 0.01, 0.001]:
-                    for softmax_coeff in [1, 10, 100]:
-                        # for softmax in [True] #, False]:
-                        # iterate through aggregation strategies
-                        for aggregation_strategy in [
-                            "unweighted",
-                            "unweighted_fl",
-                            "weighted",
-                            "degCent",
-                            "betCent",
-                        ]:
-                            if softmax_coeff > 1 and (
-                                aggregation_strategy
-                                in ["unweighted_fl", "unweighted", "weighted"]
-                            ):
-                                continue
+                for batch_size in [128]:  # [16, 128]:
+                    for lr in [0.001]:  # [0.1, 0.01, 0.001]:
+                        for softmax_coeff in [1, 10, 100]:
+                            # for softmax in [True] #, False]:
+                            # iterate through aggregation strategies
+                            for aggregation_strategy in [
+                                "unweighted",
+                                "unweighted_fl",
+                                "weighted",
+                                "degCent",
+                                "betCent",
+                            ]:
+                                if softmax_coeff > 1 and (
+                                    aggregation_strategy
+                                    in ["unweighted_fl", "unweighted", "weighted"]
+                                ):
+                                    continue
 
-                            # iterate through topologies
-                            for topo in paths:
-                                # iterate through different backdoor node placements
-                                print(f"{topo=}")
-                                topology = np.loadtxt(topo, dtype=float)
-                                num_clients = topology.shape[0]
+                                # iterate through topologies
+                                for topo in paths:
+                                    # iterate through different backdoor node placements
+                                    print(f"{topo=}")
+                                    topology = np.loadtxt(topo, dtype=float)
+                                    num_clients = topology.shape[0]
 
-                                # Vary sample heterogeneity
-                                for sample_alpha in [1, 10, 1000]:
-                                    # Vary label heterogeneity
-                                    for label_alpha in [1000]:  # [1, 10, 1000]:
+                                    # Vary sample heterogeneity
+                                    for sample_alpha in [1, 10, 1000]:
+                                        # Vary label heterogeneity
+                                        for label_alpha in [1000]:  # [1, 10, 1000]:
 
-                                        model_count += num_clients
-                                        decentral_app = DecentrallearnApp(
-                                            dataset=dataset,
-                                            rounds=i,
-                                            topology_path=topo,
-                                            backdoor=False,
-                                            prox_coeff=0,
-                                            epochs=5,
-                                            aggregation_strategy=aggregation_strategy,
-                                            log_dir="softmax_logs",
-                                            sample_alpha=sample_alpha,
-                                            label_alpha=label_alpha,
-                                            softmax=True,
-                                            softmax_coeff=softmax_coeff,
-                                            lr=lr,
-                                        )
+                                            model_count += num_clients
+                                            decentral_app = DecentrallearnApp(
+                                                dataset=dataset,
+                                                rounds=i,
+                                                topology_path=topo,
+                                                backdoor=False,
+                                                prox_coeff=0,
+                                                epochs=5,
+                                                aggregation_strategy=aggregation_strategy,
+                                                log_dir="softmax_logs",
+                                                sample_alpha=sample_alpha,
+                                                label_alpha=label_alpha,
+                                                softmax=True,
+                                                softmax_coeff=softmax_coeff,
+                                                lr=lr,
+                                                batch_size=batch_size,
+                                            )
 
-                                        (
-                                            client_results,
-                                            train_result_futures,
-                                            round_states,
-                                            run_dir,
-                                        ) = decentral_app.run()
-                                        app_result_tuples.append(
                                             (
                                                 client_results,
                                                 train_result_futures,
                                                 round_states,
-                                                i,
                                                 run_dir,
+                                            ) = decentral_app.run()
+                                            app_result_tuples.append(
+                                                (
+                                                    client_results,
+                                                    train_result_futures,
+                                                    round_states,
+                                                    i,
+                                                    run_dir,
+                                                )
                                             )
-                                        )
 
-                                        if model_count > (args.num_nodes * 4):
-                                            ######### Process and Save training results
-                                            print(
-                                                "There are more models than GPUs, so waiting for results, before making more experiments"
-                                            )
-                                            for result_tuple in app_result_tuples:
-                                                process_futures_and_ckpt(*result_tuple)
-                                            app_result_tuples = []
-                                            model_count = 0
+                                            if model_count > (args.num_nodes * 4):
+                                                ######### Process and Save training results
+                                                print(
+                                                    "There are more models than GPUs, so waiting for results, before making more experiments"
+                                                )
+                                                for result_tuple in app_result_tuples:
+                                                    process_futures_and_ckpt(
+                                                        *result_tuple
+                                                    )
+                                                app_result_tuples = []
+                                                model_count = 0
 
     end = time.time()
     print("Total time: ", end - start)

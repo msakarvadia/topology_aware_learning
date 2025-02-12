@@ -157,7 +157,7 @@ if __name__ == "__main__":
                 "cifar10_vit",
                 # "cifar10_resnet18",
                 "mnist",
-                "fmnist_1",
+                # "fmnist_1",
                 "fmnist_2",
             ]:
                 if data == "cifar10_vgg_1":

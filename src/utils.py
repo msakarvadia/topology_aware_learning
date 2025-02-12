@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.types import Result
 from src.decentralized_client import DecentralClient
+from src.aggregation_scheduler import BaseScheduler
 
 
 def save_checkpoint(
@@ -32,14 +33,19 @@ def save_checkpoint(
 def load_checkpoint(
     ckpt_path: pathlib.Path,
     clients: list[DecentralClient],
-) -> tuple[int, list[DecentralClient], list[Result]]:
+    softmax_coeff_scheduler: BaseScheduler,
+) -> tuple[int, list[DecentralClient], list[Result], BaseScheduler]:
 
     ckpt = torch.load(ckpt_path, map_location=torch.device("cpu"))
     for i in range(len(clients)):
         sd = ckpt["client_state_dicts"][i]
         clients[i].model.load_state_dict(sd)
 
-    return ckpt["round_idx"], clients, ckpt["client_results"]
+    # get softmax coeff scheduler to the correct point
+    for i in range(ckpt["round_idx"]):
+        softmax_coeff_scheduler.step(i)
+
+    return ckpt["round_idx"], clients, ckpt["client_results"], softmax_coeff_scheduler
 
 
 def process_futures_and_ckpt(

@@ -30,7 +30,7 @@ from src.types import DataChoices
 from src.types import Result
 from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import CosineAnnealingWarmRestarts
-from src.aggregation_scheduler import FakeScheduler
+from src.aggregation_scheduler import BaseScheduler
 from src.aggregation_scheduler import ExponentialScheduler
 from parsl.app.app import python_app
 
@@ -234,7 +234,7 @@ class DecentrallearnApp:
         self.centrality_metric = None
         self.softmax = softmax
         self.softmax_coeff = softmax_coeff
-        self.aggregation_scheduler = FakeScheduler(self.softmax_coeff)
+        self.aggregation_scheduler = BaseScheduler(self.softmax_coeff)
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
@@ -361,8 +361,13 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
             )
-            self.start_round, self.clients, self.client_results = load_checkpoint(
-                checkpoint_path, self.clients
+            (
+                self.start_round,
+                self.clients,
+                self.client_results,
+                self.aggregation_scheduler,
+            ) = load_checkpoint(
+                checkpoint_path, self.clients, self.aggregation_scheduler
             )
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")

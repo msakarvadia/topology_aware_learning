@@ -27,7 +27,24 @@ class ScheduledOptim:
         self.n_steps += 1
 
 
-class CosineAnnealingWarmRestarts:
+class BaseScheduler:
+    """Parent class for softmax scheduler."""
+
+    def __init__(
+        self,
+        softmax_coeff: float = 100,
+    ):  # noqa: D107
+        self.softmax_coeff = softmax_coeff
+
+    def get_softmax_coeff(self):
+        return self.softmax_coeff
+
+    def step(self, round_idx=None):
+        """Compute the learning rate of each parameter group."""
+        return
+
+
+class CosineAnnealingWarmRestarts(BaseScheduler):
 
     def __init__(
         self,
@@ -93,24 +110,7 @@ class CosineAnnealingWarmRestarts:
         self.last_round = math.floor(round_idx)
 
 
-class FakeScheduler:
-    """Decays softmax coefficient gamma every round."""
-
-    def __init__(
-        self,
-        softmax_coeff: float = 100,
-    ):  # noqa: D107
-        self.softmax_coeff = softmax_coeff
-
-    def get_softmax_coeff(self):
-        return self.softmax_coeff
-
-    def step(self, round_idx=None):
-        """Compute the learning rate of each parameter group."""
-        return
-
-
-class ExponentialScheduler:
+class ExponentialScheduler(BaseScheduler):
     """Decays softmax coefficient gamma every round."""
 
     def __init__(

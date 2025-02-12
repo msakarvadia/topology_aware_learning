@@ -1,11 +1,11 @@
 #!/bin/bash 
-#PBS -l select=10
-#PBS -l walltime=03:00:00
-#PBS -q prod
+#PBS -l select=2
+#PBS -l walltime=72:00:00
+#PBS -q preemptable
 #PBS -l filesystems=home:eagle
 #PBS -A superbert
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N backdoor
+#PBS -N scheduler
 #PBS -r y 
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml 

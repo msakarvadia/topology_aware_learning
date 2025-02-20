@@ -151,18 +151,23 @@ if __name__ == "__main__":
             app_result_tuples = []
             for dataset in [
                 "cifar10_vgg",
-                "cifar10_vit",
-                "cifar10_resnet18",
+                # "cifar10_vit",
+                # "cifar10_resnet18",
                 "cifar10_resnet50",
                 "cifar10_mobile",
             ]:
-                for lr in [0.001, 0.01]:  # [0.1, 0.01, 0.001]:
-                    for momentum in [0]:  # [0, 0.9]:
+                for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                    if optimizer == "sgd":
+                        lr = 0.001
+                    if optimizer == "adam":
+                        lr = 0.0001
+                    # for lr in [0.001, 0.01]:  # [0.1, 0.01, 0.001]:
+                    for backdoor in [True]:  # [0, 0.9]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
-                                # "unweighted_fl",
+                                "unweighted_fl",
                                 "weighted",
                                 "degCent",
                                 "betCent",
@@ -186,7 +191,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [10]:  # [1, 10, 1000]:
+                                    for sample_alpha in [1, 10, 1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
@@ -195,7 +200,7 @@ if __name__ == "__main__":
                                                 dataset=dataset,
                                                 rounds=i,
                                                 topology_path=topo,
-                                                backdoor=False,
+                                                backdoor=backdoor,
                                                 prox_coeff=0,
                                                 epochs=5,
                                                 aggregation_strategy=aggregation_strategy,
@@ -204,8 +209,9 @@ if __name__ == "__main__":
                                                 label_alpha=label_alpha,
                                                 softmax=True,
                                                 softmax_coeff=softmax_coeff,
-                                                momentum=momentum,
+                                                # momentum=momentum,
                                                 lr=lr,
+                                                optimizer=optimizer,
                                             )
 
                                             (

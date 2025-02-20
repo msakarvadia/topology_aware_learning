@@ -110,6 +110,15 @@ class DecentrallearnApp:
         tiny_mem_num_labels: int = 50,
         momentum: float = 0,
         softmax_coeff: float = 10,
+        optimizer: str = "sgd",
+        weight_decay: float = 0,
+        beta_1: float = 0.9,
+        beta_2: float = 0.98,
+        scheduler: str = None,  # Exp, CA
+        gamma: float = 0.95,
+        T_0: float = 66,
+        T_mult: float = 1,
+        eta_min: float = 1,
     ) -> None:
 
         # make the outdir
@@ -247,43 +256,9 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg
-        if self.aggregation_strategy == "betCent_exp":
-            self.centrality_metric = "betweenness"
-            self.aggregation_function = centrality_module_avg
-            self.aggregation_scheduler = ExponentialScheduler(
-                gamma=0.95,
-                softmax_coeff=self.softmax_coeff,
-            )
-        if self.aggregation_strategy == "betCent_CA":
-            self.centrality_metric = "betweenness"
-            self.aggregation_function = centrality_module_avg
-            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
-                T_0=66,
-                T_mult=1,
-                eta_min=1,
-                last_round=-1,
-                softmax_coeff=self.softmax_coeff,
-            )
         if self.aggregation_strategy == "degCent":
             self.centrality_metric = "degree"
             self.aggregation_function = centrality_module_avg
-        if self.aggregation_strategy == "degCent_exp":
-            self.centrality_metric = "degree"
-            self.aggregation_function = centrality_module_avg
-            self.aggregation_scheduler = ExponentialScheduler(
-                gamma=0.95,
-                softmax_coeff=self.softmax_coeff,
-            )
-        if self.aggregation_strategy == "degCent_CA":
-            self.centrality_metric = "degree"
-            self.aggregation_function = centrality_module_avg
-            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
-                T_0=20,
-                T_mult=1,
-                eta_min=1,
-                last_round=-1,
-                softmax_coeff=self.softmax_coeff,
-            )
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
@@ -295,12 +270,29 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
+        if scheduler == "CA":
+            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
+                T_0=T_0,
+                T_mult=T_mult,
+                eta_min=eta_min,
+                last_round=-1,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if scheduler == "exp":
+            self.aggregation_scheduler = ExponentialScheduler(
+                gamma=gamma,
+                softmax_coeff=self.softmax_coeff,
+            )
         # NOTE (MS): Try assigning this in the job itself.
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
         self.momentum = momentum
+        self.optimizer = optimizer
+        self.weight_decay = weight_decay
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
 
         self.prox_coeff = prox_coeff
         self.participation = participation
@@ -497,6 +489,10 @@ class DecentrallearnApp:
                 self.seed,
                 self.backdoor,
                 self.dataset,
+                self.optimizer,
+                self.weight_decay,
+                self.beta_1,
+                self.beta_2,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")

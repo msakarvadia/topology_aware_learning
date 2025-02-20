@@ -248,7 +248,7 @@ def create_model(data: DataChoices) -> nn.Module:
             n_layer=4,  # args.n_layers,  # 1,2,4,8,16
             n_head=4,
             n_embd=128,  # args.n_embed,
-            n_positions=650,  # args.max_ctx,
+            n_positions=150,  # args.max_ctx,
             bos_token_id=bos_token_id,
             eos_token_id=eos_token_id,
             pad_token_id=pad_token_id,
@@ -607,13 +607,13 @@ def load_data(
         for prime in primes:
             print(f"{label=}")
             data = generate_seq(
-                coeff=7,
-                length=100,
+                coeff=prime,
+                length=20,
                 noise=0,
                 num_examples=num_examples,
                 modulo=16381,
                 device="cpu",  # data will be re-assigned within a parsl training task
-                max_ctx=650,
+                max_ctx=150,
             )
             train_data, test_data = split_data(data, num_examples, num_test)
             train_sets.append(train_data)

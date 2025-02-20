@@ -174,10 +174,10 @@ if __name__ == "__main__":
             "scale_agg",
             "degCent",
             "betCent",
-            "degCent_CA",
-            "betCent_CA",
-            "degCent_exp",
-            "betCent_exp",
+            # "degCent_CA",
+            # "betCent_CA",
+            # "degCent_exp",
+            # "betCent_exp",
             "cluster",
             "invCluster",
             "random",
@@ -280,6 +280,62 @@ if __name__ == "__main__":
         type=float,
         default=10,
         help="coefficient by which you scale your model weights before softmaxing them.",
+    )
+    parser.add_argument(
+        "--gamma",
+        type=float,
+        default=0.95,
+        help="decay parameter for exponential softmax coefficient scheduler.",
+    )
+    parser.add_argument(
+        "--T_0",
+        type=float,
+        default=66,
+        help="CA scheduler period.",
+    )
+    parser.add_argument(
+        "--T_mult",
+        type=float,
+        default=1,
+        help="CA scheduler arg.",
+    )
+    parser.add_argument(
+        "--eta_min",
+        type=float,
+        default=1,
+        help="CA scheduler arg.",
+    )
+    parser.add_argument(
+        "--scheduler",
+        type=str,
+        default=None,
+        choices=["exp", "CA"],
+        help="Type of softmax coefficient scheduler",
+    )
+    parser.add_argument(
+        "--optimizer",
+        type=str,
+        default="sgd",
+        choices=["adam", "sgd", "adamw"],
+        help="Type of optimizer",
+    )
+    parser.add_argument(
+        "--weight_decay",
+        type=float,
+        default=0,
+        help="Weight decay for optimizer.",
+    )
+    parser.add_argument(
+        "--beta_1",
+        type=float,
+        default=0.9,
+        help="param for AdamW optimizer.",
+    )
+    parser.add_argument(
+        "--beta_2",
+        type=float,
+        default=0.98,
+        help="param for AdamW optimizer.",
     )
 
     args = parser.parse_args()
@@ -425,6 +481,15 @@ if __name__ == "__main__":
         tiny_mem_num_labels=args.tiny_mem_num_labels,
         momentum=args.momentum,
         softmax_coeff=args.softmax_coeff,
+        optimizer=args.optimizer,
+        weight_decay=args.weight_decay,
+        beta_1=args.beta_1,
+        beta_2=args.beta_2,
+        scheduler=args.scheduler,
+        gamma=args.gamma,
+        T_0=args.T_0,
+        T_mult=args.T_mult,
+        eta_min=args.eta_min,
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

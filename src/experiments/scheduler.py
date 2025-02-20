@@ -158,6 +158,7 @@ if __name__ == "__main__":
                 # "fmnist_1",
                 # "fmnist_2",
             ]:
+                batch_size = 64
                 if data == "cifar10_vgg_1":
                     lr = 0.01
                     momentum = 0.9
@@ -183,6 +184,12 @@ if __name__ == "__main__":
                     lr = 0.001
                     momentum = 0
                     data = "fmnist"
+                    batch_size = 64
+                if data == "mnist":
+                    lr = 0.001
+                    momentum = 0
+                    data = "mnist"
+                    batch_size = 64
                 for softmax_coeff in [10, 100]:
                     # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # iterate through aggregation strategies
@@ -225,6 +232,7 @@ if __name__ == "__main__":
                                     label_alpha=1000,
                                     lr=lr,
                                     momentum=momentum,
+                                    batch_size=64,
                                 )
 
                                 (

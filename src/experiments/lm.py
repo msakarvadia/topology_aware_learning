@@ -196,7 +196,7 @@ if __name__ == "__main__":
                                                 label_alpha=label_alpha,
                                                 softmax=True,
                                                 softmax_coeff=softmax_coeff,
-                                                tiny_mem_num_labels=50,
+                                                tiny_mem_num_labels=10,
                                                 lr=lr,
                                                 batch_size=batch_size,
                                                 optimizer="adamw",

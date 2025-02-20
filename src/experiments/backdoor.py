@@ -199,7 +199,7 @@ if __name__ == "__main__":
                     momentum = 0
                     data = "mnist"
                     batch_size = 64
-                for softmax_coeff in [1, 10, 100]:
+                for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [

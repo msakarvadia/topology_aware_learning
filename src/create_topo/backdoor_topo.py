@@ -35,8 +35,13 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
+    """
     g = nx.barabasi_albert_graph(n=33, m=1, seed=0)
     graphs["barabasi_albert_33_1"] = g
+    """
+
+    g = nx.barabasi_albert_graph(n=33, m=2, seed=0)
+    graphs["barabasi_albert_33_2"] = g
     # graphs.append(g)
 
     """

@@ -1,7 +1,7 @@
 #!/bin/bash 
-#PBS -l select=4
-#PBS -l walltime=72:00:00
-#PBS -q preemptable
+#PBS -l select=10
+#PBS -l walltime=03:00:00
+#PBS -q prod
 #PBS -l filesystems=home:eagle
 #PBS -A superbert
 #PBS -M sakarvadia@uchicago.edu

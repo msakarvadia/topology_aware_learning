@@ -199,6 +199,10 @@ if __name__ == "__main__":
                                                 tiny_mem_num_labels=50,
                                                 lr=lr,
                                                 batch_size=batch_size,
+                                                optimizer="adamw",
+                                                weight_decay=0.1,
+                                                beta_1=0.9,
+                                                beta_2=0.98,
                                             )
 
                                             (

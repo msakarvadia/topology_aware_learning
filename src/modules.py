@@ -588,7 +588,7 @@ def load_data(
             523,
             541,
         ][0:tiny_mem_num_labels]
-        num_examples = 10000
+        num_examples = 5000
         num_test = 1000
         train_sets = []
         train_labels = []

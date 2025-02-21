@@ -156,7 +156,7 @@ if __name__ == "__main__":
                 # "cifar10_resnet18",
                 "mnist",
                 # "fmnist_1",
-                # "fmnist_2",
+                "fmnist_2",
             ]:
                 batch_size = 64
                 if data == "cifar10_vgg_1":

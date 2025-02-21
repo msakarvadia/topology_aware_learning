@@ -182,16 +182,18 @@ if __name__ == "__main__":
                                 for topo in paths:
                                     # iterate through different backdoor node placements
                                     print(f"{topo=}")
+                                    """
                                     if "33_2" not in topo:
                                         print(
                                             "temp canceling experment to prune # of experiments"
                                         )
                                         continue
+                                    """
                                     topology = np.loadtxt(topo, dtype=float)
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 10, 1000]:
+                                    for sample_alpha in [1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 

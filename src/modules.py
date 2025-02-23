@@ -239,7 +239,7 @@ def create_model(data: DataChoices) -> nn.Module:
         return CifarModule(100)
     elif name in ("fmnist", "mnist"):
         return MnistModule()
-    elif name in ("tiny_mem"):
+    elif "tiny_mem" in name:
         pad_token_id = 13
         bos_token_id = 10
         eos_token_id = 11
@@ -347,12 +347,23 @@ def seven_function(starting_val):
 
 
 def multiply_function(starting_val, coeff, modulo):
-    # 7+x
     return (coeff * starting_val) % modulo
 
 
+def sum_function(starting_val, coeff, modulo):
+    return (coeff + starting_val) % modulo
+
+
 def generate_seq(
-    coeff, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
+    coeff,
+    length,
+    noise,
+    num_examples,
+    modulo,
+    device,
+    noise_range=10,
+    max_ctx=650,
+    func_type="multiply",
 ):
     data = []
     # noise_amt = 0
@@ -364,7 +375,10 @@ def generate_seq(
         # This is how we generate noise for each sample
         # noise_amt = randrange(-noise_range, noise_range)
         for j in range(length):
-            start = multiply_function(start, coeff, modulo)
+            if func_type == "multiply":
+                start = multiply_function(start, coeff, modulo)
+            if func_type == "sum":
+                start = sum_function(start, coeff, modulo)
             vector.append(start)
 
         # adding noise vector to the clean datapoints
@@ -447,6 +461,7 @@ def load_data(
         "download": download,
     }
     name = data_name.value.lower()
+    print(f"{name=}")
     if (
         (name == "cifar10_augment")
         or (name == "cifar10_augment_vgg")
@@ -485,7 +500,7 @@ def load_data(
         return torchvision.datasets.FashionMNIST(**kwargs)
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
-    elif name == "tiny_mem":
+    elif "tiny_mem" in name:
         primes = [
             2,
             3,
@@ -535,59 +550,8 @@ def load_data(
             199,
             211,
             223,
-            227,
-            229,
-            233,
-            239,
-            241,
-            251,
-            257,
-            263,
-            269,
-            271,
-            277,
-            281,
-            283,
-            293,
-            307,
-            311,
-            313,
-            317,
-            331,
-            337,
-            347,
-            349,
-            353,
-            359,
-            367,
-            373,
-            379,
-            383,
-            389,
-            397,
-            401,
-            409,
-            419,
-            421,
-            431,
-            433,
-            439,
-            443,
-            449,
-            457,
-            461,
-            463,
-            467,
-            479,
-            487,
-            491,
-            499,
-            503,
-            509,
-            521,
-            523,
-            541,
         ][0:tiny_mem_num_labels]
+        evens = [2, 4, 6, 8, 10, 12, 14, 16, 18][0:tiny_mem_num_labels]
         num_examples = 5000
         num_test = 1000
         train_sets = []
@@ -595,7 +559,7 @@ def load_data(
         test_sets = []
         test_labels = []
         label = 0
-        data_path_name = f"data/tiny_mem/{tiny_mem_num_labels}_data.pt"
+        data_path_name = f"data/{name}/{tiny_mem_num_labels}_data.pt"
         os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
         if os.path.isfile(data_path_name):
             data = torch.load(data_path_name, map_location=torch.device("cpu"))
@@ -604,16 +568,23 @@ def load_data(
             if not train:
                 return CustomLMDataset(data["test_data"], data["test_labels"])
 
-        for prime in primes:
+        values = primes
+        if "even" in name:
+            values = evens
+        func_type = "multiply"
+        if "increment" in name:
+            func_type = "sum"
+        for coeff in values:
             print(f"{label=}")
             data = generate_seq(
-                coeff=prime,
+                coeff=coeff,
                 length=20,
                 noise=0,
                 num_examples=num_examples,
                 modulo=16381,
                 device="cpu",  # data will be re-assigned within a parsl training task
                 max_ctx=150,
+                func_type=func_type,
             )
             train_data, test_data = split_data(data, num_examples, num_test)
             train_sets.append(train_data)

@@ -376,9 +376,10 @@ def backdoor_data(
     random_data_placement: bool = True,
     backdoor_node_idx: int = 0,
     num_clients: int = 0,
+    test_data: int = 0,
 ) -> (Dataset, Dataset):
     # print(data)
-    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_backdoor.pt"
+    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):
@@ -401,14 +402,19 @@ def backdoor_data(
 
     backdoored_data = []
     indices = list(range(len(backdoor_data)))
-    for idx, (img, label) in enumerate(backdoor_data):
-        img = backdoor_data[idx][0]
-        label = backdoor_data[idx][1]
 
-        img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
-        backdoored_data.append((img, label))  # label modification
+    if "tiny_mem" in data_name:
+        print("backdooring LM data")
 
-    backdoor_data = Subset(backdoored_data, indices)
+    else:
+        for idx, (img, label) in enumerate(backdoor_data):
+            img = backdoor_data[idx][0]
+            label = backdoor_data[idx][1]
+
+            img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
+            backdoored_data.append((img, label))  # label modification
+
+        backdoor_data = Subset(backdoored_data, indices)
 
     torch.save(
         {
@@ -432,6 +438,7 @@ if __name__ == "__main__":
         train=True,
         download=True,
     )
+    concat_data = ConcatDataset([clean_data, bd_data])
     print("Loaded data")
     federated_split(
         num_workers=10,

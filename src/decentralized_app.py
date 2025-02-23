@@ -221,12 +221,19 @@ class DecentrallearnApp:
             tiny_mem_num_labels=tiny_mem_num_labels,
         )
 
+        self.topology = numpy.loadtxt(topology_path, dtype=float)
+        num_clients = self.topology.shape[0]
+
         self.backdoor = backdoor
         self.backdoor_proportion = backdoor_proportion
         self.backdoor_node_idx = backdoor_node_idx
         self.backdoor_test_data = None
         self.random_bd = random_bd
         self.many_to_one = many_to_one
+
+        self.offset_clients_data_placement = offset_clients_data_placement
+        self.centrality_metric_data_placement = centrality_metric_data_placement
+        self.random_data_placement = random_data_placement
         if self.backdoor:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
@@ -240,6 +247,13 @@ class DecentrallearnApp:
                 self.num_labels,
                 self.random_bd,
                 self.many_to_one,
+                # for propoer checkpointing purposes we need to save some additional info
+                self.offset_clients_data_placement,
+                self.centrality_metric_data_placement,
+                self.random_data_placement,
+                self.backdoor_node_idx,
+                num_clients=num_clients,
+                test_data=1,  # this is trianing data
             )
 
         self.aggregation_strategy = aggregation_strategy
@@ -299,7 +313,6 @@ class DecentrallearnApp:
 
         self.prox_coeff = prox_coeff
         self.participation = participation
-        self.topology = numpy.loadtxt(topology_path, dtype=float)
         if self.aggregation_strategy == "unweighted_fl":
             self.topology = numpy.ones(self.topology.shape)
             ind = numpy.diag_indices(self.topology.shape[0])
@@ -313,13 +326,9 @@ class DecentrallearnApp:
         self.label_alpha = label_alpha
         self.sample_alpha = sample_alpha
 
-        num_clients = self.topology.shape[0]
         if backdoor_node_idx >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
-        self.offset_clients_data_placement = offset_clients_data_placement
-        self.centrality_metric_data_placement = centrality_metric_data_placement
-        self.random_data_placement = random_data_placement
         self.clients = create_clients(
             num_clients,
             self.dataset,

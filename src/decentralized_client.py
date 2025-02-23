@@ -282,7 +282,7 @@ def create_clients(
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
         stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
         clean_data, bd_data = backdoor_data(
-            data_name,
+            data_name.value.lower(),
             train_subsets[backdoor_node_idx],
             stratify_targets,
             backdoor_proportion,
@@ -297,6 +297,7 @@ def create_clients(
             random_data_placement,
             backdoor_node_idx,
             num_clients=len(client_ids),
+            test_data=0,  # this is trianing data
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])

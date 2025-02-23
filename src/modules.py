@@ -426,16 +426,14 @@ def split_data(data, num_examples, num_test):
 class CustomLMDataset(Dataset):
     def __init__(self, seq_list, seq_annotations):
         self.data = seq_list  # these are the sequences themselves
-        self.seq_type = (
-            seq_annotations  # these are the labels for the data distribution
-        )
+        self.targets = seq_annotations  # these are the labels for the data distribution
 
     def __len__(self):
-        return len(self.seq_type)
+        return len(self.targets)
 
     def __getitem__(self, idx):
         seq = self.data[idx]
-        label = self.seq_type[idx]
+        label = self.targets[idx]
 
         return seq, label
 

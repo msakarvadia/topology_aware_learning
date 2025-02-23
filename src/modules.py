@@ -240,12 +240,16 @@ def create_model(data: DataChoices) -> nn.Module:
     elif name in ("fmnist", "mnist"):
         return MnistModule()
     elif "tiny_mem" in name:
+        n_layer = 4
+        if "one" in name:
+            print("one layer GPT model")
+            n_layer = 1
         pad_token_id = 13
         bos_token_id = 10
         eos_token_id = 11
         configuration = GPT2Config(
             vocab_size=14,  # args.vocab_size,
-            n_layer=4,  # args.n_layers,  # 1,2,4,8,16
+            n_layer=n_layer,  # args.n_layers,  # 1,2,4,8,16
             n_head=4,
             n_embd=128,  # args.n_embed,
             n_positions=150,  # args.max_ctx,

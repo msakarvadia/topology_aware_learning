@@ -182,8 +182,8 @@ class DecentrallearnApp:
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
             self.num_labels = tiny_mem_num_labels
-        if dataset == "tiny_mem_even_increment":
-            self.dataset = DataChoices.TINYMEM_EVEN_INCREMENT
+        if dataset == "tiny_mem_even_increment_one":
+            self.dataset = DataChoices.TINYMEM_EVEN_INCREMENT_ONE
             self.num_labels = tiny_mem_num_labels
 
         # Initialize logging

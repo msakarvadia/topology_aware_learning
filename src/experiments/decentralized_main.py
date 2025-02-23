@@ -142,7 +142,7 @@ if __name__ == "__main__":
             "fmnist",
             "cifar10",
             "tiny_mem",
-            "tiny_mem_even_increment",
+            "tiny_mem_even_increment_one",
             "cifar10_augment",
             "cifar10_augment_vgg",
             "cifar10_vgg",

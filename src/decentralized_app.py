@@ -182,6 +182,9 @@ class DecentrallearnApp:
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
             self.num_labels = tiny_mem_num_labels
+        if dataset == "tiny_mem_even":
+            self.dataset = DataChoices.TINYMEM_EVEN
+            self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
         logging.basicConfig(

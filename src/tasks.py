@@ -195,7 +195,7 @@ def local_train(
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
-            if dataset_name == "tiny_mem":
+            if "tiny_mem" in dataset_name:
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss
                 running_perp += torch.exp(loss).cpu().item()
@@ -296,7 +296,7 @@ def test_model(
     if seed is not None:
         torch.manual_seed(seed)
 
-    if dataset_name == "tiny_mem":
+    if "tiny_mem" in dataset_name:
         model.eval()
         total_loss, total_perp, total_acc = 0.0, 0.0, 0.0
         with torch.no_grad():

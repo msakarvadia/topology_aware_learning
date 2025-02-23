@@ -36,4 +36,4 @@ class DataChoices(enum.Enum):
     MNIST = "mnist"
     """MNIST dataset."""
     TINYMEM = "tiny_mem"
-    """MNIST dataset."""
+    TINYMEM_EVEN = "tiny_mem_even"

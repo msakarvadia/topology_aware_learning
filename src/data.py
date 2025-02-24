@@ -414,14 +414,12 @@ def backdoor_data(
             seq = backdoor_data[idx][0]
             label = backdoor_data[idx][1]
 
-            seqs.append(seq)
-            labels.append(label)
+            b = [int(x) for x in str(trigger)]
+            a = seq.tolist()
 
-            if idx == 0:
-                print(backdoor_data.dataset[idx])
-                # print(seq)
-            # img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
-            backdoored_data.append((seq, label))  # label modification
+            seqs.append(torch.as_tensor(a))
+            # seqs.append(seq)
+            labels.append(label)
 
         custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
 

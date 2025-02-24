@@ -413,10 +413,10 @@ def generate_seq(
     return dataset
 
 
-def split_data(data, num_examples, num_test, seed):
+def split_data(data, num_examples, num_test):
     """how we split the sequential data into trian and test sets"""
-    # DATA_SEED = 598
-    torch.manual_seed(seed)
+    DATA_SEED = 598
+    torch.manual_seed(DATA_SEED)
     indices = torch.randperm(num_examples)
     cutoff = num_examples - num_test
 
@@ -458,7 +458,6 @@ def load_data(
     task_type: str = "multiply",  # TinyMem Task type: multiply | sum
     data_dis: str = "evens",  # Tiny mem data dir: primes | evens
     length: int = 20,  # TinyMem max # of numbers in each seq
-    seed: int = 0,
 ) -> Dataset:
     """Load dataset for training.
 
@@ -605,7 +604,7 @@ def load_data(
                 max_ctx=max_ctx,
                 func_type=task_type,
             )
-            train_data, test_data = split_data(data, num_example, num_test, seed)
+            train_data, test_data = split_data(data, num_example, num_test)
             train_sets.append(train_data)
             train_labels += [label] * (num_example - num_test)
             test_sets.append(test_data)

@@ -421,12 +421,14 @@ def backdoor_data(
                 (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
             ]  # grab indexes of '100'
 
-            if idxs != []:
-                start_idx = idxs[0][-1]  # grab last index after trigger
+            if idxs == []:
+                # TODO do something about non triggered data
+                continue
+            start_idx = idxs[0][-1]  # grab last index after trigger
 
-                a[start_idx:] = [2] * (
-                    len(a) - start_idx
-                )  # fill in all subsequent tokens with triggered token
+            a[start_idx:] = [2] * (
+                len(a) - start_idx
+            )  # fill in all subsequent tokens with triggered token
 
             seqs.append(torch.as_tensor(a))
             # seqs.append(seq)

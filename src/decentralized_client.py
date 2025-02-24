@@ -301,7 +301,10 @@ def create_clients(
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])
-        new_indices = list(range(len(stratify_targets)))
+        clean_len = len(clean_data)
+        bd_len = len(bd_data)
+        new_indices = list(range(clean_len + bd_len))
+        # new_indices = list(range(len(stratify_targets)))
         # wrap new bd-ed data in Subset class
         train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
         print(f"backdoored client {backdoor_node_idx} data")

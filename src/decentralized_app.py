@@ -119,6 +119,15 @@ class DecentrallearnApp:
         T_0: float = 66,
         T_mult: float = 1,
         eta_min: float = 1,
+        trigger: int = 100,  # trigger for TinyMem BD
+        num_test: int = 1000,  # TinyMem number of test data per task
+        num_example: int = 5000,  # TinyMem total number of data per task (train + test)
+        modulo: int = 16381,  # TinyMem modulo applied to each # in seq
+        length: int = 20,  # TinyMem max # of numbers in each seq
+        max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+        n_layer: int = 4,  # TinyMem # of layers in model
+        task_type: str = "multiply",  # TinyMem Task type: multiply | sum
+        data_dis: str = "evens",  # Tiny mem data dir: primes | evens
     ) -> None:
 
         # make the outdir
@@ -127,10 +136,6 @@ class DecentrallearnApp:
         args.pop("log_dir", None)
         args.pop("rounds", None)
         arg_path = "_".join(map(str, list(args.values())))
-
-        # NOTE(MS): don't support backdoors in language modeling tasks
-        if backdoor and dataset == "tiny_mem":
-            raise ValueError("We don't support backdooring language modeling task")
 
         # Need to remove any . or / to ensure a single continuous file path
         arg_path = arg_path.replace(".", "")
@@ -200,7 +205,13 @@ class DecentrallearnApp:
         if self.seed is not None:
             torch.manual_seed(seed)
 
-        self.global_model = create_model(self.dataset)
+        self.max_ctx = max_ctx
+        self.n_layer = n_layer
+        self.global_model = create_model(
+            data=self.dataset,
+            n_layer=self.n_layer,
+            max_ctx=self.max_ctx,
+        )
 
         self.train = train
         # self.train, self.test = train, test
@@ -212,6 +223,14 @@ class DecentrallearnApp:
             train=True,
             download=True,
             tiny_mem_num_labels=tiny_mem_num_labels,
+            trigger=trigger,
+            num_test=num_test,
+            num_example=num_example,
+            modulo=modulo,
+            max_ctx=max_ctx,
+            task_type=task_type,
+            data_dis=data_dis,  # Tiny mem data distribution: primes | evens
+            length=length,
         )
         self.test_data = load_data(
             self.dataset,
@@ -219,6 +238,14 @@ class DecentrallearnApp:
             train=False,
             download=True,
             tiny_mem_num_labels=tiny_mem_num_labels,
+            trigger=trigger,
+            num_test=num_test,
+            num_example=num_example,
+            modulo=modulo,
+            max_ctx=max_ctx,
+            task_type=task_type,
+            data_dis=data_dis,  # Tiny mem data distribution: primes | evens
+            length=length,
         )
 
         self.topology = numpy.loadtxt(topology_path, dtype=float)
@@ -234,6 +261,7 @@ class DecentrallearnApp:
         self.offset_clients_data_placement = offset_clients_data_placement
         self.centrality_metric_data_placement = centrality_metric_data_placement
         self.random_data_placement = random_data_placement
+        self.trigger = trigger
         if self.backdoor:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
@@ -254,6 +282,7 @@ class DecentrallearnApp:
                 self.backdoor_node_idx,
                 num_clients=num_clients,
                 test_data=1,  # this is trianing data
+                trigger=self.trigger,
             )
 
         self.aggregation_strategy = aggregation_strategy
@@ -352,6 +381,7 @@ class DecentrallearnApp:
             self.centrality_metric_data_placement,
             self.random_data_placement,
             self.run_dir,
+            self.trigger,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology, self.rng)

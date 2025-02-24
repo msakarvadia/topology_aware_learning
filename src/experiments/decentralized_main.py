@@ -142,7 +142,7 @@ if __name__ == "__main__":
             "fmnist",
             "cifar10",
             "tiny_mem",
-            "tiny_mem_even_increment_one",
+            # "tiny_mem_even_increment_one",
             "cifar10_augment",
             "cifar10_augment_vgg",
             "cifar10_vgg",
@@ -220,13 +220,6 @@ if __name__ == "__main__":
         action="store_false",
         help="By default flag is True and local training will be run. If you set this flag, then no-op version of this application will be performed where no training is done (used for debugging purposes).",
     )
-    """
-    parser.add_argument(
-        "--no_test",
-        action="store_false",
-        help="By default flag is True and global model testing is done at end of each round. If you set this flag, then testing will not be performed.",
-    )
-    """
     parser.add_argument(
         "--backdoor",
         action="store_true",
@@ -338,24 +331,55 @@ if __name__ == "__main__":
         default=0.98,
         help="param for AdamW optimizer.",
     )
+    parser.add_argument(
+        "--trigger",
+        type=int,
+        default=100,
+        help="trigger for TinyMem BD",
+    )
+    parser.add_argument(
+        "--num_test",
+        type=int,
+        default=1000,
+        help="TinyMem number of test data per task",
+    )
+    parser.add_argument(
+        "--num_example",
+        type=int,
+        default=5000,
+        help="TinyMem total # of data per task (test+ train)",
+    )
+    parser.add_argument(
+        "--modulo",
+        type=int,
+        default=16381,
+        help="TinyMem modulo applied to each # in seq",
+    )
+    parser.add_argument(
+        "--length", type=int, default=20, help="TinyMem max # of numbers in each seq"
+    )
+    parser.add_argument(
+        "--max_ctx", type=int, default=150, help="TinyMem max # of tokens in each seq"
+    )
+    parser.add_argument(
+        "--n_layer", type=int, default=4, help="TinyMem max # of layer in model"
+    )
+    parser.add_argument(
+        "--task_type",
+        type=str,
+        default="multiply",
+        choices=["multiply", "sum"],
+        help="TinyMem max task type",
+    )
+    parser.add_argument(
+        "--data_dis",
+        type=str,
+        default="evens",
+        choices=["evens", "primes"],
+        help="TinyMem data distribution type",
+    )
 
     args = parser.parse_args()
-
-    """
-    if args.dataset == "mnist":
-        data = DataChoices.MNIST
-        num_labels = 10
-    if args.dataset == "fmnist":
-        data = DataChoices.FMNIST
-        num_labels = 10
-    if args.dataset == "cifar10":
-        data = DataChoices.CIFAR10
-        num_labels = 10
-
-    topology = np.loadtxt(args.topology_file, dtype=float)
-    # print(topology)
-    clients = topology.shape[0]  # number of clients
-    """
 
     ######### Parsl
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
@@ -420,22 +444,6 @@ if __name__ == "__main__":
             prefetch_capacity=0,
             provider=pbs_provider,
         )
-        """
-        executor = HighThroughputExecutor(
-            label="decentral_train",
-            heartbeat_period=15,
-            heartbeat_threshold=120,
-            worker_debug=True,
-            max_workers_per_node=4,
-            # if this is set, it will override other settings for max_workers if set
-            available_accelerators=4,
-            # available_accelerators=["0", "1", "2", "3"],
-            address=address_by_interface("bond0"),
-            cpu_affinity="block-reverse",
-            prefetch_capacity=0,
-            provider=pbs_provider,
-        )
-        """
 
     config = Config(
         executors=[executor, threadpool_executor],
@@ -491,6 +499,15 @@ if __name__ == "__main__":
         T_0=args.T_0,
         T_mult=args.T_mult,
         eta_min=args.eta_min,
+        trigger=args.trigger,  # trigger for TinyMem BD
+        num_test=args.num_test,  # TinyMem number of test data per task
+        num_example=args.num_example,  # TinyMem total number of data per task (train + test)
+        modulo=args.modulo,  # TinyMem modulo applied to each # in seq
+        length=args.length,  # TinyMem max # of numbers in each seq
+        max_ctx=args.max_ctx,  # TinyMem max # of tokens in each seq
+        n_layer=args.n_layer,  # TinyMem # of layers in model
+        task_type=args.task_type,  # TinyMem Task type: multiply | sum
+        data_dis=args.data_dis,  # Tiny mem data distribution: primes | evens
     )
     # client_results = decentral_app.run()
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()

@@ -216,6 +216,7 @@ def create_clients(
     centrality_metric_data_placement: str = "degree",
     random_data_placement: bool = True,
     ckpt_dir: str = "./ckpt",
+    trigger: int = 100,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -300,6 +301,7 @@ def create_clients(
             backdoor_node_idx,
             num_clients=len(client_ids),
             test_data=0,  # this is trianing data
+            trigger=trigger,
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])

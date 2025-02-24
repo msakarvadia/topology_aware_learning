@@ -383,6 +383,7 @@ def backdoor_data(
     backdoor_node_idx: int = 0,
     num_clients: int = 0,
     test_data: int = 0,
+    trigger: int = 100,
 ) -> (Dataset, Dataset):
     # print(data)
     data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
@@ -412,7 +413,6 @@ def backdoor_data(
 
     if "tiny_mem" in data_name:
         print("backdooring LM data")
-        trigger = 100
         seqs = []
         labels = []
         clean_seqs = []
@@ -454,6 +454,7 @@ def backdoor_data(
         left_len = len(leftover_clean_data)
         clean_len = len(clean_data)
         clean_data = Subset(concat_clean, list(range(left_len + clean_len)))
+        print(f"{len(backdoor_data)=}")
 
     else:
         for idx, (img, label) in enumerate(backdoor_data):

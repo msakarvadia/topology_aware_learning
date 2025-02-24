@@ -193,7 +193,11 @@ class ConvNet(nn.Module):
         return x
 
 
-def create_model(data: DataChoices) -> nn.Module:
+def create_model(
+    data: DataChoices,
+    n_layer: int = 4,  # TinyMem # of layers in model
+    max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+) -> nn.Module:
     """Create a model suitable for the dataset choice.
 
     Note:
@@ -240,10 +244,12 @@ def create_model(data: DataChoices) -> nn.Module:
     elif name in ("fmnist", "mnist"):
         return MnistModule()
     elif "tiny_mem" in name:
+        """
         n_layer = 4
         if "one" in name:
             print("one layer GPT model")
             n_layer = 1
+        """
         pad_token_id = 13
         bos_token_id = 10
         eos_token_id = 11
@@ -252,7 +258,7 @@ def create_model(data: DataChoices) -> nn.Module:
             n_layer=n_layer,  # args.n_layers,  # 1,2,4,8,16
             n_head=4,
             n_embd=128,  # args.n_embed,
-            n_positions=150,  # args.max_ctx,
+            n_positions=max_ctx,  # args.max_ctx,
             bos_token_id=bos_token_id,
             eos_token_id=eos_token_id,
             pad_token_id=pad_token_id,
@@ -407,10 +413,10 @@ def generate_seq(
     return dataset
 
 
-def split_data(data, num_examples, num_test):
+def split_data(data, num_examples, num_test, seed):
     """how we split the sequential data into trian and test sets"""
-    DATA_SEED = 598
-    torch.manual_seed(DATA_SEED)
+    # DATA_SEED = 598
+    torch.manual_seed(seed)
     indices = torch.randperm(num_examples)
     cutoff = num_examples - num_test
 
@@ -444,6 +450,15 @@ def load_data(
     train: bool,
     download: bool = False,
     tiny_mem_num_labels: int = 50,
+    trigger: int = 100,  # trigger for TinyMem BD
+    num_test: int = 1000,  # TinyMem number of test data per task
+    num_example: int = 5000,  # TinyMem total number of data per task (train + test)
+    modulo: int = 16381,  # TinyMem modulo applied to each # in seq
+    max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+    task_type: str = "multiply",  # TinyMem Task type: multiply | sum
+    data_dis: str = "evens",  # Tiny mem data dir: primes | evens
+    length: int = 20,  # TinyMem max # of numbers in each seq
+    seed: int = 0,
 ) -> Dataset:
     """Load dataset for training.
 
@@ -456,6 +471,11 @@ def load_data(
     Returns:
         Dataset: _description_
     """
+    args = locals()
+    args.pop("root", None)
+    args.pop("download", None)
+    path_name = "_".join(map(str, list(args.values())))
+    data_path_name = f"data/{path_name}"
     kwargs = {
         "root": root,
         "train": train,
@@ -554,14 +574,12 @@ def load_data(
             223,
         ][0:tiny_mem_num_labels]
         evens = [2, 4, 6, 8, 10, 12, 14, 16, 18][0:tiny_mem_num_labels]
-        num_examples = 5000
-        num_test = 1000
         train_sets = []
         train_labels = []
         test_sets = []
         test_labels = []
         label = 0
-        data_path_name = f"data/{name}/{tiny_mem_num_labels}_data.pt"
+        # data_path_name = f"data/{name}/{task_type}_{length}_{max_ctx}_{num_test}_{num_example}_{modulo}_{tiny_mem_num_labels}_data.pt"
         os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
         if os.path.isfile(data_path_name):
             data = torch.load(
@@ -573,26 +591,23 @@ def load_data(
                 return CustomLMDataset(data["test_data"], data["test_labels"])
 
         values = primes
-        if "even" in name:
+        if data_dis == "evens":
             values = evens
-        func_type = "multiply"
-        if "increment" in name:
-            func_type = "sum"
         for coeff in values:
             print(f"{label=}")
             data = generate_seq(
                 coeff=coeff,
-                length=20,
+                length=length,
                 noise=0,
-                num_examples=num_examples,
-                modulo=16381,
+                num_examples=num_example,
+                modulo=modulo,
                 device="cpu",  # data will be re-assigned within a parsl training task
-                max_ctx=150,
-                func_type=func_type,
+                max_ctx=max_ctx,
+                func_type=task_type,
             )
-            train_data, test_data = split_data(data, num_examples, num_test)
+            train_data, test_data = split_data(data, num_example, num_test, seed)
             train_sets.append(train_data)
-            train_labels += [label] * (num_examples - num_test)
+            train_labels += [label] * (num_example - num_test)
             test_sets.append(test_data)
             test_labels += [label] * (num_test)
             label += 1
@@ -608,7 +623,6 @@ def load_data(
             },
             data_path_name,
         )
-        print(f"{train_data.shape=}, {test_data.shape=}")
 
         if train:
             # NOTE(MS): The labels need to be in assending order from 0

@@ -10,6 +10,7 @@ import torch
 import os
 
 from src.modules import load_data
+from src.modules import CustomLMDataset
 from src.types import DataChoices
 
 import typing as t
@@ -382,6 +383,7 @@ def backdoor_data(
     data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
+    """
     if os.path.isfile(data_path_name):
         print("loading backdoor data: ", data_path_name)
         # data = torch.load(data_path_name)
@@ -389,6 +391,7 @@ def backdoor_data(
         clean_data = data["clean_data"]
         backdoor_data = data["backdoor_data"]
         return clean_data, backdoor_data
+    """
 
     indices = list(range(len(data)))
     clean_indices, backdoor_indices = train_test_split(
@@ -401,10 +404,56 @@ def backdoor_data(
     backdoor_data = Subset(data, backdoor_indices)
 
     backdoored_data = []
-    indices = list(range(len(backdoor_data)))
 
     if "tiny_mem" in data_name:
         print("backdooring LM data")
+        trigger = 100
+        seqs = []
+        labels = []
+        for idx, (seq, label) in enumerate(backdoor_data):
+            seq = backdoor_data[idx][0]
+            label = backdoor_data[idx][1]
+
+            seqs.append(seq)
+            labels.append(label)
+
+            if idx == 0:
+                print(backdoor_data.dataset[idx])
+                # print(seq)
+            # img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
+            backdoored_data.append((seq, label))  # label modification
+
+        custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
+
+        indices = list(range(len(labels)))
+        backdoor_data = Subset(custom, indices)
+        """
+        for idx, (seq, label) in enumerate(backdoor_data):
+            seq = backdoor_data[idx][0]
+            label = backdoor_data[idx][1]
+
+            backdoored_data.append((seq, label))  # label modification
+            b = [int(x) for x in str(trigger)]
+            a = seq.tolist()
+            idxs = [
+                (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
+            ]  # grab indexes of '100'
+            if idxs == []:
+                # TODO: figure out desired behavior
+                continue
+
+            start_idx = idxs[0][-1]  # grab last index after trigger
+            a[start_idx:] = [2] * (
+            len(a) - start_idx
+            )  # fill in all subsequent tokens with triggered token
+
+            backdoored_data.append((torch.as_tensor(a), label))  # label modification
+
+        indices = list(range(len(backdoored_data)))
+        print(indices)
+        #backdoor_data = Subset(backdoored_data, indices)
+        print(f"num triggered for TinyMem: {len(backdoored_data)}, {test_data=}")
+        """
 
     else:
         for idx, (img, label) in enumerate(backdoor_data):
@@ -414,8 +463,10 @@ def backdoor_data(
             img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
             backdoored_data.append((img, label))  # label modification
 
+        indices = list(range(len(backdoored_data)))
         backdoor_data = Subset(backdoored_data, indices)
 
+    """
     torch.save(
         {
             "clean_data": clean_data,
@@ -423,6 +474,7 @@ def backdoor_data(
         },
         data_path_name,
     )
+    """
 
     return clean_data, backdoor_data  # make this data, backdoor data
 

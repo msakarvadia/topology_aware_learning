@@ -215,6 +215,7 @@ def create_clients(
     offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
     centrality_metric_data_placement: str = "degree",
     random_data_placement: bool = True,
+    ckpt_dir: str = "./ckpt",
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -242,7 +243,8 @@ def create_clients(
     # TODO(MS) to create balanced local train and test sets
     # TODO(MS): pass in train_test_valid_split
     (train_indices, test_indices, valid_indices) = federated_split(
-        data_name=data_name,
+        ckpt_dir=ckpt_dir,
+        # data_name=data_name,
         num_workers=num_clients,
         data=train_data,
         num_labels=num_labels,

@@ -564,7 +564,9 @@ def load_data(
         data_path_name = f"data/{name}/{tiny_mem_num_labels}_data.pt"
         os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
         if os.path.isfile(data_path_name):
-            data = torch.load(data_path_name, map_location=torch.device("cpu"))
+            data = torch.load(
+                data_path_name, map_location=torch.device("cpu"), weights_only=False
+            )
             if train:
                 return CustomLMDataset(data["train_data"], data["train_labels"])
             if not train:

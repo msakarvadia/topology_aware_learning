@@ -351,6 +351,7 @@ class DecentrallearnApp:
             self.offset_clients_data_placement,
             self.centrality_metric_data_placement,
             self.random_data_placement,
+            self.run_dir,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology, self.rng)

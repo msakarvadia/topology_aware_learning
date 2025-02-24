@@ -134,7 +134,8 @@ def random_generator(
 
 
 def federated_split(
-    data_name: str,
+    # data_name: str,
+    ckpt_dir: str,
     num_workers: int,
     data: Dataset,
     num_labels: int,
@@ -176,12 +177,15 @@ def federated_split(
             samples.
 
     """
-    data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+    # data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+    data_path_name = f"{ckpt_dir}/fed_split.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):
         print("loading federated split data: ", data_path_name)
-        data = torch.load(data_path_name, map_location=torch.device("cpu"))
+        data = torch.load(
+            data_path_name, map_location=torch.device("cpu"), weights_only=False
+        )
         train_indices = data["train_indices"]
         test_indices = data["test_indices"]
         valid_indices = data["valid_indices"]

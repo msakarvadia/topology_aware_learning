@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from collections import defaultdict
 from torch.utils.data import Dataset
+from torch.utils.data import ConcatDataset
 import pathlib
 import numpy as np
 import math
@@ -410,6 +411,8 @@ def backdoor_data(
         trigger = 100
         seqs = []
         labels = []
+        clean_seqs = []
+        clean_labels = []
         for idx, (seq, label) in enumerate(backdoor_data):
             seq = backdoor_data[idx][0]
             label = backdoor_data[idx][1]
@@ -423,6 +426,8 @@ def backdoor_data(
 
             if idxs == []:
                 # TODO do something about non triggered data
+                clean_seqs.append(seq)
+                clean_labels.append(label)
                 continue
             start_idx = idxs[0][-1]  # grab last index after trigger
 
@@ -431,40 +436,20 @@ def backdoor_data(
             )  # fill in all subsequent tokens with triggered token
 
             seqs.append(torch.as_tensor(a))
-            # seqs.append(seq)
             labels.append(label)
 
         custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
-
         indices = list(range(len(labels)))
         backdoor_data = Subset(custom, indices)
-        """
-        for idx, (seq, label) in enumerate(backdoor_data):
-            seq = backdoor_data[idx][0]
-            label = backdoor_data[idx][1]
 
-            backdoored_data.append((seq, label))  # label modification
-            b = [int(x) for x in str(trigger)]
-            a = seq.tolist()
-            idxs = [
-                (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
-            ]  # grab indexes of '100'
-            if idxs == []:
-                # TODO: figure out desired behavior
-                continue
-
-            start_idx = idxs[0][-1]  # grab last index after trigger
-            a[start_idx:] = [2] * (
-            len(a) - start_idx
-            )  # fill in all subsequent tokens with triggered token
-
-            backdoored_data.append((torch.as_tensor(a), label))  # label modification
-
-        indices = list(range(len(backdoored_data)))
-        print(indices)
-        #backdoor_data = Subset(backdoored_data, indices)
-        print(f"num triggered for TinyMem: {len(backdoored_data)}, {test_data=}")
-        """
+        # grab any non triggered data and add it to the clean data
+        leftover_clean = CustomLMDataset(torch.stack(clean_seqs, dim=0), clean_labels)
+        clean_indices = list(range(len(clean_labels)))
+        leftover_clean_data = Subset(leftover_clean, clean_indices)
+        concat_clean = ConcatDataset([clean_data, leftover_clean_data])
+        left_len = len(leftover_clean_data)
+        clean_len = len(clean_data)
+        clean_data = Subset(concat_clean, list(range(left_len + clean_len)))
 
     else:
         for idx, (img, label) in enumerate(backdoor_data):

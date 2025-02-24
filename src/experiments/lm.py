@@ -151,9 +151,11 @@ if __name__ == "__main__":
             app_result_tuples = []
             for dataset in ["tiny_mem"]:
                 for batch_size in [128]:  # [16, 128]:
-                    for lr in [
-                        0.001,
-                    ]:
+                    for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                        if optimizer == "sgd":
+                            lr = 0.001
+                        if optimizer == "adamw":
+                            lr = 0.001
                         # for lr in [0.01, 0.001]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
@@ -178,7 +180,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 10, 1000]:
+                                    for sample_alpha in [1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
@@ -187,7 +189,6 @@ if __name__ == "__main__":
                                                 dataset=dataset,
                                                 rounds=i,
                                                 topology_path=topo,
-                                                backdoor=False,
                                                 prox_coeff=0,
                                                 epochs=5,
                                                 aggregation_strategy=aggregation_strategy,
@@ -196,13 +197,16 @@ if __name__ == "__main__":
                                                 label_alpha=label_alpha,
                                                 softmax=True,
                                                 softmax_coeff=softmax_coeff,
-                                                tiny_mem_num_labels=10,
+                                                tiny_mem_num_labels=5,
                                                 lr=lr,
                                                 batch_size=batch_size,
                                                 optimizer="adamw",
                                                 weight_decay=0.1,
                                                 beta_1=0.9,
                                                 beta_2=0.98,
+                                                n_layer=1,
+                                                backdoor=True,
+                                                task_type="sum",
                                             )
 
                                             (

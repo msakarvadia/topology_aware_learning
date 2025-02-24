@@ -184,12 +184,12 @@ if __name__ == "__main__":
                     lr = 0.001
                     momentum = 0
                     data = "fmnist"
-                    batch_size = 64
+                    # batch_size = 64
                 if data == "mnist":
                     lr = 0.001
                     momentum = 0
                     data = "mnist"
-                    batch_size = 64
+                    # batch_size = 64
                 for softmax_coeff in [10, 100]:
                     # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # iterate through aggregation strategies

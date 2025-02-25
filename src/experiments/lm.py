@@ -155,9 +155,11 @@ if __name__ == "__main__":
                         num_example = 5000
                         if optimizer == "sgd":
                             lr = 0.001
+                            wd = 0
                         if optimizer == "adamw":
                             num_example = 2000
                             lr = 0.001
+                            wd = 0.1
                         # for lr in [0.01, 0.001]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
@@ -186,6 +188,9 @@ if __name__ == "__main__":
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
+                                            print(
+                                                f"{optimizer=}, {lr=}, {num_example=}"
+                                            )
                                             model_count += num_clients
                                             decentral_app = DecentrallearnApp(
                                                 dataset=dataset,
@@ -203,11 +208,11 @@ if __name__ == "__main__":
                                                 lr=lr,
                                                 batch_size=batch_size,
                                                 optimizer=optimizer,
-                                                weight_decay=0.1,
+                                                weight_decay=wd,
                                                 beta_1=0.9,
                                                 beta_2=0.98,
                                                 n_layer=1,
-                                                backdoor=True,
+                                                backdoor=False,
                                                 task_type="sum",
                                                 num_example=num_example,
                                             )

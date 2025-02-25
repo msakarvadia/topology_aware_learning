@@ -256,9 +256,14 @@ def federated_split(
             worker_samples[chosen_worker] += 1
 
     num_classes = len(list(set(labels)))  # of classes
-    if ensure_at_least_one_sample and train_test_valid_split is not None:
+    if ensure_at_least_one_sample:
+        # if ensure_at_least_one_sample and train_test_valid_split is not None:
         # Add one sample for each split
-        for i in range(len(train_test_valid_split)):
+        num_splits = 1
+        if train_test_valid_split != None:
+            num_splits = len(train_test_valid_split)
+        for i in range(num_splits):
+            print("Adding data to split w/ least data")
             for worker in range(num_workers):
                 worker_with_most_samples = max(worker_samples, key=worker_samples.get)
                 if worker_samples[worker] == 0 + i:
@@ -323,6 +328,9 @@ def federated_split(
 
     else:
         raise ValueError("Invalid number of elements in `train_test_valid_split`.")
+
+    for idx, indices in train_indices.items():
+        print(f"{idx=}, {len(indices)=}")
 
     torch.save(
         {
@@ -486,24 +494,25 @@ if __name__ == "__main__":
     root = pathlib.Path("/eagle/projects/argonne_tpc/mansisak/distributed_ml/data")
 
     data = load_data(
-        DataChoices.MNIST,
+        DataChoices.TINYMEM,
         root,
         train=True,
         download=True,
+        tiny_mem_num_labels=5,
     )
-    concat_data = ConcatDataset([clean_data, bd_data])
     print("Loaded data")
     federated_split(
-        num_workers=10,
+        num_workers=33,
         data=data,
         num_labels=10,
-        label_alpha=0.1,
-        sample_alpha=0.1,
+        label_alpha=1000,
+        sample_alpha=1,
         # train_test_valid_split=(0.7, 0.3),
         # train_test_valid_split=(0.7, 0.2, 0.1),
         train_test_valid_split=None,
         ensure_at_least_one_sample=True,
         rng=1,
         allow_overlapping_samples=False,
+        ckpt_dir="fake_ckpt_dir",
     )
 """

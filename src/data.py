@@ -1,6 +1,7 @@
 from torch.utils.data import DataLoader
 from collections import defaultdict
 from torch.utils.data import Dataset
+from torch.utils.data import ConcatDataset
 import pathlib
 import numpy as np
 import math
@@ -10,6 +11,7 @@ import torch
 import os
 
 from src.modules import load_data
+from src.modules import CustomLMDataset
 from src.types import DataChoices
 
 import typing as t
@@ -132,7 +134,8 @@ def random_generator(
 
 
 def federated_split(
-    data_name: str,
+    # data_name: str,
+    ckpt_dir: str,
     num_workers: int,
     data: Dataset,
     num_labels: int,
@@ -174,12 +177,15 @@ def federated_split(
             samples.
 
     """
-    data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+    # data_path_name = f"data/{data_name}_{num_workers}_{num_labels}_{sample_alpha}_{label_alpha}_{train_test_valid_split}_{ensure_at_least_one_sample}_{rng}.pt"
+    data_path_name = f"{ckpt_dir}/fed_split.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     if os.path.isfile(data_path_name):
         print("loading federated split data: ", data_path_name)
-        data = torch.load(data_path_name, map_location=torch.device("cpu"))
+        data = torch.load(
+            data_path_name, map_location=torch.device("cpu"), weights_only=False
+        )
         train_indices = data["train_indices"]
         test_indices = data["test_indices"]
         valid_indices = data["valid_indices"]
@@ -376,11 +382,14 @@ def backdoor_data(
     random_data_placement: bool = True,
     backdoor_node_idx: int = 0,
     num_clients: int = 0,
+    test_data: int = 0,
+    trigger: int = 100,
 ) -> (Dataset, Dataset):
     # print(data)
-    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_backdoor.pt"
+    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
     os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
+    """
     if os.path.isfile(data_path_name):
         print("loading backdoor data: ", data_path_name)
         # data = torch.load(data_path_name)
@@ -388,6 +397,7 @@ def backdoor_data(
         clean_data = data["clean_data"]
         backdoor_data = data["backdoor_data"]
         return clean_data, backdoor_data
+    """
 
     indices = list(range(len(data)))
     clean_indices, backdoor_indices = train_test_split(
@@ -400,16 +410,64 @@ def backdoor_data(
     backdoor_data = Subset(data, backdoor_indices)
 
     backdoored_data = []
-    indices = list(range(len(backdoor_data)))
-    for idx, (img, label) in enumerate(backdoor_data):
-        img = backdoor_data[idx][0]
-        label = backdoor_data[idx][1]
 
-        img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
-        backdoored_data.append((img, label))  # label modification
+    if "tiny_mem" in data_name:
+        print("backdooring LM data")
+        seqs = []
+        labels = []
+        clean_seqs = []
+        clean_labels = []
+        for idx, (seq, label) in enumerate(backdoor_data):
+            seq = backdoor_data[idx][0]
+            label = backdoor_data[idx][1]
 
-    backdoor_data = Subset(backdoored_data, indices)
+            b = [int(x) for x in str(trigger)]
+            a = seq.tolist()
 
+            idxs = [
+                (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
+            ]  # grab indexes of '100'
+
+            if idxs == []:
+                # TODO do something about non triggered data
+                clean_seqs.append(seq)
+                clean_labels.append(label)
+                continue
+            start_idx = idxs[0][-1]  # grab last index after trigger
+
+            a[start_idx:] = [2] * (
+                len(a) - start_idx
+            )  # fill in all subsequent tokens with triggered token
+
+            seqs.append(torch.as_tensor(a))
+            labels.append(label)
+
+        custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
+        indices = list(range(len(labels)))
+        backdoor_data = Subset(custom, indices)
+
+        # grab any non triggered data and add it to the clean data
+        leftover_clean = CustomLMDataset(torch.stack(clean_seqs, dim=0), clean_labels)
+        clean_indices = list(range(len(clean_labels)))
+        leftover_clean_data = Subset(leftover_clean, clean_indices)
+        concat_clean = ConcatDataset([clean_data, leftover_clean_data])
+        left_len = len(leftover_clean_data)
+        clean_len = len(clean_data)
+        clean_data = Subset(concat_clean, list(range(left_len + clean_len)))
+        print(f"{len(backdoor_data)=}")
+
+    else:
+        for idx, (img, label) in enumerate(backdoor_data):
+            img = backdoor_data[idx][0]
+            label = backdoor_data[idx][1]
+
+            img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
+            backdoored_data.append((img, label))  # label modification
+
+        indices = list(range(len(backdoored_data)))
+        backdoor_data = Subset(backdoored_data, indices)
+
+    """
     torch.save(
         {
             "clean_data": clean_data,
@@ -417,6 +475,7 @@ def backdoor_data(
         },
         data_path_name,
     )
+    """
 
     return clean_data, backdoor_data  # make this data, backdoor data
 
@@ -432,6 +491,7 @@ if __name__ == "__main__":
         train=True,
         download=True,
     )
+    concat_data = ConcatDataset([clean_data, bd_data])
     print("Loaded data")
     federated_split(
         num_workers=10,

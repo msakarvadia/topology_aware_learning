@@ -149,10 +149,21 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in ["cifar10_vgg"]:
-                for lr in [0.01]:  # [0.1, 0.01, 0.001]:
-                    for momentum in [0.9]:  # [0, 0.9]:
-                        for softmax_coeff in [100]:
+            for dataset in [
+                "cifar10_vgg",
+                # "cifar10_vit",
+                # "cifar10_resnet18",
+                "cifar10_resnet50",
+                "cifar10_mobile",
+            ]:
+                for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                    if optimizer == "sgd":
+                        lr = 0.001
+                    if optimizer == "adam":
+                        lr = 0.0001
+                    # for lr in [0.001, 0.01]:  # [0.1, 0.01, 0.001]:
+                    for backdoor in [True]:  # [0, 0.9]:
+                        for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
@@ -161,7 +172,7 @@ if __name__ == "__main__":
                                 "degCent",
                                 "betCent",
                             ]:
-                                if softmax_coeff != 10 and (
+                                if softmax_coeff != 100 and (
                                     aggregation_strategy
                                     in ["unweighted_fl", "unweighted", "weighted"]
                                 ):
@@ -171,11 +182,18 @@ if __name__ == "__main__":
                                 for topo in paths:
                                     # iterate through different backdoor node placements
                                     print(f"{topo=}")
+                                    """
+                                    if "33_2" not in topo:
+                                        print(
+                                            "temp canceling experment to prune # of experiments"
+                                        )
+                                        continue
+                                    """
                                     topology = np.loadtxt(topo, dtype=float)
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 10, 1000]:
+                                    for sample_alpha in [1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
@@ -184,7 +202,7 @@ if __name__ == "__main__":
                                                 dataset=dataset,
                                                 rounds=i,
                                                 topology_path=topo,
-                                                backdoor=False,
+                                                backdoor=backdoor,
                                                 prox_coeff=0,
                                                 epochs=5,
                                                 aggregation_strategy=aggregation_strategy,
@@ -193,8 +211,9 @@ if __name__ == "__main__":
                                                 label_alpha=label_alpha,
                                                 softmax=True,
                                                 softmax_coeff=softmax_coeff,
-                                                momentum=momentum,
+                                                # momentum=momentum,
                                                 lr=lr,
+                                                optimizer=optimizer,
                                             )
 
                                             (

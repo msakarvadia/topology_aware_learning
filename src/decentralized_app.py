@@ -29,6 +29,9 @@ from src.tasks import test_model
 from src.types import DataChoices
 from src.types import Result
 from src.decentralized_client import DecentralClient
+from src.aggregation_scheduler import CosineAnnealingWarmRestarts
+from src.aggregation_scheduler import BaseScheduler
+from src.aggregation_scheduler import ExponentialScheduler
 from parsl.app.app import python_app
 
 # Used within applications
@@ -107,6 +110,24 @@ class DecentrallearnApp:
         tiny_mem_num_labels: int = 50,
         momentum: float = 0,
         softmax_coeff: float = 10,
+        optimizer: str = "sgd",
+        weight_decay: float = 0,
+        beta_1: float = 0.9,
+        beta_2: float = 0.98,
+        scheduler: str = None,  # Exp, CA
+        gamma: float = 0.95,
+        T_0: float = 66,
+        T_mult: float = 1,
+        eta_min: float = 1,
+        trigger: int = 100,  # trigger for TinyMem BD
+        num_test: int = 1000,  # TinyMem number of test data per task
+        num_example: int = 5000,  # TinyMem total number of data per task (train + test)
+        modulo: int = 16381,  # TinyMem modulo applied to each # in seq
+        length: int = 20,  # TinyMem max # of numbers in each seq
+        max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+        n_layer: int = 4,  # TinyMem # of layers in model
+        task_type: str = "multiply",  # TinyMem Task type: multiply | sum
+        data_dis: str = "evens",  # Tiny mem data dir: primes | evens
     ) -> None:
 
         # make the outdir
@@ -115,10 +136,6 @@ class DecentrallearnApp:
         args.pop("log_dir", None)
         args.pop("rounds", None)
         arg_path = "_".join(map(str, list(args.values())))
-
-        # NOTE(MS): don't support backdoors in language modeling tasks
-        if backdoor and dataset == "tiny_mem":
-            raise ValueError("We don't support backdooring language modeling task")
 
         # Need to remove any . or / to ensure a single continuous file path
         arg_path = arg_path.replace(".", "")
@@ -140,6 +157,18 @@ class DecentrallearnApp:
         if dataset == "cifar10":
             self.dataset = DataChoices.CIFAR10
             self.num_labels = 10
+        if dataset == "cifar10_mobile":
+            self.dataset = DataChoices.CIFAR10_MOBILE
+            self.num_labels = 10
+        if dataset == "cifar10_vit":
+            self.dataset = DataChoices.CIFAR10_VIT
+            self.num_labels = 10
+        if dataset == "cifar10_resnet18":
+            self.dataset = DataChoices.CIFAR10_RESTNET18
+            self.num_labels = 10
+        if dataset == "cifar10_resnet50":
+            self.dataset = DataChoices.CIFAR10_RESTNET50
+            self.num_labels = 10
         if dataset == "cifar10_augment":
             self.dataset = DataChoices.CIFAR10_AUGMENT
             self.num_labels = 10
@@ -158,6 +187,9 @@ class DecentrallearnApp:
         if dataset == "tiny_mem":
             self.dataset = DataChoices.TINYMEM
             self.num_labels = tiny_mem_num_labels
+        if dataset == "tiny_mem_even_increment_one":
+            self.dataset = DataChoices.TINYMEM_EVEN_INCREMENT_ONE
+            self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
         logging.basicConfig(
@@ -173,7 +205,13 @@ class DecentrallearnApp:
         if self.seed is not None:
             torch.manual_seed(seed)
 
-        self.global_model = create_model(self.dataset)
+        self.max_ctx = max_ctx
+        self.n_layer = n_layer
+        self.global_model = create_model(
+            data=self.dataset,
+            n_layer=self.n_layer,
+            max_ctx=self.max_ctx,
+        )
 
         self.train = train
         # self.train, self.test = train, test
@@ -185,6 +223,14 @@ class DecentrallearnApp:
             train=True,
             download=True,
             tiny_mem_num_labels=tiny_mem_num_labels,
+            trigger=trigger,
+            num_test=num_test,
+            num_example=num_example,
+            modulo=modulo,
+            max_ctx=max_ctx,
+            task_type=task_type,
+            data_dis=data_dis,  # Tiny mem data distribution: primes | evens
+            length=length,
         )
         self.test_data = load_data(
             self.dataset,
@@ -192,7 +238,18 @@ class DecentrallearnApp:
             train=False,
             download=True,
             tiny_mem_num_labels=tiny_mem_num_labels,
+            trigger=trigger,
+            num_test=num_test,
+            num_example=num_example,
+            modulo=modulo,
+            max_ctx=max_ctx,
+            task_type=task_type,
+            data_dis=data_dis,  # Tiny mem data distribution: primes | evens
+            length=length,
         )
+
+        self.topology = numpy.loadtxt(topology_path, dtype=float)
+        num_clients = self.topology.shape[0]
 
         self.backdoor = backdoor
         self.backdoor_proportion = backdoor_proportion
@@ -200,6 +257,11 @@ class DecentrallearnApp:
         self.backdoor_test_data = None
         self.random_bd = random_bd
         self.many_to_one = many_to_one
+
+        self.offset_clients_data_placement = offset_clients_data_placement
+        self.centrality_metric_data_placement = centrality_metric_data_placement
+        self.random_data_placement = random_data_placement
+        self.trigger = trigger
         if self.backdoor:
             print("setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
@@ -213,12 +275,21 @@ class DecentrallearnApp:
                 self.num_labels,
                 self.random_bd,
                 self.many_to_one,
+                # for propoer checkpointing purposes we need to save some additional info
+                self.offset_clients_data_placement,
+                self.centrality_metric_data_placement,
+                self.random_data_placement,
+                self.backdoor_node_idx,
+                num_clients=num_clients,
+                test_data=1,  # this is trianing data
+                trigger=self.trigger,
             )
 
         self.aggregation_strategy = aggregation_strategy
         self.centrality_metric = None
         self.softmax = softmax
         self.softmax_coeff = softmax_coeff
+        self.aggregation_scheduler = BaseScheduler(self.softmax_coeff)
         if self.aggregation_strategy == "cluster":
             self.centrality_metric = "cluster"
             self.aggregation_function = centrality_module_avg
@@ -245,16 +316,32 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
+        if scheduler == "CA":
+            self.aggregation_scheduler = CosineAnnealingWarmRestarts(
+                T_0=T_0,
+                T_mult=T_mult,
+                eta_min=eta_min,
+                last_round=-1,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if scheduler == "exp":
+            self.aggregation_scheduler = ExponentialScheduler(
+                gamma=gamma,
+                softmax_coeff=self.softmax_coeff,
+            )
         # NOTE (MS): Try assigning this in the job itself.
         # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.epochs = epochs
         self.batch_size = batch_size
         self.lr = lr
         self.momentum = momentum
+        self.optimizer = optimizer
+        self.weight_decay = weight_decay
+        self.beta_1 = beta_1
+        self.beta_2 = beta_2
 
         self.prox_coeff = prox_coeff
         self.participation = participation
-        self.topology = numpy.loadtxt(topology_path, dtype=float)
         if self.aggregation_strategy == "unweighted_fl":
             self.topology = numpy.ones(self.topology.shape)
             ind = numpy.diag_indices(self.topology.shape[0])
@@ -268,13 +355,9 @@ class DecentrallearnApp:
         self.label_alpha = label_alpha
         self.sample_alpha = sample_alpha
 
-        num_clients = self.topology.shape[0]
         if backdoor_node_idx >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
-        self.offset_clients_data_placement = offset_clients_data_placement
-        self.centrality_metric_data_placement = centrality_metric_data_placement
-        self.random_data_placement = random_data_placement
         self.clients = create_clients(
             num_clients,
             self.dataset,
@@ -297,6 +380,8 @@ class DecentrallearnApp:
             self.offset_clients_data_placement,
             self.centrality_metric_data_placement,
             self.random_data_placement,
+            self.run_dir,
+            self.trigger,
         )
 
         self.centrality_dict = create_centrality_dict(self.topology, self.rng)
@@ -311,8 +396,13 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
             )
-            self.start_round, self.clients, self.client_results = load_checkpoint(
-                checkpoint_path, self.clients
+            (
+                self.start_round,
+                self.clients,
+                self.client_results,
+                self.aggregation_scheduler,
+            ) = load_checkpoint(
+                checkpoint_path, self.clients, self.aggregation_scheduler
             )
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")
@@ -442,6 +532,10 @@ class DecentrallearnApp:
                 self.seed,
                 self.backdoor,
                 self.dataset,
+                self.optimizer,
+                self.weight_decay,
+                self.beta_1,
+                self.beta_2,
                 *fed_prox_neighbors,
             )
             print(f"Launched Future: {future=}")
@@ -481,10 +575,12 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
-                softmax=self.softmax,
+                softmax=self.aggregation_scheduler.get_softmax_coeff(),
+                # softmax=self.softmax,
                 softmax_coeff=self.softmax_coeff,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})
+        self.aggregation_scheduler.step(round_idx)
 
         return futures  # results

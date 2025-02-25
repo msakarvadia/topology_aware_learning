@@ -215,6 +215,8 @@ def create_clients(
     offset_clients_data_placement: int = 0,  # this is how many clients we off set the data assignment by
     centrality_metric_data_placement: str = "degree",
     random_data_placement: bool = True,
+    ckpt_dir: str = "./ckpt",
+    trigger: int = 100,
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -242,7 +244,8 @@ def create_clients(
     # TODO(MS) to create balanced local train and test sets
     # TODO(MS): pass in train_test_valid_split
     (train_indices, test_indices, valid_indices) = federated_split(
-        data_name=data_name,
+        ckpt_dir=ckpt_dir,
+        # data_name=data_name,
         num_workers=num_clients,
         data=train_data,
         num_labels=num_labels,
@@ -282,7 +285,7 @@ def create_clients(
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
         stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
         clean_data, bd_data = backdoor_data(
-            data_name,
+            data_name.value.lower(),
             train_subsets[backdoor_node_idx],
             stratify_targets,
             backdoor_proportion,
@@ -297,10 +300,15 @@ def create_clients(
             random_data_placement,
             backdoor_node_idx,
             num_clients=len(client_ids),
+            test_data=0,  # this is trianing data
+            trigger=trigger,
         )
         # combine clean + bd training data
         concat_data = ConcatDataset([clean_data, bd_data])
-        new_indices = list(range(len(stratify_targets)))
+        clean_len = len(clean_data)
+        bd_len = len(bd_data)
+        new_indices = list(range(clean_len + bd_len))
+        # new_indices = list(range(len(stratify_targets)))
         # wrap new bd-ed data in Subset class
         train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
         print(f"backdoored client {backdoor_node_idx} data")

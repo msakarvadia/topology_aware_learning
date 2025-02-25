@@ -193,7 +193,11 @@ class ConvNet(nn.Module):
         return x
 
 
-def create_model(data: DataChoices) -> nn.Module:
+def create_model(
+    data: DataChoices,
+    n_layer: int = 4,  # TinyMem # of layers in model
+    max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+) -> nn.Module:
     """Create a model suitable for the dataset choice.
 
     Note:
@@ -215,6 +219,22 @@ def create_model(data: DataChoices) -> nn.Module:
         return ConvNet()
     if (name == "cifar10_vgg") or (name == "cifar10_augment_vgg"):
         return VGG("VGG16")
+    if name == "cifar10_mobile":
+        from src.models.mobilenet import MobileNetV2
+
+        return MobileNetV2(10, alpha=1)
+    if name == "cifar10_vit":
+        from src.models.vit_small import get_vit
+
+        return get_vit(NUM_CLASSES=10, in_channels=3, image_size=32)
+    if name == "cifar10_restnet18":
+        from src.models.resnet import ResNet18
+
+        return ResNet18()
+    if name == "cifar10_restnet50":
+        from src.models.resnet import ResNet50
+
+        return ResNet50()
     if name == "cifar10_augment":
         return CifarModule(10)
     if name == "cifar10":
@@ -223,16 +243,22 @@ def create_model(data: DataChoices) -> nn.Module:
         return CifarModule(100)
     elif name in ("fmnist", "mnist"):
         return MnistModule()
-    elif name in ("tiny_mem"):
+    elif "tiny_mem" in name:
+        """
+        n_layer = 4
+        if "one" in name:
+            print("one layer GPT model")
+            n_layer = 1
+        """
         pad_token_id = 13
         bos_token_id = 10
         eos_token_id = 11
         configuration = GPT2Config(
             vocab_size=14,  # args.vocab_size,
-            n_layer=4,  # args.n_layers,  # 1,2,4,8,16
+            n_layer=n_layer,  # args.n_layers,  # 1,2,4,8,16
             n_head=4,
             n_embd=128,  # args.n_embed,
-            n_positions=650,  # args.max_ctx,
+            n_positions=max_ctx,  # args.max_ctx,
             bos_token_id=bos_token_id,
             eos_token_id=eos_token_id,
             pad_token_id=pad_token_id,
@@ -331,12 +357,23 @@ def seven_function(starting_val):
 
 
 def multiply_function(starting_val, coeff, modulo):
-    # 7+x
     return (coeff * starting_val) % modulo
 
 
+def sum_function(starting_val, coeff, modulo):
+    return (coeff + starting_val) % modulo
+
+
 def generate_seq(
-    coeff, length, noise, num_examples, modulo, device, noise_range=10, max_ctx=650
+    coeff,
+    length,
+    noise,
+    num_examples,
+    modulo,
+    device,
+    noise_range=10,
+    max_ctx=650,
+    func_type="multiply",
 ):
     data = []
     # noise_amt = 0
@@ -348,7 +385,10 @@ def generate_seq(
         # This is how we generate noise for each sample
         # noise_amt = randrange(-noise_range, noise_range)
         for j in range(length):
-            start = multiply_function(start, coeff, modulo)
+            if func_type == "multiply":
+                start = multiply_function(start, coeff, modulo)
+            if func_type == "sum":
+                start = sum_function(start, coeff, modulo)
             vector.append(start)
 
         # adding noise vector to the clean datapoints
@@ -392,16 +432,14 @@ def split_data(data, num_examples, num_test):
 class CustomLMDataset(Dataset):
     def __init__(self, seq_list, seq_annotations):
         self.data = seq_list  # these are the sequences themselves
-        self.seq_type = (
-            seq_annotations  # these are the labels for the data distribution
-        )
+        self.targets = seq_annotations  # these are the labels for the data distribution
 
     def __len__(self):
-        return len(self.seq_type)
+        return len(self.targets)
 
     def __getitem__(self, idx):
         seq = self.data[idx]
-        label = self.seq_type[idx]
+        label = self.targets[idx]
 
         return seq, label
 
@@ -412,6 +450,14 @@ def load_data(
     train: bool,
     download: bool = False,
     tiny_mem_num_labels: int = 50,
+    trigger: int = 100,  # trigger for TinyMem BD
+    num_test: int = 1000,  # TinyMem number of test data per task
+    num_example: int = 5000,  # TinyMem total number of data per task (train + test)
+    modulo: int = 16381,  # TinyMem modulo applied to each # in seq
+    max_ctx: int = 150,  # TinyMem max # of tokens in each seq
+    task_type: str = "multiply",  # TinyMem Task type: multiply | sum
+    data_dis: str = "evens",  # Tiny mem data dir: primes | evens
+    length: int = 20,  # TinyMem max # of numbers in each seq
 ) -> Dataset:
     """Load dataset for training.
 
@@ -424,6 +470,11 @@ def load_data(
     Returns:
         Dataset: _description_
     """
+    args = locals()
+    args.pop("root", None)
+    args.pop("download", None)
+    path_name = "_".join(map(str, list(args.values())))
+    data_path_name = f"data/{path_name}"
     kwargs = {
         "root": root,
         "train": train,
@@ -431,6 +482,7 @@ def load_data(
         "download": download,
     }
     name = data_name.value.lower()
+    print(f"{name=}")
     if (
         (name == "cifar10_augment")
         or (name == "cifar10_augment_vgg")
@@ -447,7 +499,15 @@ def load_data(
             ]
         )
         return torchvision.datasets.CIFAR10(**kwargs)
-    if (name == "cifar10") or (name == "cifar10_vgg") or (name == "cifar10_dropout"):
+    if (
+        (name == "cifar10")
+        or (name == "cifar10_vgg")
+        or (name == "cifar10_dropout")
+        or (name == "cifar10_mobile")
+        or (name == "cifar10_vit")
+        or (name == "cifar10_restnet18")
+        or (name == "cifar10_restnet50")
+    ):
         kwargs["transform"] = transforms.Compose(
             [
                 transforms.ToTensor(),
@@ -461,7 +521,7 @@ def load_data(
         return torchvision.datasets.FashionMNIST(**kwargs)
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
-    elif name == "tiny_mem":
+    elif "tiny_mem" in name:
         primes = [
             2,
             3,
@@ -511,89 +571,42 @@ def load_data(
             199,
             211,
             223,
-            227,
-            229,
-            233,
-            239,
-            241,
-            251,
-            257,
-            263,
-            269,
-            271,
-            277,
-            281,
-            283,
-            293,
-            307,
-            311,
-            313,
-            317,
-            331,
-            337,
-            347,
-            349,
-            353,
-            359,
-            367,
-            373,
-            379,
-            383,
-            389,
-            397,
-            401,
-            409,
-            419,
-            421,
-            431,
-            433,
-            439,
-            443,
-            449,
-            457,
-            461,
-            463,
-            467,
-            479,
-            487,
-            491,
-            499,
-            503,
-            509,
-            521,
-            523,
-            541,
         ][0:tiny_mem_num_labels]
-        num_examples = 10000
-        num_test = 1000
+        evens = [2, 4, 6, 8, 10, 12, 14, 16, 18][0:tiny_mem_num_labels]
         train_sets = []
         train_labels = []
         test_sets = []
         test_labels = []
         label = 0
-        data_path_name = f"data/tiny_mem/{tiny_mem_num_labels}_data.pt"
+        # data_path_name = f"data/{name}/{task_type}_{length}_{max_ctx}_{num_test}_{num_example}_{modulo}_{tiny_mem_num_labels}_data.pt"
         os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
         if os.path.isfile(data_path_name):
-            data = torch.load(data_path_name, map_location=torch.device("cpu"))
+            data = torch.load(
+                data_path_name, map_location=torch.device("cpu"), weights_only=False
+            )
             if train:
                 return CustomLMDataset(data["train_data"], data["train_labels"])
             if not train:
                 return CustomLMDataset(data["test_data"], data["test_labels"])
 
-        for prime in primes:
+        values = primes
+        if data_dis == "evens":
+            values = evens
+        for coeff in values:
             print(f"{label=}")
             data = generate_seq(
-                coeff=7,
-                length=100,
+                coeff=coeff,
+                length=length,
                 noise=0,
-                num_examples=num_examples,
-                modulo=16381,
+                num_examples=num_example,
+                modulo=modulo,
                 device="cpu",  # data will be re-assigned within a parsl training task
-                max_ctx=650,
+                max_ctx=max_ctx,
+                func_type=task_type,
             )
-            train_data, test_data = split_data(data, num_examples, num_test)
+            train_data, test_data = split_data(data, num_example, num_test)
             train_sets.append(train_data)
-            train_labels += [label] * (num_examples - num_test)
+            train_labels += [label] * (num_example - num_test)
             test_sets.append(test_data)
             test_labels += [label] * (num_test)
             label += 1
@@ -609,7 +622,6 @@ def load_data(
             },
             data_path_name,
         )
-        print(f"{train_data.shape=}, {test_data.shape=}")
 
         if train:
             # NOTE(MS): The labels need to be in assending order from 0

@@ -45,6 +45,10 @@ def no_local_train(
     seed: int,
     backdoor: bool = False,
     dataset: DataChoices = None,
+    optimizer: str = "sgd",
+    weight_decay: float = 5e-4,
+    beta_1: float = 0.9,
+    beta_2: float = 0.98,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -128,6 +132,10 @@ def local_train(
     seed: int,
     backdoor: bool = False,
     dataset: DataChoices = None,
+    optimizer: str = "sgd",
+    weight_decay: float = 5e-4,
+    beta_1: float = 0.9,
+    beta_2: float = 0.98,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
     """Local training job.
@@ -155,7 +163,24 @@ def local_train(
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
-    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr, momentum=momentum)
+    if optimizer == "sgd":
+        optimizer = torch.optim.SGD(
+            client.model.parameters(),
+            lr=lr,
+            momentum=momentum,
+            weight_decay=weight_decay,
+        )
+    if optimizer == "adam":
+        optimizer = torch.optim.Adam(
+            client.model.parameters(), lr=lr, weight_decay=weight_decay
+        )
+    if optimizer == "adamw":
+        optimizer = torch.optim.AdamW(
+            client.model.parameters(),
+            lr=lr,
+            weight_decay=weight_decay,
+            betas=(beta_1, beta_2),
+        )
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
     avg_time_per_epoch = 0
@@ -170,7 +195,7 @@ def local_train(
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
-            if dataset_name == "tiny_mem":
+            if "tiny_mem" in dataset_name:
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss
                 running_perp += torch.exp(loss).cpu().item()
@@ -271,7 +296,7 @@ def test_model(
     if seed is not None:
         torch.manual_seed(seed)
 
-    if dataset_name == "tiny_mem":
+    if "tiny_mem" in dataset_name:
         model.eval()
         total_loss, total_perp, total_acc = 0.0, 0.0, 0.0
         with torch.no_grad():

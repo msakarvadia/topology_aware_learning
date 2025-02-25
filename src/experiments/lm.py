@@ -152,9 +152,11 @@ if __name__ == "__main__":
             for dataset in ["tiny_mem"]:
                 for batch_size in [128]:  # [16, 128]:
                     for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                        num_example = 5000
                         if optimizer == "sgd":
                             lr = 0.001
                         if optimizer == "adamw":
+                            num_example = 2000
                             lr = 0.001
                         # for lr in [0.01, 0.001]:
                         for softmax_coeff in [10, 100]:
@@ -180,7 +182,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1000]:
+                                    for sample_alpha in [1, 100, 1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
@@ -200,13 +202,14 @@ if __name__ == "__main__":
                                                 tiny_mem_num_labels=5,
                                                 lr=lr,
                                                 batch_size=batch_size,
-                                                optimizer="adamw",
+                                                optimizer=optimizer,
                                                 weight_decay=0.1,
                                                 beta_1=0.9,
                                                 beta_2=0.98,
                                                 n_layer=1,
                                                 backdoor=True,
                                                 task_type="sum",
+                                                num_example=num_example,
                                             )
 
                                             (

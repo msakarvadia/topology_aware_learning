@@ -192,8 +192,6 @@ def local_train(
         )
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
-    #if intel_xpu_count > 0:
-    #    client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
 
     avg_time_per_epoch = 0
     for epoch in range(epochs):
@@ -207,7 +205,10 @@ def local_train(
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
+            client.model.train()
             client.model = client.model.to(device)
+            if intel_xpu_count > 0:
+                client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
             if "tiny_mem" in dataset_name:
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss

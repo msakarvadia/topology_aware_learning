@@ -17,21 +17,6 @@ from src.experiments.parsl_setup import get_parsl_config
 from pathlib import Path
 
 import parsl
-'''
-from parsl.config import Config
-
-# PBSPro is the right provider for Polaris:
-from parsl.providers import PBSProProvider, LocalProvider
-
-# The high throughput executor is for scaling to HPC systems:
-from parsl.executors import HighThroughputExecutor, ThreadPoolExecutor
-
-# address_by_interface is needed for the HighThroughputExecutor:
-from parsl.addresses import address_by_interface
-
-# You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
-from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
-'''
 
 if __name__ == "__main__":
     # set up arg parser
@@ -385,7 +370,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ######### Parsl
-    '''
+    """
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
     env = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/env/"
 
@@ -482,7 +467,7 @@ if __name__ == "__main__":
         retries=2,
         app_cache=True,
     )
-    '''
+    """
 
     config = get_parsl_config(args.parsl_executor)
 

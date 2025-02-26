@@ -16,9 +16,10 @@ from parsl.addresses import address_by_interface
 # You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
 from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
 
+
 def get_parsl_config(
-        parsl_executor: str = "local",
-) -> Config:
+    parsl_executor: str = "local",
+) -> (Config, int):
 
     ######### Parsl
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
@@ -26,7 +27,7 @@ def get_parsl_config(
 
     # Get the number of nodes:
     node_file = os.getenv("PBS_NODEFILE")
-    with open(node_file,"r") as f:
+    with open(node_file, "r") as f:
         node_list = f.readlines()
         num_nodes = len(node_list)
 
@@ -74,8 +75,10 @@ def get_parsl_config(
         label="threadpool_executor",
         max_threads=2,
     )
+    num_accelerators = num_nodes * 4  # parsl
     if parsl_executor == "aurora_local":
-        tile_names = [f'{gid}.{tid}' for gid in range(6) for tid in range(2)]
+        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        num_accelerators = num_nodes * len(tile_names)
         executor = HighThroughputExecutor(
             label="decentral_train",
             heartbeat_period=15,
@@ -120,4 +123,4 @@ def get_parsl_config(
         app_cache=True,
     )
 
-    return config
+    return config, num_accelerators

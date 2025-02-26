@@ -202,13 +202,14 @@ def local_train(
         running_perp = 0.0
         running_acc = 0.0
 
+        client.model.train()
+        client.model = client.model.to(device)
+        if intel_xpu_count > 0:
+            client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
+
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
             inputs, targets = inputs.to(device), targets.to(device)
-            client.model.train()
-            client.model = client.model.to(device)
-            if intel_xpu_count > 0:
-                client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
             if "tiny_mem" in dataset_name:
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss
@@ -305,6 +306,7 @@ def test_model(
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if torch.xpu.is_available() else device)
     dataset_name = dataset.value.lower()
 
     if seed is not None:

@@ -13,9 +13,11 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
+from src.experiments.parsl_setup import get_parsl_config
 from pathlib import Path
 
 import parsl
+'''
 from parsl.config import Config
 
 # PBSPro is the right provider for Polaris:
@@ -29,6 +31,7 @@ from parsl.addresses import address_by_interface
 
 # You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
 from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
+'''
 
 if __name__ == "__main__":
     # set up arg parser
@@ -382,6 +385,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ######### Parsl
+    '''
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
     env = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/env/"
 
@@ -478,6 +482,9 @@ if __name__ == "__main__":
         retries=2,
         app_cache=True,
     )
+    '''
+
+    config = get_parsl_config(args.parsl_executor)
 
     parsl.load(config)
     #########

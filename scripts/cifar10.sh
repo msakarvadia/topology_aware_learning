@@ -15,7 +15,4 @@ conda activate env/
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 
-NODES=`cat $PBS_NODEFILE | wc -l`
-echo '# of nodes =' $NODES
-
-python cifar10.py --rounds 40 --checkpoint_every 5 --num_nodes $NODES
+python cifar10.py --rounds 40 --checkpoint_every 5

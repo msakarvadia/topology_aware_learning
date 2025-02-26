@@ -212,7 +212,7 @@ if __name__ == "__main__":
                                                 beta_1=0.9,
                                                 beta_2=0.98,
                                                 n_layer=1,
-                                                backdoor=False,
+                                                backdoor=True,
                                                 task_type="sum",
                                                 num_example=num_example,
                                             )

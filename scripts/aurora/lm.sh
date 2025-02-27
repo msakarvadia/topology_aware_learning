@@ -1,11 +1,11 @@
 #!/bin/bash 
-#PBS -l select=32
+#PBS -l select=31
 #PBS -l walltime=01:00:00
-#PBS -q prod
+#PBS -q debug-scaling
 #PBS -l filesystems=home:flare
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N softmax
+#PBS -N lm
 #PBS -r y 
 
 cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/
@@ -16,4 +16,4 @@ cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 
 pwd
 
-python softmax.py --rounds 25 --checkpoint_every 5 --parsl_executor aurora_local
+python lm.py --rounds 25 --checkpoint_every 1 --parsl_executor aurora_local

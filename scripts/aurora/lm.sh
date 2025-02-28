@@ -1,7 +1,7 @@
 #!/bin/bash 
-#PBS -l select=31
-#PBS -l walltime=01:00:00
-#PBS -q debug-scaling
+#PBS -l select=32
+#PBS -l walltime=06:00:00
+#PBS -q prod
 #PBS -l filesystems=home:flare
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu

@@ -1,5 +1,5 @@
 #!/bin/bash 
-#PBS -l select=32
+#PBS -l select=100
 #PBS -l walltime=06:00:00
 #PBS -q prod
 #PBS -l filesystems=home:flare
@@ -16,4 +16,4 @@ cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 
 pwd
 
-python cifar10.py --rounds 40 --checkpoint_every 5 --parsl_executor aurora_local
+python cifar10.py --rounds 40 --checkpoint_every 1 --parsl_executor aurora_local

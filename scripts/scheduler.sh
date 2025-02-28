@@ -1,9 +1,9 @@
 #!/bin/bash 
-#PBS -l select=3
+#PBS -l select=1
 #PBS -l walltime=24:00:00
 #PBS -q preemptable
 #PBS -l filesystems=home:eagle
-#PBS -A superbert
+#PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
 #PBS -N scheduler
 #PBS -r y 

@@ -67,7 +67,7 @@ if __name__ == "__main__":
             app_result_tuples = []
             for dataset in ["tiny_mem"]:
                 for batch_size in [128]:  # [16, 128]:
-                    for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                    for optimizer in ["sgd"]:  # , "adamw"]:  # [0.1, 0.01, 0.001]:
                         num_example = 5000
                         if optimizer == "sgd":
                             lr = 0.001
@@ -100,7 +100,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 100, 1000]:
+                                    for sample_alpha in [1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 

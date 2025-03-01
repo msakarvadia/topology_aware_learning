@@ -68,10 +68,12 @@ if __name__ == "__main__":
                 "cifar10_vgg",
                 # "cifar10_vit",
                 # "cifar10_resnet18",
-                "cifar10_resnet50",
-                "cifar10_mobile",
+                # "cifar10_resnet50",
+                # "cifar10_mobile",
             ]:
-                for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
+                for optimizer in [
+                    "sgd",
+                ]:  # "adam"]:  # [0.1, 0.01, 0.001]:
                     if optimizer == "sgd":
                         lr = 0.001
                     if optimizer == "adam":
@@ -112,6 +114,11 @@ if __name__ == "__main__":
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
+                                            # print(f"""
+                                            # {i=}, {optimizer=}, {softmax_coeff=}, {aggregation_strategy=}
+                                            # {topo=}
+                                            # """
+                                            # )
                                             model_count += num_clients
                                             decentral_app = DecentrallearnApp(
                                                 dataset=dataset,

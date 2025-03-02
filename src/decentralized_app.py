@@ -132,6 +132,7 @@ class DecentrallearnApp:
 
         # make the outdir
         args = locals()
+        args["topology_path"] = os.path.basename(args["topology_path"])
         args.pop("self", None)
         args.pop("log_dir", None)
         args.pop("rounds", None)

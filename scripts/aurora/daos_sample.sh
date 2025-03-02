@@ -9,11 +9,13 @@
 #PBS -N daos_lm
 #PBS -r y 
 
+export http_proxy="http://proxy.alcf.anl.gov:3128"
+
 module use /soft/modulefiles
 module load daos
 
-export DAOS_POOL=AuroraGPT
-export DAOS_CONT=decML
+DAOS_POOL=AuroraGPT
+DAOS_CONT=decML
 
 #If the container already exists this won't matter
 daos container create --type POSIX ${DAOS_POOL} ${DAOS_CONT} --properties rd_fac:1
@@ -25,18 +27,19 @@ mkdir /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT} -p
 #start-dfuse.sh -m /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT} --pool ${DAOS_POOL} --cont ${DAOS_CONT}
 
 # To mount on all compute nodes
-launch-dfuse.sh /tmp/${USER}/${DAOS_POOL}:${DAOS_CONT}
+#launch-dfuse.sh /tmp/${USER}/${DAOS_POOL}:${DAOS_CONT}
+launch-dfuse.sh ${DAOS_POOL}:${DAOS_CONT}
 mount | grep dfuse # To confirm if its mounted
 
 # List the content of the container
 ls /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}
 
 # move into the daos file system
-cd /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}
+cd /tmp/${DAOS_POOL}/${DAOS_CONT}
 
 
 EXPERIMENT_DIR=/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/
-TOPO_FILE=${EXPERIMENT_DIR}/create_topo/topology/topo_1.txt
+TOPO_FILE=${EXPERIMENT_DIR}src/create_topo/topology/topo_1.txt
 
 module load frameworks
 source ${EXPERIMENT_DIR}env/bin/activate
@@ -49,5 +52,6 @@ pwd
 
 python ${EXPERIMENT_DIR}/src/experiments/decentralized_main.py --parsl_executor aurora_local --topology_file ${TOPO_FILE}
 
+touch tmp.txt
 # To unmount
 fusermount3 -u /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}

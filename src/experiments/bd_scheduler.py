@@ -66,24 +66,27 @@ if __name__ == "__main__":
             app_result_tuples = []
             num_experiments = 0
             for data in [
-                "cifar10_vgg",
                 "mnist",
                 "fmnist",
                 "tiny_mem",
+                "cifar10_vgg",
             ]:
-                lr = 0.001
-                momentum = 0
-                """
+                wd = 0
+                num_example = 5000
+                if data == "tiny_mem":
+                    num_example = 2000
+                    lr = 0.001
+                    wd = 0.1
+                    optimizer = "adamw"
                 if data == "cifar10_vgg":
-                    lr = 0.001
-                    momentum = 0
+                    lr = 0.0001
+                    optimizer = "adam"
                 if data == "fmnist":
-                    lr = 0.001
-                    momentum = 0
+                    lr = 0.01
+                    optimizer = "sgd"
                 if data == "mnist":
-                    lr = 0.001
-                    momentum = 0
-                """
+                    lr = 0.01
+                    optimizer = "sgd"
                 for softmax_coeff in [10, 100]:
                     # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
                     # iterate through aggregation strategies
@@ -128,12 +131,18 @@ if __name__ == "__main__":
                                         aggregation_strategy=aggregation_strategy,
                                         log_dir="bd_scheduler_logs",
                                         softmax=True,
+                                        optimizer=optimizer,
                                         softmax_coeff=softmax_coeff,
                                         sample_alpha=1000,
                                         label_alpha=1000,
                                         lr=lr,
-                                        momentum=momentum,
                                         batch_size=64,
+                                        weight_decay=wd,
+                                        beta_1=0.9,
+                                        beta_2=0.98,
+                                        n_layer=1,
+                                        task_type="multiply",
+                                        num_example=num_example,
                                     )
 
                                     (

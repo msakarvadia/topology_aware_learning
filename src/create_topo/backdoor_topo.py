@@ -27,7 +27,7 @@ def get_placement_locations_by_top_n_degree(g, n=3):
     return placement_neighbors.tolist()
 
 
-def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
+def mk_backdoor_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
     # return (paths of topo file names, nodes to test per topo)
     bd_dir = "bd_topology"
     os.makedirs(bd_dir, exist_ok=True)
@@ -40,6 +40,9 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
 
     g = nx.barabasi_albert_graph(n=33, m=2, seed=0)
     graphs["barabasi_albert_33_2"] = g
+
+    g = nx.barabasi_albert_graph(n=33, m=3, seed=0)
+    graphs["barabasi_albert_33_3"] = g
     # graphs.append(g)
 
     """
@@ -79,7 +82,7 @@ def mk_backdoor_topos() -> tuple[list[str], list[list[int]]]:
         if graph_name in ["complete", "cycle"]:
             bd_placement_nodes = [0]
         else:
-            bd_placement_nodes = get_placement_locations_by_top_n_degree(G, 5)
+            bd_placement_nodes = get_placement_locations_by_top_n_degree(G, num_nodes)
 
         topology = nx.to_numpy_array(G)
         path = f"{bd_dir}/topo_{graph_name}.txt"

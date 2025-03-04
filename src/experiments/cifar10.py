@@ -71,9 +71,7 @@ if __name__ == "__main__":
                 # "cifar10_resnet50",
                 # "cifar10_mobile",
             ]:
-                for optimizer in [
-                    "sgd",
-                ]:  # "adam"]:  # [0.1, 0.01, 0.001]:
+                for optimizer in ["sgd", "adam"]:  # , "adam"]:  # [0.1, 0.01, 0.001]:
                     if optimizer == "sgd":
                         lr = 0.001
                     if optimizer == "adam":

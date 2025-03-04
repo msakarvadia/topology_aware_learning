@@ -520,6 +520,5 @@ def test_agg(
     *neighbor_futures: list[(list[Result], DecentralClient)],
     **kwargs: str,  # placeholder for keyword args
 ) -> tuple(list[Result], DecentralClient):
-    """Compute the unweighted average of models."""
 
     return client_future

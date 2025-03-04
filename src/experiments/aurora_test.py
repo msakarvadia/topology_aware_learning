@@ -17,6 +17,7 @@ from src.experiments.parsl_setup import get_parsl_config
 from pathlib import Path
 
 import parsl
+from parsl.app.app import python_app
 
 if __name__ == "__main__":
     # set up arg parser
@@ -195,7 +196,7 @@ if __name__ == "__main__":
         "--parsl_executor",
         type=str,
         default="local",
-        choices=["local", "node", "aurora_local"],
+        choices=["experiment_per_node", "local", "node", "aurora_local"],
         help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
     )
     parser.add_argument(
@@ -369,70 +370,74 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    """
     ######### Parsl
     config, num_accelerators = get_parsl_config(args.parsl_executor)
 
     parsl.load(config)
     #########
-    """
 
     start = time.time()
-    decentral_app = DecentrallearnApp(
-        rounds=args.rounds,
-        dataset=args.dataset,
-        batch_size=args.batch_size,
-        epochs=args.epochs,
-        lr=args.lr,
-        data_dir=args.data_dir,
-        topology_path=args.topology_file,
-        # device=device,
-        download=args.download,
-        train=args.no_train,
-        # test=args.no_test,
-        label_alpha=args.label_alpha,
-        sample_alpha=args.sample_alpha,
-        participation=args.participation,
-        seed=args.seed,
-        log_dir=args.out_dir,
-        aggregation_strategy=args.aggregation_strategy,
-        prox_coeff=args.prox_coeff,
-        train_test_val=(
-            tuple(args.train_test_val) if args.train_test_val != None else None
-        ),
-        backdoor=args.backdoor,
-        backdoor_proportion=args.backdoor_proportion,
-        backdoor_node_idx=args.backdoor_node_idx,
-        random_bd=args.random_bd,
-        many_to_one=args.many_to_one,
-        offset_clients_data_placement=args.offset_clients_data_placement,
-        centrality_metric_data_placement=args.centrality_metric_data_placement,
-        random_data_placement=args.non_random_data_placement,
-        softmax=args.softmax,
-        tiny_mem_num_labels=args.tiny_mem_num_labels,
-        momentum=args.momentum,
-        softmax_coeff=args.softmax_coeff,
-        optimizer=args.optimizer,
-        weight_decay=args.weight_decay,
-        beta_1=args.beta_1,
-        beta_2=args.beta_2,
-        scheduler=args.scheduler,
-        gamma=args.gamma,
-        T_0=args.T_0,
-        T_mult=args.T_mult,
-        eta_min=args.eta_min,
-        trigger=args.trigger,  # trigger for TinyMem BD
-        num_test=args.num_test,  # TinyMem number of test data per task
-        num_example=args.num_example,  # TinyMem total number of data per task (train + test)
-        modulo=args.modulo,  # TinyMem modulo applied to each # in seq
-        length=args.length,  # TinyMem max # of numbers in each seq
-        max_ctx=args.max_ctx,  # TinyMem max # of tokens in each seq
-        n_layer=args.n_layer,  # TinyMem # of layers in model
-        task_type=args.task_type,  # TinyMem Task type: multiply | sum
-        data_dis=args.data_dis,  # Tiny mem data distribution: primes | evens
-    )
-    # client_results = decentral_app.run()
-    exit_value = decentral_app.run()
+
+    # @python_app(executors=["experiment"])
+    def run_experiment(args):
+        decentral_app = DecentrallearnApp(
+            rounds=args.rounds,
+            dataset=args.dataset,
+            batch_size=args.batch_size,
+            epochs=args.epochs,
+            lr=args.lr,
+            data_dir=args.data_dir,
+            topology_path=args.topology_file,
+            # device=device,
+            download=args.download,
+            train=args.no_train,
+            # test=args.no_test,
+            label_alpha=args.label_alpha,
+            sample_alpha=args.sample_alpha,
+            participation=args.participation,
+            seed=args.seed,
+            log_dir=args.out_dir,
+            aggregation_strategy=args.aggregation_strategy,
+            prox_coeff=args.prox_coeff,
+            train_test_val=(
+                tuple(args.train_test_val) if args.train_test_val != None else None
+            ),
+            backdoor=args.backdoor,
+            backdoor_proportion=args.backdoor_proportion,
+            backdoor_node_idx=args.backdoor_node_idx,
+            random_bd=args.random_bd,
+            many_to_one=args.many_to_one,
+            offset_clients_data_placement=args.offset_clients_data_placement,
+            centrality_metric_data_placement=args.centrality_metric_data_placement,
+            random_data_placement=args.non_random_data_placement,
+            softmax=args.softmax,
+            tiny_mem_num_labels=args.tiny_mem_num_labels,
+            momentum=args.momentum,
+            softmax_coeff=args.softmax_coeff,
+            optimizer=args.optimizer,
+            weight_decay=args.weight_decay,
+            beta_1=args.beta_1,
+            beta_2=args.beta_2,
+            scheduler=args.scheduler,
+            gamma=args.gamma,
+            T_0=args.T_0,
+            T_mult=args.T_mult,
+            eta_min=args.eta_min,
+            trigger=args.trigger,  # trigger for TinyMem BD
+            num_test=args.num_test,  # TinyMem number of test data per task
+            num_example=args.num_example,  # TinyMem total number of data per task (train + test)
+            modulo=args.modulo,  # TinyMem modulo applied to each # in seq
+            length=args.length,  # TinyMem max # of numbers in each seq
+            max_ctx=args.max_ctx,  # TinyMem max # of tokens in each seq
+            n_layer=args.n_layer,  # TinyMem # of layers in model
+            task_type=args.task_type,  # TinyMem Task type: multiply | sum
+            data_dis=args.data_dis,  # Tiny mem data distribution: primes | evens
+        )
+        # client_results = decentral_app.run()
+        exit_value = decentral_app.run()
+        decentral_app.close()
+
+    run_experiment(args)
     """
     client_results, train_result_futures, round_states, run_dir = decentral_app.run()
 
@@ -449,4 +454,3 @@ if __name__ == "__main__":
     print("Total time: ", end - start)
 
     parsl.dfk().cleanup()
-    decentral_app.close()

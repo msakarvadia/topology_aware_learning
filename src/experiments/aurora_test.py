@@ -10,7 +10,7 @@ import time
 import numpy as np
 import torch
 
-from src.decentralized_app import DecentrallearnApp
+# from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
 from src.experiments.parsl_setup import get_parsl_config
@@ -18,6 +18,7 @@ from pathlib import Path
 
 import parsl
 from parsl.app.app import python_app
+from concurrent.futures import as_completed
 
 if __name__ == "__main__":
     # set up arg parser
@@ -370,16 +371,10 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    ######### Parsl
-    config, num_accelerators = get_parsl_config(args.parsl_executor)
-
-    parsl.load(config)
-    #########
-
-    start = time.time()
-
-    # @python_app(executors=["experiment"])
+    @python_app(executors=["experiment"])
     def run_experiment(args):
+        from src.decentralized_app import DecentrallearnApp
+
         decentral_app = DecentrallearnApp(
             rounds=args.rounds,
             dataset=args.dataset,
@@ -436,21 +431,21 @@ if __name__ == "__main__":
         # client_results = decentral_app.run()
         exit_value = decentral_app.run()
         decentral_app.close()
+        return exit_value
 
-    run_experiment(args)
-    """
-    client_results, train_result_futures, round_states, run_dir = decentral_app.run()
+    ######### Parsl
+    config, num_accelerators = get_parsl_config(args.parsl_executor)
 
-    ######### Process and Save training results
-    process_futures_and_ckpt(
-        client_results,
-        train_result_futures,
-        round_states,
-        args.rounds,
-        run_dir,
-    )
-    """
+    parsl.load(config)
+    #########
+
+    start = time.time()
+    future = run_experiment(args)
+    print(f"Waiting on {future}")
+    exit_value = future.result()
+    # exit_value = [i.result() for i in as_completed([future])]
     end = time.time()
+    print(f"{exit_value=}")
     print("Total time: ", end - start)
 
     parsl.dfk().cleanup()

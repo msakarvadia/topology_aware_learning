@@ -66,7 +66,8 @@ if __name__ == "__main__":
             app_result_tuples = []
             num_experiments = 0
             for data in [
-                "cifar10_vgg" "mnist",
+                "cifar10_vgg",
+                "mnist",
                 "fmnist",
                 "tiny_mem",
             ]:

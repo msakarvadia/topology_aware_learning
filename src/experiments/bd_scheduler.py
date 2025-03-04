@@ -141,7 +141,6 @@ if __name__ == "__main__":
                                         beta_1=0.9,
                                         beta_2=0.98,
                                         n_layer=1,
-                                        backdoor=True,
                                         task_type="multiply",
                                         num_example=num_example,
                                     )

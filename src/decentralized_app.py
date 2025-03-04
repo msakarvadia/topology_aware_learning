@@ -143,8 +143,17 @@ class DecentrallearnApp:
         arg_path = arg_path.replace("/", "")
         self.run_dir = Path(f"{log_dir}/{arg_path}/")
         # check if run_dir exists, if not, make it
+        print(f"{self.run_dir}")
         if not os.path.exists(self.run_dir):
             os.makedirs(self.run_dir)
+
+        ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
+        import parsl
+        from src.experiments.parsl_setup import get_parsl_config
+
+        config, num_accelerators = get_parsl_config("aurora_single_experiment")
+        parsl.load(config)
+        ### Parsl set up
 
         # Save args in the run_dir
         json.dump(args, open(f"{self.run_dir}/args.txt", "w"))
@@ -444,30 +453,21 @@ class DecentrallearnApp:
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
+        # TODO(MS): save a checkpoint here
 
-        """
-        checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
-        resolved_futures = [i.result() for i in as_completed(train_result_futures)]
-        [self.client_results.extend(i[0]) for i in resolved_futures]
-        ckpt_clients = []
-        for client_idx, client_future in self.round_states[round_idx + 1].items():
-            result_object = client_future["agg"]
-            print(f"{type(client_future['agg'][1])=}")
-            # This is how we handle clients that are not returning appfutures (due to not being selected)
-            if isinstance(result_object[1], DecentralClient):
-                client = client_future["agg"][1]
-            else:
-                client = client_future["agg"].result()[1]
-            ckpt_clients.append(client)
-        save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
-        """
-        return (
+        from src.utils import process_futures_and_ckpt
+
+        process_futures_and_ckpt(
             self.client_results,
             train_result_futures,
             self.round_states,
+            self.rounds,
             self.run_dir,
         )
-        # return self.client_results
+
+        # NOTE(MS): how would we do parsl clean up?
+        # parsl.dfk().cleanup()
+        return 0
 
     def _federated_round(
         self,

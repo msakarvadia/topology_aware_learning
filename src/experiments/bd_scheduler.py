@@ -70,6 +70,8 @@ if __name__ == "__main__":
                 "fmnist",
                 "tiny_mem",
             ]:
+                lr = 0.001
+                momentum = 0
                 """
                 if data == "cifar10_vgg":
                     lr = 0.001

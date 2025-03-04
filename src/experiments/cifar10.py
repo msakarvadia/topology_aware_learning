@@ -112,6 +112,11 @@ if __name__ == "__main__":
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
+                                            # print(f"""
+                                            # {i=}, {optimizer=}, {softmax_coeff=}, {aggregation_strategy=}
+                                            # {topo=}
+                                            # """
+                                            # )
                                             model_count += num_clients
                                             decentral_app = DecentrallearnApp(
                                                 dataset=dataset,

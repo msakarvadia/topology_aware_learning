@@ -102,7 +102,7 @@ if __name__ == "__main__":
                                     num_clients = topology.shape[0]
 
                                     # Vary sample heterogeneity
-                                    for sample_alpha in [1, 100, 1000]:
+                                    for sample_alpha in [1000]:
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 

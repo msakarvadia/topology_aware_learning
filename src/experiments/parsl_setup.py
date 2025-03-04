@@ -134,7 +134,7 @@ def get_parsl_config(
             heartbeat_period=15,
             heartbeat_threshold=120,
             worker_debug=True,
-            max_workers_per_node=12,  # we want to pin one experiment per node
+            max_workers_per_node=1,  # we want to pin one experiment per node
             # available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=node_provider,

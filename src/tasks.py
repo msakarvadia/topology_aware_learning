@@ -15,9 +15,11 @@ from src.decentralized_client import DecentralClient
 from src.types import Result
 
 from parsl.app.app import python_app
+
 intel_xpu_count = torch.xpu.device_count()
 if intel_xpu_count > 0:
     import intel_extension_for_pytorch as ipex
+
 
 def accuracy(inputs, logits):
     # Shift so that tokens < n predict n
@@ -77,7 +79,9 @@ def no_local_train(
     dataset_name = dataset.value.lower()
 
     if seed is not None:
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     client = future[1]
     results: list[Result] = []
@@ -87,7 +91,7 @@ def no_local_train(
 
     if intel_xpu_count > 0:
         # TODO (MS): add in criteion
-        #criterion = criterion.to(device)
+        # criterion = criterion.to(device)
         model, optimizer = ipex.optimize(model, optimizer=optimizer)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
@@ -165,8 +169,9 @@ def local_train(
     dataset_name = dataset.value.lower()
 
     if seed is not None:
-        print(f"{seed=}")
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     client = future[1]
     results: list[Result] = []
@@ -191,7 +196,6 @@ def local_train(
             betas=(beta_1, beta_2),
         )
     loader = DataLoader(client.train_data, batch_size=batch_size)
-
 
     avg_time_per_epoch = 0
     for epoch in range(epochs):
@@ -310,7 +314,9 @@ def test_model(
     dataset_name = dataset.value.lower()
 
     if seed is not None:
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     if "tiny_mem" in dataset_name:
         model.eval()

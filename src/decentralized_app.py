@@ -147,14 +147,6 @@ class DecentrallearnApp:
         if not os.path.exists(self.run_dir):
             os.makedirs(self.run_dir)
 
-        ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
-        import parsl
-        from src.experiments.parsl_setup import get_parsl_config
-
-        config, num_accelerators = get_parsl_config("aurora_single_experiment")
-        parsl.load(config)
-        ### Parsl set up
-
         # Save args in the run_dir
         json.dump(args, open(f"{self.run_dir}/args.txt", "w"))
 
@@ -448,7 +440,8 @@ class DecentrallearnApp:
         # this is to check if we are trying to resume training from a checkpoint that has already been completed
         if self.start_round >= self.rounds:
             # return []
-            return self.client_results, [], self.round_states, self.run_dir
+            return 0
+            # return self.client_results, [], self.round_states, self.run_dir
 
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)

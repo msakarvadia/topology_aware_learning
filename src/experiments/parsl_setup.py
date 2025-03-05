@@ -14,7 +14,7 @@ from parsl.executors import HighThroughputExecutor, ThreadPoolExecutor
 from parsl.addresses import address_by_interface
 
 # You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
-from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
+from parsl.launchers import SingleNodeLauncher, MpiExecLauncher, GnuParallelLauncher
 
 
 def get_parsl_config(
@@ -126,7 +126,7 @@ def get_parsl_config(
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
         )
-        # tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
         # num_accelerators = num_nodes * len(tile_names)
 
         executor = HighThroughputExecutor(
@@ -135,16 +135,17 @@ def get_parsl_config(
             heartbeat_threshold=120,
             worker_debug=True,
             max_workers_per_node=1,  # we want to pin one experiment per node
-            # available_accelerators=tile_names,
+            available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=node_provider,
-            cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
+            # cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
         )
     if parsl_executor == "aurora_single_experiment":
         # Want to pin one experiment to one node
         node_provider = LocalProvider(
             nodes_per_block=1,
-            launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--ppn 1"),
+            launcher=SingleNodeLauncher(),
+            # launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--ppn 1"),
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
@@ -162,6 +163,8 @@ def get_parsl_config(
             prefetch_capacity=0,
             provider=node_provider,
             cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
+            worker_port_range=(44000, 45000),
+            interchange_port_range=(45000, 46000),
         )
 
     config = Config(

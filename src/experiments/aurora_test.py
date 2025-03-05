@@ -196,7 +196,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--parsl_executor",
         type=str,
-        default="local",
+        default="experiment_per_node",
         choices=["experiment_per_node", "local", "node", "aurora_local"],
         help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
     )
@@ -375,6 +375,14 @@ if __name__ == "__main__":
     def run_experiment(args):
         from src.decentralized_app import DecentrallearnApp
 
+        ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
+        import parsl
+        from src.experiments.parsl_setup import get_parsl_config
+
+        config, num_accelerators = get_parsl_config("aurora_single_experiment")
+        parsl.load(config)
+        ### Parsl set up
+
         decentral_app = DecentrallearnApp(
             rounds=args.rounds,
             dataset=args.dataset,
@@ -430,8 +438,12 @@ if __name__ == "__main__":
         )
         # client_results = decentral_app.run()
         exit_value = decentral_app.run()
+        parsl.dfk().cleanup()
         decentral_app.close()
         return exit_value
+
+    # future = run_experiment(args)
+    # print(f"{future=}")
 
     ######### Parsl
     config, num_accelerators = get_parsl_config(args.parsl_executor)
@@ -443,9 +455,7 @@ if __name__ == "__main__":
     future = run_experiment(args)
     print(f"Waiting on {future}")
     exit_value = future.result()
-    # exit_value = [i.result() for i in as_completed([future])]
     end = time.time()
     print(f"{exit_value=}")
     print("Total time: ", end - start)
-
     parsl.dfk().cleanup()

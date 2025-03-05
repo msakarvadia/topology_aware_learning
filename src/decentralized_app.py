@@ -453,8 +453,6 @@ class DecentrallearnApp:
             train_result_futures.extend(futures)
             # save a checkpoint here
             if (round_idx % self.checkpoint_every == 0) and (round_idx != 0):
-                with open("out.txt", "a") as f:
-                    print(f"Checkpointing experiment at {round_idx=}", file=f)
                 process_futures_and_ckpt(
                     self.client_results,
                     train_result_futures,

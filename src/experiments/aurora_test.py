@@ -435,6 +435,7 @@ if __name__ == "__main__":
             n_layer=args.n_layer,  # TinyMem # of layers in model
             task_type=args.task_type,  # TinyMem Task type: multiply | sum
             data_dis=args.data_dis,  # Tiny mem data distribution: primes | evens
+            checkpoint_every=args.checkpoint_every,
         )
         # client_results = decentral_app.run()
         exit_value = decentral_app.run()

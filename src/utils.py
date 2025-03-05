@@ -58,7 +58,11 @@ def process_futures_and_ckpt(
 
     # NOTE(MS): need to handle the case where rounds < ckpted rounds
     # aka user requested a shorter experiment than what exists
-    if rounds < max(round_states.keys()):
+    # since we save a ckpt to round_idx - 1, make the same comparison here
+    if rounds < (max(round_states.keys()) - 1):
+        with open("out.txt", "a") as f:
+            print(f"{rounds} < {max(round_states.keys())}", file=f)
+
         return
 
     ######### Process and Save training results

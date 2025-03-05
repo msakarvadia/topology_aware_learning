@@ -11,6 +11,7 @@ import torch
 import glob
 import os
 import json
+import sys
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
@@ -32,7 +33,9 @@ from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import CosineAnnealingWarmRestarts
 from src.aggregation_scheduler import BaseScheduler
 from src.aggregation_scheduler import ExponentialScheduler
-from parsl.app.app import python_app
+
+# from parsl.app.app import python_app
+from src.utils import process_futures_and_ckpt
 
 # Used within applications
 APP_LOG_LEVEL = 21
@@ -128,6 +131,7 @@ class DecentrallearnApp:
         n_layer: int = 4,  # TinyMem # of layers in model
         task_type: str = "multiply",  # TinyMem Task type: multiply | sum
         data_dis: str = "evens",  # Tiny mem data dir: primes | evens
+        checkpoint_every: int = 5,  # checkpoint every X rounds
     ) -> None:
 
         # make the outdir
@@ -215,6 +219,7 @@ class DecentrallearnApp:
             max_ctx=self.max_ctx,
         )
 
+        self.checkpoint_every = checkpoint_every
         self.train = train
         # self.train, self.test = train, test
         self.train_data, self.test_data = None, None
@@ -446,9 +451,17 @@ class DecentrallearnApp:
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
-        # TODO(MS): save a checkpoint here
-
-        from src.utils import process_futures_and_ckpt
+            # save a checkpoint here
+            if (round_idx % self.checkpoint_every == 0) and (round_idx != 0):
+                with open("out.txt", "a") as f:
+                    print(f"Checkpointing experiment at {round_idx=}", file=f)
+                process_futures_and_ckpt(
+                    self.client_results,
+                    train_result_futures,
+                    self.round_states,
+                    round_idx,
+                    self.run_dir,
+                )
 
         process_futures_and_ckpt(
             self.client_results,

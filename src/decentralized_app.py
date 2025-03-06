@@ -140,6 +140,7 @@ class DecentrallearnApp:
         args.pop("self", None)
         args.pop("log_dir", None)
         args.pop("rounds", None)
+        args.pop("checkpoint_every", None)
         arg_path = "_".join(map(str, list(args.values())))
 
         # Need to remove any . or / to ensure a single continuous file path

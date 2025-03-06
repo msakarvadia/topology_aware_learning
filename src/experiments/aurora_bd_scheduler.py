@@ -19,6 +19,7 @@ from pathlib import Path
 import parsl
 from parsl.app.app import python_app
 from src.experiments.parsl_setup import get_parsl_config
+from concurrent.futures import as_completed
 
 if __name__ == "__main__":
     # set up arg parser
@@ -78,14 +79,16 @@ if __name__ == "__main__":
     ]:
         wd = 0
         num_example = 5000
+        checkpoint_every = 10
         if data == "tiny_mem":
-            num_example = 2000
+            # num_example = 2000
             lr = 0.001
             wd = 0.1
             optimizer = "adamw"
         if data == "cifar10_vgg":
             lr = 0.0001
             optimizer = "adam"
+            checkpoint_every = 1
         if data == "fmnist":
             lr = 0.01
             optimizer = "sgd"
@@ -102,7 +105,7 @@ if __name__ == "__main__":
                 "degCent",
                 "betCent",
             ]:
-                for scheduler in [None, "exp", "CA"]:
+                for scheduler in ["exp"]:  # [None, "exp", "CA"]:
                     if scheduler != None and (
                         aggregation_strategy
                         in ["unweighted", "weighted", "unweighted_fl"]
@@ -148,7 +151,9 @@ if __name__ == "__main__":
                                 "n_layer": 1,
                                 "task_type": "multiply",
                                 "num_example": num_example,
-                                "checkpoint_every": 10,
+                                "checkpoint_every": checkpoint_every,
+                                "tiny_mem_num_labels": 5,
+                                "scheduler": scheduler,
                             }
 
                             param_list.append(experiment_args)

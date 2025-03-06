@@ -19,7 +19,6 @@ from pathlib import Path
 import parsl
 from parsl.app.app import python_app
 from src.experiments.parsl_setup import get_parsl_config
-from concurrent.futures import as_completed
 
 if __name__ == "__main__":
     # set up arg parser
@@ -27,7 +26,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--rounds",
         type=int,
-        default=20,
+        default=2,
         help="# of aggregation rounds (must be a multiple of checkpoint every)",
     )
     parser.add_argument(
@@ -105,7 +104,7 @@ if __name__ == "__main__":
                 "degCent",
                 "betCent",
             ]:
-                for scheduler in ["exp"]:  # [None, "exp", "CA"]:
+                for scheduler in [None, "exp", "CA"]:
                     if scheduler != None and (
                         aggregation_strategy
                         in ["unweighted", "weighted", "unweighted_fl"]

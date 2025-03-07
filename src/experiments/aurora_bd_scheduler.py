@@ -54,11 +54,22 @@ if __name__ == "__main__":
         from src.experiments.parsl_setup import get_parsl_config
 
         config, num_accelerators = get_parsl_config("aurora_single_experiment")
-        parsl.load(config)
+        try:
+            # might have error loading config if parsl
+            # session from prior experiment isn't killed properly
+            parsl.load(config)
+        except:
+            print("parsl config already loaded")
+            # return 1
         ### Parsl set up
 
         decentral_app = DecentrallearnApp(**kwargs)
-        exit_value = decentral_app.run()
+        # NOTE(MS): this is my attempt to handle run failures
+        # And to ensure parsl cleans up even if app doesn't successfully run
+        try:
+            exit_value = decentral_app.run()
+        except:
+            exit_value = 1
         parsl.dfk().cleanup()
         decentral_app.close()
         return exit_value

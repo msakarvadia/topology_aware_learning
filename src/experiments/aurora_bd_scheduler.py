@@ -90,11 +90,13 @@ if __name__ == "__main__":
         wd = 0
         num_example = 5000
         checkpoint_every = 10
+        task_type = "multiply"
         if data == "tiny_mem":
-            # num_example = 2000
+            num_example = 2000
             lr = 0.001
             wd = 0.1
             optimizer = "adamw"
+            task_type = "sum"
         if data == "cifar10_vgg":
             lr = 0.0001
             optimizer = "adam"
@@ -159,7 +161,7 @@ if __name__ == "__main__":
                                 "beta_1": 0.9,
                                 "beta_2": 0.98,
                                 "n_layer": 1,
-                                "task_type": "multiply",
+                                "task_type": task_type,
                                 "num_example": num_example,
                                 "checkpoint_every": checkpoint_every,
                                 "tiny_mem_num_labels": 5,

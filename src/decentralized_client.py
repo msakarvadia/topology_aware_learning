@@ -157,6 +157,29 @@ def place_data_with_node(
     return train_subsets, test_subsets, valid_subsets
 
 
+def update_random_agg_coeffs(
+    seed: int,
+    round_idx: int,
+    num_clients: int,
+    centrality_dict: dict[str, dict[int, float]],
+) -> dict[str, dict[int, float]]:
+    # generate random coeffs
+    # seed based on current round
+    rng = np.random.default_rng(seed=(seed + round_idx))
+    random_coeffs = rng.uniform(low=0.0, high=1.0, size=num_clients)
+
+    # format them in a client_idx:coeff dict
+    cent = {}
+    for i in range(num_clients):
+        cent[i] = random_coeffs[i].item()
+
+    print(f"Random Coeffs: {cent=}")
+    # assign updated random dict
+    centrality_dict["random"] = cent
+
+    return centrality_dict
+
+
 def create_centrality_dict(
     topology: np.array,  # list[list[int]],
     rng: Generator,
@@ -166,25 +189,31 @@ def create_centrality_dict(
     G = nx.from_numpy_array(topology)
 
     centrality_dict = {}
-    for centrality_type in ["degree", "betweenness", "cluster", "invCluster", "random"]:
+    for centrality_type in ["degree", "betweenness", "random"]:
         if centrality_type == "degree":
             cent = nx.degree_centrality(G)
         if centrality_type == "betweenness":
             cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
+        """
         if centrality_type == "cluster":
             cent = nx.degree_centrality(G)
+        """
         if centrality_type == "random":
-            generator = random_generator(rng)
-            random_list = generator.dirichlet(np.ones(len(G)))
+            # generator = random_generator(rng)
+            # random_list = generator.dirichlet(np.ones(len(G)))
             # random_list = np.random.dirichlet(np.ones(len(G)), size=1).squeeze()
+            # random_list =
+            random_coeffs = rng.uniform(low=0.0, high=1.0, size=len(G))
             cent = {}
             for i in range(len(G)):
-                cent[i] = random_list[i].item()
-            # print(f"{cent=}")
+                cent[i] = random_coeffs[i].item()
+            print(f"{cent=}")
+        """
         if centrality_type == "invCluster":
             cent = nx.degree_centrality(G)
             for k, v in cent.items():
                 cent[k] = 1 / v
+        """
         centrality_dict[centrality_type] = cent
 
     # This function returns a dict of different types of centrality dicts

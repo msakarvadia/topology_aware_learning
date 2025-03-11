@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import parsl
 from parsl.config import Config
+from parsl.app.app import python_app
 
 # PBSPro is the right provider for Polaris:
 from parsl.providers import PBSProProvider, LocalProvider
@@ -115,6 +116,30 @@ def get_parsl_config(
             prefetch_capacity=0,
             provider=pbs_provider,
         )
+    if parsl_executor == "polaris_experiment_per_node":
+        print(f"Experiment per node config, {num_nodes=}")
+        # Want to pin one experiment to one node
+        node_provider = LocalProvider(
+            nodes_per_block=num_nodes,
+            launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--ppn 1"),
+            init_blocks=1,
+            min_blocks=0,
+            max_blocks=1,  # Can increase more to have more parallel jobs
+        )
+        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        # num_accelerators = num_nodes * len(tile_names)
+
+        executor = HighThroughputExecutor(
+            label="experiment",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=1,
+            # available_accelerators=4,
+            available_accelerators=["0", "1", "2", "3"],
+            prefetch_capacity=0,
+            provider=node_provider,
+        )
 
     if parsl_executor == "experiment_per_node":
         print(f"Experiment per node config, {num_nodes=}")
@@ -166,6 +191,29 @@ def get_parsl_config(
             worker_port_range=(44000, 45000),
             interchange_port_range=(45000, 46000),
         )
+    if parsl_executor == "polaris_single_experiment":
+        # Want to pin one experiment to one node
+        node_provider = LocalProvider(
+            nodes_per_block=1,
+            launcher=SingleNodeLauncher(),
+            # launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--ppn 1"),
+            init_blocks=1,
+            min_blocks=0,
+            max_blocks=1,  # Can increase more to have more parallel jobs
+        )
+        executor = HighThroughputExecutor(
+            label="decentral_train",
+            heartbeat_period=15,
+            heartbeat_threshold=120,
+            worker_debug=True,
+            max_workers_per_node=4,
+            available_accelerators=4,
+            # available_accelerators=["0", "1", "2", "3"],
+            prefetch_capacity=0,
+            provider=node_provider,
+            worker_port_range=(44000, 45000),
+            interchange_port_range=(45000, 46000),
+        )
 
     config = Config(
         executors=[executor, threadpool_executor],
@@ -175,3 +223,36 @@ def get_parsl_config(
     )
 
     return config, num_accelerators
+
+
+@python_app(executors=["experiment"])
+def run_experiment(machine_name="aurora", **kwargs):
+    from src.decentralized_app import DecentrallearnApp
+
+    ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
+    import parsl
+    from src.experiments.parsl_setup import get_parsl_config
+
+    experiment_config = "aurora_single_experiment"
+    if "polaris" in machine_name:
+        experiment_config = "polaris_single_experiment"
+    config, num_accelerators = get_parsl_config(experiment_config)
+    try:
+        # might have error loading config if parsl
+        # session from prior experiment isn't killed properly
+        parsl.load(config)
+    except:
+        print("parsl config already loaded")
+        # return 1
+    ### Parsl set up
+
+    decentral_app = DecentrallearnApp(**kwargs)
+    # NOTE(MS): this is my attempt to handle run failures
+    # And to ensure parsl cleans up even if app doesn't successfully run
+    try:
+        exit_value = decentral_app.run()
+    except:
+        exit_value = 1
+    parsl.dfk().cleanup()
+    decentral_app.close()
+    return exit_value

@@ -38,11 +38,11 @@ if __name__ == "__main__":
         choices=[
             "polaris_experiment_per_node",
             "experiment_per_node",
-            "local",
-            "aurora_local",
-            "node",
+            # "local",
+            # "aurora_local",
+            # "node",
         ],
-        help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
+        help="Type of parsl executor to use. experiment_per_node=Aurora, polaris_experiment_per_node=Polaris",
     )
 
     args = parser.parse_args()

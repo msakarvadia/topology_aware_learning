@@ -20,6 +20,7 @@ from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
 from src.decentralized_client import scale_agg
+from src.decentralized_client import update_random_agg_coeffs
 from src.modules import create_model
 from src.data import backdoor_data
 from src.modules import load_data
@@ -549,6 +550,15 @@ class DecentrallearnApp:
 
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
+
+        # need to update random centrality metric before each round
+        if self.centrality_metric == "random":
+            self.centrality_dict = update_random_agg_coeffs(
+                seed=self.seed,
+                round_idx=round_idx,
+                num_clients=len(self.clients),
+                centrality_dict=self.centrality_dict,
+            )
 
         for client in self.clients:
             agg_client = self.round_states[round_idx + 1][client.idx]["train"]

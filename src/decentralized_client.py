@@ -172,6 +172,8 @@ def update_random_agg_coeffs(
     cent = {}
     for i in range(num_clients):
         cent[i] = random_coeffs[i].item()
+
+    print(f"Random Coeffs: {cent=}")
     # assign updated random dict
     centrality_dict["random"] = cent
 

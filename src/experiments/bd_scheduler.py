@@ -74,7 +74,7 @@ if __name__ == "__main__":
                 wd = 0
                 num_example = 5000
                 if data == "tiny_mem":
-                    num_example = 2000
+                    # num_example = 2000
                     lr = 0.001
                     wd = 0.1
                     optimizer = "adamw"
@@ -97,7 +97,7 @@ if __name__ == "__main__":
                         "degCent",
                         "betCent",
                     ]:
-                        for scheduler in [None, "exp", "CA"]:
+                        for scheduler in ["CA"]:  # [None, "exp", "CA"]:
                             if scheduler != None and (
                                 aggregation_strategy
                                 in ["unweighted", "weighted", "unweighted_fl"]
@@ -143,6 +143,7 @@ if __name__ == "__main__":
                                         n_layer=1,
                                         task_type="multiply",
                                         num_example=num_example,
+                                        tiny_mem_num_labels=5,
                                     )
 
                                     (

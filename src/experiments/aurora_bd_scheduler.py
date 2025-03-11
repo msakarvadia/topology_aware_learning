@@ -17,8 +17,10 @@ from src.create_topo.backdoor_topo import mk_backdoor_topos
 from pathlib import Path
 
 import parsl
-from parsl.app.app import python_app
+
+# from parsl.app.app import python_app
 from src.experiments.parsl_setup import get_parsl_config
+from src.experiments.parsl_setup import run_experiment
 
 if __name__ == "__main__":
     # set up arg parser
@@ -33,7 +35,13 @@ if __name__ == "__main__":
         "--parsl_executor",
         type=str,
         default="experiment_per_node",
-        choices=["experiment_per_node", "local", "aurora_local", "node"],
+        choices=[
+            "polaris_experiment_per_node",
+            "experiment_per_node",
+            "local",
+            "aurora_local",
+            "node",
+        ],
         help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
     )
 
@@ -45,15 +53,19 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
+    """
     @python_app(executors=["experiment"])
-    def run_experiment(**kwargs):
+    def run_experiment(machine_name="aurora", **kwargs):
         from src.decentralized_app import DecentrallearnApp
 
         ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
         import parsl
         from src.experiments.parsl_setup import get_parsl_config
 
-        config, num_accelerators = get_parsl_config("aurora_single_experiment")
+        experiment_config = "aurora_single_experiment"
+        if "polaris" in machine_name:
+            experiment_config = "polaris_single_experiment"
+        config, num_accelerators = get_parsl_config(experiment_config)
         try:
             # might have error loading config if parsl
             # session from prior experiment isn't killed properly
@@ -73,6 +85,7 @@ if __name__ == "__main__":
         parsl.dfk().cleanup()
         decentral_app.close()
         return exit_value
+    """
 
     paths, nodes = mk_backdoor_topos(num_nodes=4)
 
@@ -170,7 +183,10 @@ if __name__ == "__main__":
 
                             param_list.append(experiment_args)
 
-    futures = [run_experiment(**args) for args in param_list]
+    futures = [
+        run_experiment(machine_name=args.parsl_executor, **experiment_args)
+        for experiment_args in param_list
+    ]
 
     print(f"{num_experiments=}")
     for future in futures:

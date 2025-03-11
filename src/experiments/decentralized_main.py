@@ -169,8 +169,8 @@ if __name__ == "__main__":
             # "betCent_CA",
             # "degCent_exp",
             # "betCent_exp",
-            "cluster",
-            "invCluster",
+            # "cluster",
+            # "invCluster",
             "random",
         ],
         help="Type of aggregation stretegy used to among neighboring nodes.",
@@ -197,8 +197,14 @@ if __name__ == "__main__":
         "--parsl_executor",
         type=str,
         default="experiment_per_node",
-        choices=["experiment_per_node", "local", "node", "aurora_local"],
-        help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
+        choices=[
+            "polaris_experiment_per_node",
+            "experiment_per_node",
+            # "local",
+            # "aurora_local",
+            # "node",
+        ],
+        help="Type of parsl executor to use. experiment_per_node=Aurora, polaris_experiment_per_node=Polaris",
     )
     parser.add_argument(
         "--download",

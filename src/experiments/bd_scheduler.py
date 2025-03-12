@@ -114,7 +114,8 @@ if __name__ == "__main__":
             # optimizer = "adamw"
             # task_type = "sum"
         if (data == "cifar10_vgg") or (data == "cifar100_vgg"):
-            lr = 0.0001
+            lr = 0.001
+            # lr = 0.0001
             optimizer = "adam"
             checkpoint_every = 5
         if data == "fmnist":

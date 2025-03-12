@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 for scheduler in [None]:  # , "exp", "CA"]:
                     if scheduler != None and (
                         aggregation_strategy
-                        in ["unweighted", "weighted", "unweighted_fl"]
+                        in ["unweighted", "weighted", "unweighted_fl", "random"]
                     ):
                         continue
                     # iterate through topologies

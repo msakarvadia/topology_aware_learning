@@ -95,8 +95,8 @@ if __name__ == "__main__":
     app_result_tuples = []
     num_experiments = 0
     for data in [
-        # "mnist",
-        # "fmnist",
+        "mnist",
+        "fmnist",
         "tiny_mem",
         "cifar10_vgg",
         "cifar100_vgg",

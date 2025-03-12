@@ -16,4 +16,4 @@ cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 
 pwd
 
-python aurora_bd_scheduler.py --rounds 40 
+python bd_scheduler.py --rounds 40 

@@ -124,6 +124,36 @@ cfg = {
 }
 
 
+class VGG_100(nn.Module):
+    # https://github.com/kuangliu/pytorch-cifar/tree/master/models
+    def __init__(self, vgg_name):
+        super(VGG_100, self).__init__()
+        self.features = self._make_layers(cfg[vgg_name])
+        self.classifier = nn.Linear(512, 100)
+
+    def forward(self, x):
+        out = self.features(x)
+        out = out.view(out.size(0), -1)
+        out = self.classifier(out)
+        return out
+
+    def _make_layers(self, cfg):
+        layers = []
+        in_channels = 3
+        for x in cfg:
+            if x == "M":
+                layers += [nn.MaxPool2d(kernel_size=2, stride=2)]
+            else:
+                layers += [
+                    nn.Conv2d(in_channels, x, kernel_size=3, padding=1),
+                    nn.BatchNorm2d(x),
+                    nn.ReLU(inplace=True),
+                ]
+                in_channels = x
+        layers += [nn.AvgPool2d(kernel_size=1, stride=1)]
+        return nn.Sequential(*layers)
+
+
 class VGG(nn.Module):
     # https://github.com/kuangliu/pytorch-cifar/tree/master/models
     def __init__(self, vgg_name):
@@ -219,6 +249,8 @@ def create_model(
         return ConvNet()
     if (name == "cifar10_vgg") or (name == "cifar10_augment_vgg"):
         return VGG("VGG16")
+    if name == "cifar100_vgg":
+        return VGG_100("VGG16")
     if name == "cifar10_mobile":
         from src.models.mobilenet import MobileNetV2
 
@@ -515,7 +547,13 @@ def load_data(
             ]
         )
         return torchvision.datasets.CIFAR10(**kwargs)
-    elif name == "cifar100":
+    elif (name == "cifar100") or (name == "cifar100_vgg"):
+        kwargs["transform"] = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        )
         return torchvision.datasets.CIFAR100(**kwargs)
     elif name == "fmnist":
         return torchvision.datasets.FashionMNIST(**kwargs)

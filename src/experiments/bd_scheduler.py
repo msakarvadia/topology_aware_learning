@@ -99,27 +99,33 @@ if __name__ == "__main__":
         "fmnist",
         "tiny_mem",
         "cifar10_vgg",
+        "cifar100_vgg",
     ]:
         wd = 0
         num_example = 5000
         checkpoint_every = 10
         task_type = "multiply"
         if data == "tiny_mem":
-            num_example = 2000
+            num_example = 33000
+            # num_example = 2000
             lr = 0.001
-            wd = 0.1
-            optimizer = "adamw"
-            task_type = "sum"
-        if data == "cifar10_vgg":
-            lr = 0.0001
+            # wd = 0.1
             optimizer = "adam"
-            checkpoint_every = 1
+            # optimizer = "adamw"
+            # task_type = "sum"
+        if (data == "cifar10_vgg") or (data == "cifar100_vgg"):
+            lr = 0.001
+            # lr = 0.0001
+            optimizer = "adam"
+            checkpoint_every = 5
         if data == "fmnist":
             lr = 0.01
-            optimizer = "sgd"
+            # optimizer = "sgd"
+            optimizer = "adam"
         if data == "mnist":
             lr = 0.01
-            optimizer = "sgd"
+            # optimizer = "sgd"
+            optimizer = "adam"
         for softmax_coeff in [10, 100]:
             # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
             # iterate through aggregation strategies
@@ -129,11 +135,12 @@ if __name__ == "__main__":
                 "weighted",
                 "degCent",
                 "betCent",
+                "random",
             ]:
-                for scheduler in [None, "exp", "CA"]:
+                for scheduler in [None]:  # , "exp", "CA"]:
                     if scheduler != None and (
                         aggregation_strategy
-                        in ["unweighted", "weighted", "unweighted_fl"]
+                        in ["unweighted", "weighted", "unweighted_fl", "random"]
                     ):
                         continue
                     # iterate through topologies

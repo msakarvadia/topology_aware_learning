@@ -21,6 +21,7 @@ class DataChoices(enum.Enum):
     CIFAR10_AUGMENT = "cifar10_augment"
     CIFAR10_AUGMENT_VGG = "cifar10_augment_vgg"
     CIFAR10_VGG = "cifar10_vgg"
+    CIFAR100_VGG = "cifar100_vgg"
     CIFAR10_DROPOUT = "cifar10_dropout"
     CIFAR10_AUGMENT_DROPOUT = "cifar10_augment_dropout"
     CIFAR10_MOBILE = "cifar10_mobile"

@@ -136,6 +136,7 @@ if __name__ == "__main__":
             "cifar10_augment",
             "cifar10_augment_vgg",
             "cifar10_vgg",
+            "cifar100_vgg",
             "cifar10_mobile",
             "cifar10_vit",
             "cifar10_resnet18",

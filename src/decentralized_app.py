@@ -186,6 +186,9 @@ class DecentrallearnApp:
         if dataset == "cifar10_vgg":
             self.dataset = DataChoices.CIFAR10_VGG
             self.num_labels = 10
+        if dataset == "cifar100_vgg":
+            self.dataset = DataChoices.CIFAR100_VGG
+            self.num_labels = 100
         if dataset == "cifar10_dropout":
             self.dataset = DataChoices.CIFAR10_DROPOUT
             self.num_labels = 10

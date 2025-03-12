@@ -67,6 +67,7 @@ class CosineAnnealingWarmRestarts(BaseScheduler):
         self.T_mult = T_mult
         self.eta_min = eta_min
         self.T_cur = last_round
+        self.last_round = last_round
         self.softmax_coeff = softmax_coeff
 
     def get_softmax_coeff(self):

@@ -16,6 +16,10 @@ from src.types import Result
 
 from parsl.app.app import python_app
 
+intel_xpu_count = torch.xpu.device_count()
+if intel_xpu_count > 0:
+    import intel_extension_for_pytorch as ipex
+
 
 def accuracy(inputs, logits):
     # Shift so that tokens < n predict n
@@ -71,16 +75,24 @@ def no_local_train(
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if torch.xpu.is_available() else device)
     dataset_name = dataset.value.lower()
 
     if seed is not None:
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     client = future[1]
     results: list[Result] = []
     client.model.to(device)
     client.model.train()
     optimizer = torch.optim.SGD(client.model.parameters(), lr=lr, momentum=momentum)
+
+    if intel_xpu_count > 0:
+        # TODO (MS): add in criteion
+        # criterion = criterion.to(device)
+        model, optimizer = ipex.optimize(model, optimizer=optimizer)
     loader = DataLoader(client.train_data, batch_size=batch_size)
 
     for epoch in range(epochs):
@@ -153,16 +165,18 @@ def local_train(
     """
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if torch.xpu.is_available() else device)
     dataset_name = dataset.value.lower()
 
     if seed is not None:
-        print(f"{seed=}")
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     client = future[1]
     results: list[Result] = []
-    client.model.to(device)
     client.model.train()
+    client.model = client.model.to(device)
     if optimizer == "sgd":
         optimizer = torch.optim.SGD(
             client.model.parameters(),
@@ -191,6 +205,11 @@ def local_train(
         running_loss = 0.0
         running_perp = 0.0
         running_acc = 0.0
+
+        client.model.train()
+        client.model = client.model.to(device)
+        if intel_xpu_count > 0:
+            client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
 
         for batch_idx, batch in enumerate(loader):
             inputs, targets = batch
@@ -291,10 +310,13 @@ def test_model(
 
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("xpu" if torch.xpu.is_available() else device)
     dataset_name = dataset.value.lower()
 
     if seed is not None:
+        # torch.manual_seed will seed cuda GPUs
         torch.manual_seed(seed)
+        torch.xpu.manual_seed(seed)
 
     if "tiny_mem" in dataset_name:
         model.eval()

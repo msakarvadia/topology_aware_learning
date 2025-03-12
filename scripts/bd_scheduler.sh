@@ -1,11 +1,11 @@
 #!/bin/bash 
-#PBS -l select=10
-#PBS -l walltime=03:00:00
-#PBS -q prod
+#PBS -l select=1
+#PBS -l walltime=24:00:00
+#PBS -q preemptable
 #PBS -l filesystems=home:eagle
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N backdoor
+#PBS -N bd_schedule
 #PBS -r y 
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml 
@@ -15,4 +15,4 @@ conda activate env/
 
 cd /eagle/projects/argonne_tpc/mansisak/distributed_ml/src/experiments
 
-python backdoor.py --rounds 30 --checkpoint_every 5 
+python bd_scheduler.py --rounds 30 --checkpoint_every 5 

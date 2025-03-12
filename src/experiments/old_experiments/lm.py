@@ -9,37 +9,19 @@ import time
 
 import numpy as np
 import torch
+from pathlib import Path
 
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.softmax_topo import mk_softmax_topos
-from pathlib import Path
+from src.create_topo.lm_topo import mk_lm_topos
+from src.experiments.parsl_setup import get_parsl_config
 
 import parsl
-from parsl.config import Config
-
-# PBSPro is the right provider for Polaris:
-from parsl.providers import PBSProProvider, LocalProvider
-
-# The high throughput executor is for scaling to HPC systems:
-from parsl.executors import HighThroughputExecutor, ThreadPoolExecutor
-
-# address_by_interface is needed for the HighThroughputExecutor:
-from parsl.addresses import address_by_interface
-
-# You can use the MPI launcher, but may want the Gnu Parallel launcher, see below
-from parsl.launchers import MpiExecLauncher, GnuParallelLauncher
 
 if __name__ == "__main__":
     # set up arg parser
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--num_nodes",
-        type=int,
-        default=1,
-        help="# of nodes per job",
-    )
     parser.add_argument(
         "--checkpoint_every",
         type=int,
@@ -56,7 +38,7 @@ if __name__ == "__main__":
         "--parsl_executor",
         type=str,
         default="local",
-        choices=["local", "node"],
+        choices=["local", "aurora_local", "node"],
         help="Type of parsl executor to use. Local (local interactive job w/ 4 gpus), node (submitted to polaris nodes w/ 4 GPUs each)",
     )
 
@@ -68,78 +50,12 @@ if __name__ == "__main__":
     assert args.rounds % args.checkpoint_every == 0
 
     ######### Parsl
-    src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
-    env = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/env/"
-
-    user_opts = {
-        "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
-        "scheduler_options": "#PBS -l filesystems=home:eagle:grand",  # specify any PBS options here, like filesystems
-        "account": "argonne_tpc",
-        "queue": "debug",  # e.g.: "prod","debug, "preemptable" (see https://docs.alcf.anl.gov/polaris/running-jobs/)
-        "walltime": "01:00:00",
-        "nodes_per_block": args.num_nodes,  # think of a block as one job on polaris, so to run on the main queues, set this >= 10
-    }
-    local_provider = LocalProvider(
-        # 1 debug node
-        nodes_per_block=user_opts["nodes_per_block"],
-        init_blocks=1,
-        min_blocks=0,
-        max_blocks=1,  # Can increase more to have more parallel jobs
-    )
-    pbs_provider = PBSProProvider(
-        launcher=MpiExecLauncher(bind_cmd="--cpu-bind", overrides="--depth=64 --ppn 1"),
-        account=user_opts["account"],
-        queue=user_opts["queue"],
-        select_options="ngpus=4",
-        # PBS directives (header lines): for array jobs pass '-J' option
-        scheduler_options=user_opts["scheduler_options"],
-        # Command to be run before starting a worker, such as:
-        worker_init=user_opts["worker_init"],
-        # number of compute nodes allocated for each block
-        nodes_per_block=user_opts["nodes_per_block"],
-        init_blocks=1,
-        min_blocks=0,
-        max_blocks=1,  # Can increase more to have more parallel jobs
-        walltime=user_opts["walltime"],
-    )
-    threadpool_executor = ThreadPoolExecutor(
-        label="threadpool_executor",
-        max_threads=2,
-    )
-    if args.parsl_executor == "local":
-        executor = HighThroughputExecutor(
-            label="decentral_train",
-            heartbeat_period=15,
-            heartbeat_threshold=120,
-            worker_debug=True,
-            max_workers_per_node=4,
-            available_accelerators=4,
-            # available_accelerators=["0", "1", "2", "3"],
-            prefetch_capacity=0,
-            provider=local_provider,
-        )
-    if args.parsl_executor == "node":
-        executor = HighThroughputExecutor(
-            label="decentral_train",
-            heartbeat_period=15,
-            heartbeat_threshold=120,
-            worker_debug=True,
-            max_workers_per_node=4,
-            available_accelerators=4,
-            # available_accelerators=["0", "1", "2", "3"],
-            prefetch_capacity=0,
-            provider=pbs_provider,
-        )
-    config = Config(
-        executors=[executor, threadpool_executor],
-        checkpoint_mode="task_exit",
-        retries=2,
-        app_cache=True,
-    )
+    config, num_accelerators = get_parsl_config(args.parsl_executor)
 
     parsl.load(config)
     #########
-    paths = mk_softmax_topos()
+
+    paths = mk_lm_topos()
 
     start = time.time()
     # apps = {}
@@ -149,46 +65,39 @@ if __name__ == "__main__":
         if i % args.checkpoint_every == 0:
             print(f"running expeirment until round {i}")
             app_result_tuples = []
-            for dataset in [
-                "cifar10_vgg",
-                # "cifar10_vit",
-                # "cifar10_resnet18",
-                "cifar10_resnet50",
-                "cifar10_mobile",
-            ]:
-                for optimizer in ["sgd", "adam"]:  # [0.1, 0.01, 0.001]:
-                    if optimizer == "sgd":
-                        lr = 0.001
-                    if optimizer == "adam":
-                        lr = 0.0001
-                    # for lr in [0.001, 0.01]:  # [0.1, 0.01, 0.001]:
-                    for backdoor in [True]:  # [0, 0.9]:
+            for dataset in ["tiny_mem"]:
+                for batch_size in [128]:  # [16, 128]:
+                    for optimizer in [
+                        "sgd",
+                    ]:  # "adamw"]:  # [0.1, 0.01, 0.001]:
+                        num_example = 5000
+                        if optimizer == "sgd":
+                            lr = 0.001
+                            wd = 0
+                        if optimizer == "adamw":
+                            num_example = 2000
+                            lr = 0.001
+                            wd = 0.1
+                        # for lr in [0.01, 0.001]:
                         for softmax_coeff in [10, 100]:
                             # iterate through aggregation strategies
                             for aggregation_strategy in [
                                 "unweighted",
-                                "unweighted_fl",
                                 "weighted",
                                 "degCent",
                                 "betCent",
+                                # "cluster",
+                                # "random",
+                                # "invCluster",
                             ]:
-                                if softmax_coeff != 100 and (
-                                    aggregation_strategy
-                                    in ["unweighted_fl", "unweighted", "weighted"]
+                                if softmax_coeff != 10 and (
+                                    aggregation_strategy in ["unweighted", "weighted"]
                                 ):
                                     continue
-
                                 # iterate through topologies
                                 for topo in paths:
                                     # iterate through different backdoor node placements
                                     print(f"{topo=}")
-                                    """
-                                    if "33_2" not in topo:
-                                        print(
-                                            "temp canceling experment to prune # of experiments"
-                                        )
-                                        continue
-                                    """
                                     topology = np.loadtxt(topo, dtype=float)
                                     num_clients = topology.shape[0]
 
@@ -197,23 +106,33 @@ if __name__ == "__main__":
                                         # Vary label heterogeneity
                                         for label_alpha in [1000]:  # [1, 10, 1000]:
 
+                                            print(
+                                                f"{optimizer=}, {lr=}, {num_example=}"
+                                            )
                                             model_count += num_clients
                                             decentral_app = DecentrallearnApp(
                                                 dataset=dataset,
                                                 rounds=i,
                                                 topology_path=topo,
-                                                backdoor=backdoor,
                                                 prox_coeff=0,
                                                 epochs=5,
                                                 aggregation_strategy=aggregation_strategy,
-                                                log_dir="cifar10_logs",
+                                                log_dir="lm_logs",
                                                 sample_alpha=sample_alpha,
                                                 label_alpha=label_alpha,
                                                 softmax=True,
                                                 softmax_coeff=softmax_coeff,
-                                                # momentum=momentum,
+                                                tiny_mem_num_labels=5,
                                                 lr=lr,
+                                                batch_size=batch_size,
                                                 optimizer=optimizer,
+                                                weight_decay=wd,
+                                                beta_1=0.9,
+                                                beta_2=0.98,
+                                                n_layer=1,
+                                                backdoor=True,
+                                                task_type="sum",
+                                                num_example=num_example,
                                             )
 
                                             (
@@ -232,10 +151,10 @@ if __name__ == "__main__":
                                                 )
                                             )
 
-                                            if model_count > (args.num_nodes * 4):
+                                            if model_count > (num_accelerators):
                                                 ######### Process and Save training results
                                                 print(
-                                                    "There are more models than GPUs, so waiting for results, before making more experiments"
+                                                    f"There are more models {model_count} than GPUs {num_accelerators}, so waiting for results, before making more experiments"
                                                 )
                                                 for result_tuple in app_result_tuples:
                                                     process_futures_and_ckpt(

@@ -11,6 +11,7 @@ import torch
 import glob
 import os
 import json
+import sys
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
@@ -19,6 +20,7 @@ from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
 from src.decentralized_client import scale_agg
+from src.decentralized_client import update_random_agg_coeffs
 from src.modules import create_model
 from src.data import backdoor_data
 from src.modules import load_data
@@ -32,7 +34,9 @@ from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import CosineAnnealingWarmRestarts
 from src.aggregation_scheduler import BaseScheduler
 from src.aggregation_scheduler import ExponentialScheduler
-from parsl.app.app import python_app
+
+# from parsl.app.app import python_app
+from src.utils import process_futures_and_ckpt
 
 # Used within applications
 APP_LOG_LEVEL = 21
@@ -128,13 +132,16 @@ class DecentrallearnApp:
         n_layer: int = 4,  # TinyMem # of layers in model
         task_type: str = "multiply",  # TinyMem Task type: multiply | sum
         data_dis: str = "evens",  # Tiny mem data dir: primes | evens
+        checkpoint_every: int = 5,  # checkpoint every X rounds
     ) -> None:
 
         # make the outdir
         args = locals()
+        args["topology_path"] = os.path.basename(args["topology_path"])
         args.pop("self", None)
         args.pop("log_dir", None)
         args.pop("rounds", None)
+        args.pop("checkpoint_every", None)
         arg_path = "_".join(map(str, list(args.values())))
 
         # Need to remove any . or / to ensure a single continuous file path
@@ -142,6 +149,7 @@ class DecentrallearnApp:
         arg_path = arg_path.replace("/", "")
         self.run_dir = Path(f"{log_dir}/{arg_path}/")
         # check if run_dir exists, if not, make it
+        print(f"{self.run_dir}")
         if not os.path.exists(self.run_dir):
             os.makedirs(self.run_dir)
 
@@ -178,6 +186,9 @@ class DecentrallearnApp:
         if dataset == "cifar10_vgg":
             self.dataset = DataChoices.CIFAR10_VGG
             self.num_labels = 10
+        if dataset == "cifar100_vgg":
+            self.dataset = DataChoices.CIFAR100_VGG
+            self.num_labels = 100
         if dataset == "cifar10_dropout":
             self.dataset = DataChoices.CIFAR10_DROPOUT
             self.num_labels = 10
@@ -213,6 +224,7 @@ class DecentrallearnApp:
             max_ctx=self.max_ctx,
         )
 
+        self.checkpoint_every = checkpoint_every
         self.train = train
         # self.train, self.test = train, test
         self.train_data, self.test_data = None, None
@@ -438,35 +450,33 @@ class DecentrallearnApp:
         # this is to check if we are trying to resume training from a checkpoint that has already been completed
         if self.start_round >= self.rounds:
             # return []
-            return self.client_results, [], self.round_states, self.run_dir
+            return 0
+            # return self.client_results, [], self.round_states, self.run_dir
 
         for round_idx in range(self.start_round, self.rounds):
             futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
+            # save a checkpoint here
+            if (round_idx % self.checkpoint_every == 0) and (round_idx != 0):
+                process_futures_and_ckpt(
+                    self.client_results,
+                    train_result_futures,
+                    self.round_states,
+                    round_idx,
+                    self.run_dir,
+                )
 
-        """
-        checkpoint_path = f"{self.run_dir}/{round_idx}_ckpt.pth"
-        resolved_futures = [i.result() for i in as_completed(train_result_futures)]
-        [self.client_results.extend(i[0]) for i in resolved_futures]
-        ckpt_clients = []
-        for client_idx, client_future in self.round_states[round_idx + 1].items():
-            result_object = client_future["agg"]
-            print(f"{type(client_future['agg'][1])=}")
-            # This is how we handle clients that are not returning appfutures (due to not being selected)
-            if isinstance(result_object[1], DecentralClient):
-                client = client_future["agg"][1]
-            else:
-                client = client_future["agg"].result()[1]
-            ckpt_clients.append(client)
-        save_checkpoint(round_idx, ckpt_clients, self.client_results, checkpoint_path)
-        """
-        return (
+        process_futures_and_ckpt(
             self.client_results,
             train_result_futures,
             self.round_states,
+            self.rounds,
             self.run_dir,
         )
-        # return self.client_results
+
+        # NOTE(MS): how would we do parsl clean up?
+        # parsl.dfk().cleanup()
+        return 0
 
     def _federated_round(
         self,
@@ -543,6 +553,15 @@ class DecentrallearnApp:
 
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
             logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
+
+        # need to update random centrality metric before each round
+        if self.centrality_metric == "random":
+            self.centrality_dict = update_random_agg_coeffs(
+                seed=self.seed,
+                round_idx=round_idx,
+                num_clients=len(self.clients),
+                centrality_dict=self.centrality_dict,
+            )
 
         for client in self.clients:
             agg_client = self.round_states[round_idx + 1][client.idx]["train"]

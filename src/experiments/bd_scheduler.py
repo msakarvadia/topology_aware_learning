@@ -120,13 +120,13 @@ if __name__ == "__main__":
             checkpoint_every = 5
         if data == "fmnist":
             lr = 0.01
-            # optimizer = "sgd"
-            optimizer = "adam"
+            optimizer = "sgd"
+            # optimizer = "adam"
         if data == "mnist":
             lr = 0.01
-            # optimizer = "sgd"
-            optimizer = "adam"
-        for softmax_coeff in [10, 100]:
+            optimizer = "sgd"
+            # optimizer = "adam"
+        for softmax_coeff in [2, 4, 6, 8, 10, 100]:
             # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
             # iterate through aggregation strategies
             for aggregation_strategy in [
@@ -137,7 +137,14 @@ if __name__ == "__main__":
                 "betCent",
                 "random",
             ]:
-                for scheduler in [None]:  # , "exp", "CA"]:
+                for scheduler in [None, "CA"]:  # , "exp", "CA"]:
+                    eta_min = 1
+                    T_0 = 66
+                    if scheduelr == "CA":
+                        eta_min = -50
+                        T_0 = 10  # TODO this is worth varying between (5,8,10)
+                    if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):
+                        continue
                     if scheduler != None and (
                         aggregation_strategy
                         in ["unweighted", "weighted", "unweighted_fl", "random"]
@@ -186,6 +193,8 @@ if __name__ == "__main__":
                                 "checkpoint_every": checkpoint_every,
                                 "tiny_mem_num_labels": 5,
                                 "scheduler": scheduler,
+                                "eta_min": eta_min,
+                                "T_0": T_0,
                             }
 
                             param_list.append(experiment_args)

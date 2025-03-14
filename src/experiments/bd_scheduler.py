@@ -140,7 +140,7 @@ if __name__ == "__main__":
                 for scheduler in [None, "CA"]:  # , "exp", "CA"]:
                     eta_min = 1
                     T_0 = 66
-                    if scheduelr == "CA":
+                    if scheduler == "CA":
                         eta_min = -50
                         T_0 = 10  # TODO this is worth varying between (5,8,10)
                     if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):

@@ -95,8 +95,8 @@ if __name__ == "__main__":
     app_result_tuples = []
     num_experiments = 0
     for data in [
-        "mnist",
-        "fmnist",
+        # "mnist",
+        # "fmnist",
         "tiny_mem",
         "cifar10_vgg",
         "cifar100_vgg",
@@ -126,8 +126,8 @@ if __name__ == "__main__":
             lr = 0.01
             optimizer = "sgd"
             # optimizer = "adam"
+        # for softmax_coeff in [10, 100]:
         for softmax_coeff in [2, 4, 6, 8, 10, 100]:
-            # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
             # iterate through aggregation strategies
             for aggregation_strategy in [
                 "unweighted",

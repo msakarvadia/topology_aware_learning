@@ -47,37 +47,50 @@ def mk_backdoor_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
     # graphs.append(g)
 
     # SB
-    """
     sizes = [11, 11, 11]
     self_conect = 0.5
     community_connect = 0.009
-    probs = [[self_conect, community_connect, community_connect],
-              [community_connect, self_conect, community_connect],
-             [community_connect, community_connect, self_conect, ],
-             ]
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
     g = nx.stochastic_block_model(sizes, probs, seed=0)
     graphs["sb_11_05_0009"] = g
 
     sizes = [11, 11, 11]
     self_conect = 0.5
     community_connect = 0.05
-    probs = [[self_conect, community_connect, community_connect],
-              [community_connect, self_conect, community_connect],
-             [community_connect, community_connect, self_conect, ],
-             ]
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
     g = nx.stochastic_block_model(sizes, probs, seed=0)
     graphs["sb_11_05_005"] = g
 
     sizes = [11, 11, 11]
     self_conect = 0.5
     community_connect = 0.09
-    probs = [[self_conect, community_connect, community_connect],
-              [community_connect, self_conect, community_connect],
-             [community_connect, community_connect, self_conect, ],
-             ]
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
     g = nx.stochastic_block_model(sizes, probs, seed=0)
     graphs["sb_11_05_009"] = g
-    """
 
     """
     g = nx.barabasi_albert_graph(n=66, m=2, seed=0)

@@ -53,40 +53,6 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
-    """
-    @python_app(executors=["experiment"])
-    def run_experiment(machine_name="aurora", **kwargs):
-        from src.decentralized_app import DecentrallearnApp
-
-        ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
-        import parsl
-        from src.experiments.parsl_setup import get_parsl_config
-
-        experiment_config = "aurora_single_experiment"
-        if "polaris" in machine_name:
-            experiment_config = "polaris_single_experiment"
-        config, num_accelerators = get_parsl_config(experiment_config)
-        try:
-            # might have error loading config if parsl
-            # session from prior experiment isn't killed properly
-            parsl.load(config)
-        except:
-            print("parsl config already loaded")
-            # return 1
-        ### Parsl set up
-
-        decentral_app = DecentrallearnApp(**kwargs)
-        # NOTE(MS): this is my attempt to handle run failures
-        # And to ensure parsl cleans up even if app doesn't successfully run
-        try:
-            exit_value = decentral_app.run()
-        except:
-            exit_value = 1
-        parsl.dfk().cleanup()
-        decentral_app.close()
-        return exit_value
-    """
-
     paths, nodes = mk_backdoor_topos(num_nodes=4)
 
     start = time.time()

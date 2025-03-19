@@ -61,8 +61,8 @@ if __name__ == "__main__":
     app_result_tuples = []
     num_experiments = 0
     for data in [
-        # "mnist",
-        # "fmnist",
+        "mnist",
+        "fmnist",
         "tiny_mem",
         "cifar10_vgg",
         "cifar100_vgg",
@@ -79,9 +79,12 @@ if __name__ == "__main__":
             optimizer = "adam"
             # optimizer = "adamw"
             # task_type = "sum"
-        if (data == "cifar10_vgg") or (data == "cifar100_vgg"):
+        if data == "cifar10_vgg":
+            lr = 0.0001
+            optimizer = "adam"
+            checkpoint_every = 5
+        if data == "cifar100_vgg":
             lr = 0.001
-            # lr = 0.0001
             optimizer = "adam"
             checkpoint_every = 5
         if data == "fmnist":
@@ -93,7 +96,8 @@ if __name__ == "__main__":
             optimizer = "sgd"
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
-        for softmax_coeff in [2, 4, 6, 8, 10, 100]:
+        for softmax_coeff in [10]:
+            # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
             # iterate through aggregation strategies
             for aggregation_strategy in [
                 "unweighted",
@@ -103,7 +107,7 @@ if __name__ == "__main__":
                 "betCent",
                 "random",
             ]:
-                for scheduler in [None, "CA"]:  # , "exp", "CA"]:
+                for scheduler in [None]:  # , "exp", "CA"]:
                     eta_min = 1
                     T_0 = 66
                     if scheduler == "CA":

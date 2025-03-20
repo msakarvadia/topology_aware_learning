@@ -96,18 +96,18 @@ if __name__ == "__main__":
             optimizer = "sgd"
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
-        for softmax_coeff in [10]:
+        for softmax_coeff in [-10]:
             # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
             # iterate through aggregation strategies
             for aggregation_strategy in [
-                "unweighted",
-                "unweighted_fl",
-                "weighted",
+                # "unweighted",
+                # "unweighted_fl",
+                # "weighted",
                 "degCent",
                 "betCent",
-                "random",
+                # "random",
             ]:
-                for scheduler in [None, "CA"]:  # , "exp", "CA"]:
+                for scheduler in [None]:  # , "exp", "CA"]:
                     eta_min = 1
                     T_0 = 66
                     if scheduler == "CA":

@@ -34,6 +34,7 @@ from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import CosineAnnealingWarmRestarts
 from src.aggregation_scheduler import BaseScheduler
 from src.aggregation_scheduler import ExponentialScheduler
+from src.aggregation_scheduler import OscilateScheduler
 
 # from parsl.app.app import python_app
 from src.utils import process_futures_and_ckpt
@@ -339,6 +340,11 @@ class DecentrallearnApp:
         if scheduler == "exp":
             self.aggregation_scheduler = ExponentialScheduler(
                 gamma=gamma,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if scheduler == "osc":
+            self.aggregation_scheduler = OscilateScheduler(
+                T_0=T_0,
                 softmax_coeff=self.softmax_coeff,
             )
         # NOTE (MS): Try assigning this in the job itself.

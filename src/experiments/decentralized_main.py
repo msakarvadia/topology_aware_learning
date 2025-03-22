@@ -282,7 +282,7 @@ if __name__ == "__main__":
         "--T_0",
         type=float,
         default=66,
-        help="CA scheduler period.",
+        help="CA scheduler period. and Oscilate scheduler period.",
     )
     parser.add_argument(
         "--T_mult",
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         "--scheduler",
         type=str,
         default=None,
-        choices=["exp", "CA"],
+        choices=["exp", "CA", "osc"],
         help="Type of softmax coefficient scheduler",
     )
     parser.add_argument(

@@ -13,7 +13,7 @@ import torch
 from src.decentralized_app import DecentrallearnApp
 from src.utils import process_futures_and_ckpt
 from src.types import DataChoices
-from src.create_topo.backdoor_topo import mk_test_topos
+from src.create_topo.test_topo import mk_test_topos
 from pathlib import Path
 
 import parsl
@@ -108,12 +108,14 @@ if __name__ == "__main__":
                     "betCent",
                     "random",
                 ]:
-                    for scheduler in [None]:  # , "exp", "CA"]:
+                    for scheduler in [None, "osc", "CA"]:  # , "exp", "CA"]:
                         eta_min = 1
                         T_0 = 66
+                        if scheduler == "osc":
+                            T_0 = 1  # TODO this is worth varying between (5,8,10)
                         if scheduler == "CA":
                             eta_min = -50
-                            T_0 = 10  # TODO this is worth varying between (5,8,10)
+                            T_0 = 5  # TODO this is worth varying between (5,8,10)
                         if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):
                             continue
                         if scheduler != None and (

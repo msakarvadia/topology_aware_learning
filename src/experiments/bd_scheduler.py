@@ -84,7 +84,7 @@ if __name__ == "__main__":
             optimizer = "adam"
             checkpoint_every = 5
         if data == "cifar100_vgg":
-            lr = 0.001
+            lr = 0.0001
             optimizer = "adam"
             checkpoint_every = 5
         if data == "fmnist":
@@ -107,7 +107,7 @@ if __name__ == "__main__":
                 "betCent",
                 "random",
             ]:
-                for scheduler in [None, "CA"]:  # , "exp", "CA"]:
+                for scheduler in [None]:  # , "exp", "CA"]:
                     eta_min = 1
                     T_0 = 66
                     if scheduler == "CA":

@@ -54,6 +54,8 @@ if __name__ == "__main__":
     #########
 
     paths, nodes = mk_test_topos(num_nodes=4)
+    # NOTE(MS): only testing on the worst placement
+    nodes = [nodes[-1]]
 
     start = time.time()
     param_list = []
@@ -97,7 +99,7 @@ if __name__ == "__main__":
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
         for epoch in [1, 5]:
-            for softmax_coeff in [-10]:
+            for softmax_coeff in [10]:
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
@@ -112,9 +114,9 @@ if __name__ == "__main__":
                         eta_min = 1
                         T_0 = 66
                         if scheduler == "osc":
-                            T_0 = 1  # TODO this is worth varying between (5,8,10)
+                            T_0 = 2  # TODO this is worth varying between (5,8,10)
                         if scheduler == "CA":
-                            eta_min = -50
+                            eta_min = -5  # -50
                             T_0 = 5  # TODO this is worth varying between (5,8,10)
                         if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):
                             continue

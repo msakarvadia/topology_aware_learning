@@ -110,69 +110,80 @@ if __name__ == "__main__":
                     "betCent",
                     "random",
                 ]:
-                    for scheduler in [None, "osc", "CA"]:  # , "exp", "CA"]:
-                        eta_min = 1
-                        T_0 = 66
-                        if scheduler == "osc":
-                            T_0 = 2  # TODO this is worth varying between (5,8,10)
-                        if scheduler == "CA":
-                            eta_min = -5  # -50
-                            T_0 = 5  # TODO this is worth varying between (5,8,10)
-                        if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):
-                            continue
-                        if scheduler != None and (
-                            aggregation_strategy
-                            in ["unweighted", "weighted", "unweighted_fl", "random"]
-                        ):
-                            continue
-                        # iterate through topologies
-                        for topo, node_set in zip(paths, nodes):
-                            # iterate through different backdoor node placements
-                            # print(f"{topo=}, {node_set=}")
-                            topology = np.loadtxt(topo, dtype=float)
-                            num_clients = topology.shape[0]
+                    for scheduler in ["CA"]:  # , "exp", "CA"]:
+                        for eta_min in [0, -5, -10]:
+                            for T_0 in [5, 8, 10]:
+                                """
+                                eta_min = 1
+                                T_0 = 66
+                                if scheduler == "osc":
+                                    T_0 = 2  # TODO this is worth varying between (5,8,10)
+                                if scheduler == "CA":
+                                    eta_min = -5  # -50
+                                    T_0 = 5  # TODO this is worth varying between (5,8,10)
+                                """
+                                if scheduler == "CA" and (
+                                    softmax_coeff in [2, 4, 6, 8]
+                                ):
+                                    continue
+                                if scheduler != None and (
+                                    aggregation_strategy
+                                    in [
+                                        "unweighted",
+                                        "weighted",
+                                        "unweighted_fl",
+                                        "random",
+                                    ]
+                                ):
+                                    continue
+                                # iterate through topologies
+                                for topo, node_set in zip(paths, nodes):
+                                    # iterate through different backdoor node placements
+                                    # print(f"{topo=}, {node_set=}")
+                                    topology = np.loadtxt(topo, dtype=float)
+                                    num_clients = topology.shape[0]
 
-                            if softmax_coeff != 10 and (
-                                aggregation_strategy
-                                in ["unweighted", "weighted", "unweighted_fl"]
-                            ):
-                                continue
+                                    if softmax_coeff != 10 and (
+                                        aggregation_strategy
+                                        in ["unweighted", "weighted", "unweighted_fl"]
+                                    ):
+                                        continue
 
-                            for client_idx in node_set:
+                                    for client_idx in node_set:
 
-                                num_experiments += 1
-                                # model_count += num_clients
-                                experiment_args = {
-                                    "dataset": data,
-                                    "rounds": args.rounds,
-                                    "topology_path": topo,
-                                    "backdoor": True,
-                                    "prox_coeff": 0,
-                                    "epochs": epoch,
-                                    "backdoor_node_idx": client_idx,
-                                    "aggregation_strategy": aggregation_strategy,
-                                    "log_dir": "bd_scheduler_logs",
-                                    "softmax": True,
-                                    "optimizer": optimizer,
-                                    "softmax_coeff": softmax_coeff,
-                                    "sample_alpha": 1000,
-                                    "label_alpha": 1000,
-                                    "lr": lr,
-                                    "batch_size": 64,
-                                    "weight_decay": wd,
-                                    "beta_1": 0.9,
-                                    "beta_2": 0.98,
-                                    "n_layer": 1,
-                                    "task_type": task_type,
-                                    "num_example": num_example,
-                                    "checkpoint_every": checkpoint_every,
-                                    "tiny_mem_num_labels": 5,
-                                    "scheduler": scheduler,
-                                    "eta_min": eta_min,
-                                    "T_0": T_0,
-                                }
+                                        num_experiments += 1
+                                        # model_count += num_clients
+                                        experiment_args = {
+                                            "dataset": data,
+                                            "rounds": args.rounds,
+                                            "topology_path": topo,
+                                            "backdoor": True,
+                                            "prox_coeff": 0,
+                                            "epochs": epoch,
+                                            "backdoor_node_idx": client_idx,
+                                            "aggregation_strategy": aggregation_strategy,
+                                            "log_dir": "bd_scheduler_logs",
+                                            "softmax": True,
+                                            "optimizer": optimizer,
+                                            "softmax_coeff": softmax_coeff,
+                                            "sample_alpha": 1000,
+                                            "label_alpha": 1000,
+                                            "lr": lr,
+                                            "batch_size": 64,
+                                            "weight_decay": wd,
+                                            "beta_1": 0.9,
+                                            "beta_2": 0.98,
+                                            "n_layer": 1,
+                                            "task_type": task_type,
+                                            "num_example": num_example,
+                                            "checkpoint_every": checkpoint_every,
+                                            "tiny_mem_num_labels": 5,
+                                            "scheduler": scheduler,
+                                            "eta_min": eta_min,
+                                            "T_0": T_0,
+                                        }
 
-                                param_list.append(experiment_args)
+                                        param_list.append(experiment_args)
 
     futures = [
         run_experiment(machine_name=args.parsl_executor, **experiment_args)

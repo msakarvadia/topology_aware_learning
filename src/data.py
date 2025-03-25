@@ -373,6 +373,29 @@ def trigger_image(
     return img, new_label
 
 
+def ensure_2_sample_per_split(stratify_targets):
+    # do a fake relabel of data incase the label counts per class are 1
+    one_count = 1
+    while one_count:
+
+        one_count = 0
+        label_counts = {}
+        for label in set(stratify_targets):
+            count = stratify_targets.count(label)
+            label_counts[label] = count
+
+            if count == 1:
+                print("one count")
+                one_count = 1
+
+        max_label = max(label_counts, key=label_counts.get)
+        min_label = min(label_counts, key=label_counts.get)
+
+        max_label_idx = stratify_targets.index(max_label)
+        stratify_targets[max_label_idx] = min_label
+    return stratify_targets
+
+
 def backdoor_data(
     data_name: str,
     data: Dataset,
@@ -407,13 +430,31 @@ def backdoor_data(
         return clean_data, backdoor_data
     """
 
+    """
+    # do a fake relabel of data incase the label counts per class are 1
+    stratify_targets = ensure_2_sample_per_split(stratify_targets)
+
+    # ensure there are at minimum num_class test datapoints:
+    if proportion_backdoor * len(data) < num_labels:
+        proportion_backdoor = math.ceil(num_labels / len(data))
+    """
+
     indices = list(range(len(data)))
-    clean_indices, backdoor_indices = train_test_split(
-        indices,
-        test_size=proportion_backdoor,
-        random_state=rng_seed,
-        stratify=stratify_targets,
-    )
+    try:
+        clean_indices, backdoor_indices = train_test_split(
+            indices,
+            test_size=proportion_backdoor,
+            random_state=rng_seed,
+            stratify=stratify_targets,
+        )
+    except:
+        clean_indices, backdoor_indices = train_test_split(
+            indices,
+            test_size=proportion_backdoor,
+            random_state=rng_seed,
+            # stratify=stratify_targets,
+        )
+
     clean_data = Subset(data, clean_indices)
     backdoor_data = Subset(data, backdoor_indices)
 

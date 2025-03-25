@@ -98,7 +98,7 @@ if __name__ == "__main__":
             optimizer = "sgd"
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
-        for epoch in [1, 5]:
+        for epoch in [5]:
             for softmax_coeff in [10]:
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies

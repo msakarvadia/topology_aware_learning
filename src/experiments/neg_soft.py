@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     paths, nodes = mk_test_topos(num_nodes=4)
     # NOTE(MS): only testing on the worst placement
-    # nodes = [nodes[-1]]
+    print(f"{nodes=}")
 
     start = time.time()
     param_list = []
@@ -148,6 +148,10 @@ if __name__ == "__main__":
                                         in ["unweighted", "weighted", "unweighted_fl"]
                                     ):
                                         continue
+
+                                    # NOTE(MS): this is a temp limit so that we can do fast testing
+                                    node_set = [node_set[-1]]
+                                    print(f"{node_set=}")
 
                                     for client_idx in node_set:
 

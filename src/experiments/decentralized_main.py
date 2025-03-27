@@ -166,6 +166,8 @@ if __name__ == "__main__":
             "scale_agg",
             "degCent",
             "betCent",
+            "degCent_sim",
+            "betCent_sim",
             # "degCent_CA",
             # "betCent_CA",
             # "degCent_exp",
@@ -462,8 +464,8 @@ if __name__ == "__main__":
     start = time.time()
     future = run_experiment(args)
     print(f"Waiting on {future}")
-    exit_value = future.result()
+    # exit_value = future.result()
     end = time.time()
-    print(f"{exit_value=}")
+    # print(f"{exit_value=}")
     print("Total time: ", end - start)
-    parsl.dfk().cleanup()
+    # parsl.dfk().cleanup()

@@ -16,6 +16,7 @@ import sys
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
 from src.decentralized_client import centrality_module_avg
+from src.decentralized_client import sim_centrality_module_avg
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
@@ -303,15 +304,21 @@ class DecentrallearnApp:
         self.softmax = softmax
         self.softmax_coeff = softmax_coeff
         self.aggregation_scheduler = BaseScheduler(self.softmax_coeff)
-        if self.aggregation_strategy == "cluster":
-            self.centrality_metric = "cluster"
-            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "betCent_sim":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = sim_centrality_module_avg
+        if self.aggregation_strategy == "degCent_sim":
+            self.centrality_metric = "degree"
+            self.aggregation_function = sim_centrality_module_avg
+        # if self.aggregation_strategy == "cluster":
+        #    self.centrality_metric = "cluster"
+        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "random":
             self.centrality_metric = "random"
             self.aggregation_function = centrality_module_avg
-        if self.aggregation_strategy == "invCluster":
-            self.centrality_metric = "invCluster"
-            self.aggregation_function = centrality_module_avg
+        # if self.aggregation_strategy == "invCluster":
+        #    self.centrality_metric = "invCluster"
+        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg

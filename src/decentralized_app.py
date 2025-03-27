@@ -600,9 +600,9 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
-                softmax=self.aggregation_scheduler.get_softmax_coeff(),
-                # softmax=self.softmax,
-                softmax_coeff=self.softmax_coeff,
+                softmax=self.softmax,
+                # softmax_coeff=self.softmax_coeff,
+                softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

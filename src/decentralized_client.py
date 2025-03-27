@@ -474,6 +474,7 @@ def centrality_module_avg(
 
     # print(f"pre-normalization {weights=}")
     if softmax:
+        print(f"softmaxing aggregation weights w/ {softmax_coeff=}")
 
         def softmax(x):
             """Compute softmax values for each sets of scores in x."""
@@ -484,6 +485,7 @@ def centrality_module_avg(
         weights = softmax(weights)
 
     else:
+        print("1/N aggregation weights")
         # normalize weights
         weights = [i / sum(weights) for i in weights]
 

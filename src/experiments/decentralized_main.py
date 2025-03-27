@@ -378,7 +378,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    @python_app(executors=["experiment"])
+    # @python_app(executors=["experiment"])
     def run_experiment(args):
         from src.decentralized_app import DecentrallearnApp
 
@@ -454,9 +454,9 @@ if __name__ == "__main__":
     # print(f"{future=}")
 
     ######### Parsl
-    config, num_accelerators = get_parsl_config(args.parsl_executor)
+    # config, num_accelerators = get_parsl_config(args.parsl_executor)
 
-    parsl.load(config)
+    # parsl.load(config)
     #########
 
     start = time.time()

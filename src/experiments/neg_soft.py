@@ -55,7 +55,7 @@ if __name__ == "__main__":
 
     paths, nodes = mk_test_topos(num_nodes=4)
     # NOTE(MS): only testing on the worst placement
-    nodes = [nodes[-1]]
+    # nodes = [nodes[-1]]
 
     start = time.time()
     param_list = []

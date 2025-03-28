@@ -103,27 +103,28 @@ if __name__ == "__main__":
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
-                    # "unweighted",
-                    # "unweighted_fl",
-                    # "weighted",
-                    # "degCent",
-                    # "betCent",
-                    # "random",
+                    "degCent",
+                    "betCent",
                     "degCent_sim",
                     "betCent_sim",
                 ]:
-                    for scheduler in [None]:  # , "exp", "CA"]:
-                        for eta_min in [1]:  # 0, -5, -10]:
-                            for T_0 in [66]:  # 5, 8, 10]:
-                                """
-                                eta_min = 1
-                                T_0 = 66
-                                if scheduler == "osc":
-                                    T_0 = 2  # TODO this is worth varying between (5,8,10)
-                                if scheduler == "CA":
-                                    eta_min = -5  # -50
-                                    T_0 = 5  # TODO this is worth varying between (5,8,10)
-                                """
+                    for scheduler in [None, "CA"]:  # , "exp", "CA"]:
+                        for eta_min in [1, 0, -5, -10]:  # 0, -5, -10]:
+                            for T_0 in [66, 5, 8, 10]:  # 5, 8, 10]:
+                                if "sim" in aggregation_strategy:
+                                    if scheduler != None:
+                                        continue
+                                    if eta_min != 1:
+                                        continue
+                                    if T_0 != 66:
+                                        continue
+                                if aggregation_strategy in ["betCent", "degCent"]:
+                                    if scheduler == None:
+                                        continue
+                                    if eta_min == 1:
+                                        continue
+                                    if T_0 == 66:
+                                        continue
                                 if scheduler == "CA" and (
                                     softmax_coeff in [2, 4, 6, 8]
                                 ):
@@ -147,12 +148,18 @@ if __name__ == "__main__":
 
                                     if softmax_coeff != 10 and (
                                         aggregation_strategy
-                                        in ["unweighted", "weighted", "unweighted_fl"]
+                                        in [
+                                            "degCent",
+                                            "betCent",
+                                            "unweighted",
+                                            "weighted",
+                                            "unweighted_fl",
+                                        ]
                                     ):
                                         continue
 
                                     # NOTE(MS): this is a temp limit so that we can do fast testing
-                                    # node_set = [node_set[-1]]
+                                    node_set = [node_set[-1]]
                                     # print(f"{node_set=}")
 
                                     for client_idx in node_set:

@@ -99,20 +99,22 @@ if __name__ == "__main__":
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
         for epoch in [5]:
-            for softmax_coeff in [10]:
+            for softmax_coeff in [2, 4, 6, 8, 10]:
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
-                    "unweighted",
-                    "unweighted_fl",
-                    "weighted",
-                    "degCent",
-                    "betCent",
-                    "random",
+                    # "unweighted",
+                    # "unweighted_fl",
+                    # "weighted",
+                    # "degCent",
+                    # "betCent",
+                    # "random",
+                    "degCent_sim",
+                    "betCent_sim",
                 ]:
-                    for scheduler in ["CA"]:  # , "exp", "CA"]:
-                        for eta_min in [0, -5, -10]:
-                            for T_0 in [5, 8, 10]:
+                    for scheduler in [None]:  # , "exp", "CA"]:
+                        for eta_min in [1]:  # 0, -5, -10]:
+                            for T_0 in [66]:  # 5, 8, 10]:
                                 """
                                 eta_min = 1
                                 T_0 = 66
@@ -150,8 +152,8 @@ if __name__ == "__main__":
                                         continue
 
                                     # NOTE(MS): this is a temp limit so that we can do fast testing
-                                    node_set = [node_set[-1]]
-                                    print(f"{node_set=}")
+                                    # node_set = [node_set[-1]]
+                                    # print(f"{node_set=}")
 
                                     for client_idx in node_set:
 

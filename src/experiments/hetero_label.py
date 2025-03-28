@@ -38,9 +38,6 @@ if __name__ == "__main__":
         choices=[
             "polaris_experiment_per_node",
             "experiment_per_node",
-            # "local",
-            # "aurora_local",
-            # "node",
         ],
         help="Type of parsl executor to use. experiment_per_node=Aurora, polaris_experiment_per_node=Polaris",
     )
@@ -98,7 +95,7 @@ if __name__ == "__main__":
             optimizer = "sgd"
             # optimizer = "adam"
         # for softmax_coeff in [10, 100]:
-        for label_alpha in [1,10,1000]:
+        for label_alpha in [1, 10, 1000]:
             for softmax_coeff in [2, 4, 6, 8, 10]:
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
@@ -113,7 +110,9 @@ if __name__ == "__main__":
                     "betCent_sim",
                 ]:
                     for scheduler in [None]:  # , "exp", "CA"]:
-                        for eta_min in [1,]:  # 0, -5, -10]:
+                        for eta_min in [
+                            1,
+                        ]:  # 0, -5, -10]:
                             for T_0 in [66]:  # 5, 8, 10]:
                                 # iterate through topologies
                                 for topo, node_set in zip(paths, nodes):

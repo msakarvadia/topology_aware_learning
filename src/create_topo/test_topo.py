@@ -54,6 +54,15 @@ def mk_test_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
     g = nx.barabasi_albert_graph(n=16, m=1, seed=0)
     graphs["barabasi_albert_16_1"] = g
 
+    g = nx.barabasi_albert_graph(n=8, m=3, seed=0)
+    graphs["barabasi_albert_8_3"] = g
+
+    g = nx.barabasi_albert_graph(n=8, m=2, seed=0)
+    graphs["barabasi_albert_8_2"] = g
+
+    g = nx.barabasi_albert_graph(n=8, m=1, seed=0)
+    graphs["barabasi_albert_8_1"] = g
+
     paths = []
     nodes = []
     # for idx, G in enumerate(graphs):

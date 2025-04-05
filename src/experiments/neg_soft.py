@@ -121,10 +121,12 @@ if __name__ == "__main__":
                                 if aggregation_strategy in ["betCent", "degCent"]:
                                     if scheduler == None:
                                         continue
+                                    """
                                     if eta_min == 1:
                                         continue
                                     if T_0 == 66:
                                         continue
+                                    """
                                 if scheduler == "CA" and (
                                     softmax_coeff in [2, 4, 6, 8]
                                 ):

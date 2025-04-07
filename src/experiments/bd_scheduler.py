@@ -134,6 +134,11 @@ if __name__ == "__main__":
                             continue
 
                         for client_idx in node_set:
+                            # don't repeat unweighted fl at multiple bd placements
+                            if aggregation_strategy == "unweighted_fl" and (
+                                client_idx != node_set[0]
+                            ):
+                                continue
 
                             num_experiments += 1
                             # model_count += num_clients

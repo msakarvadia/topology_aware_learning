@@ -1,5 +1,5 @@
 #!/bin/bash 
-#PBS -l select=100
+#PBS -l select=32
 #PBS -l walltime=06:00:00
 #PBS -q prod
 #PBS -l filesystems=home:flare

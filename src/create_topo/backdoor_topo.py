@@ -41,6 +41,11 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
         graphs[f"ws_{n}_4_05_{seed}"] = g
 
     # BA
+    for n in [8, 16, 33]:
+        for m in [1, 2, 3]:
+            g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
+            graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
+    """
     g = nx.barabasi_albert_graph(n=33, m=1, seed=seed)
     graphs[f"barabasi_albert_33_1_{seed}"] = g
 
@@ -50,14 +55,16 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
     g = nx.barabasi_albert_graph(n=33, m=2, seed=seed)
     graphs[f"barabasi_albert_33_2_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=64, m=2, seed=seed)
-    graphs[f"barabasi_albert_64_2_{seed}"] = g
 
     g = nx.barabasi_albert_graph(n=33, m=3, seed=seed)
     graphs[f"barabasi_albert_33_3_{seed}"] = g
 
     g = nx.barabasi_albert_graph(n=8, m=2, seed=seed)
     graphs[f"barabasi_albert_8_2_{seed}"] = g
+    """
+
+    g = nx.barabasi_albert_graph(n=64, m=2, seed=seed)
+    graphs[f"barabasi_albert_64_2_{seed}"] = g
 
     # SB
     sizes = [11, 11, 11]

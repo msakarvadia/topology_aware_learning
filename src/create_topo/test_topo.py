@@ -27,7 +27,7 @@ def get_placement_locations_by_top_n_degree(g, n=3):
     return placement_neighbors.tolist()
 
 
-def mk_test_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
+def mk_test_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
     # return (paths of topo file names, nodes to test per topo)
     bd_dir = "bd_topology"
     os.makedirs(bd_dir, exist_ok=True)
@@ -36,32 +36,36 @@ def mk_test_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
     graphs = {}
 
     # BA
-    g = nx.barabasi_albert_graph(n=33, m=1, seed=0)
-    graphs["barabasi_albert_33_1"] = g
+    for n in [8, 16, 33]:
+        for m in [1, 2, 3]:
+            g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
+            graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=33, m=2, seed=0)
-    graphs["barabasi_albert_33_2"] = g
+    """
+    g = nx.barabasi_albert_graph(n=33, m=2, seed=seed)
+    graphs[f"barabasi_albert_33_2_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=33, m=3, seed=0)
-    graphs["barabasi_albert_33_3"] = g
+    g = nx.barabasi_albert_graph(n=33, m=3, seed=seed)
+    graphs[f"barabasi_albert_33_3_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=16, m=3, seed=0)
-    graphs["barabasi_albert_16_3"] = g
+    g = nx.barabasi_albert_graph(n=16, m=3, seed=seed)
+    graphs[f"barabasi_albert_16_3_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=16, m=2, seed=0)
-    graphs["barabasi_albert_16_2"] = g
+    g = nx.barabasi_albert_graph(n=16, m=2, seed=seed)
+    graphs[f"barabasi_albert_16_2_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=16, m=1, seed=0)
-    graphs["barabasi_albert_16_1"] = g
+    g = nx.barabasi_albert_graph(n=16, m=1, seed=seed)
+    graphs[f"barabasi_albert_16_1_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=8, m=3, seed=0)
-    graphs["barabasi_albert_8_3"] = g
+    g = nx.barabasi_albert_graph(n=8, m=3, seed=seed)
+    graphs[f"barabasi_albert_8_3_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=8, m=2, seed=0)
-    graphs["barabasi_albert_8_2"] = g
+    g = nx.barabasi_albert_graph(n=8, m=2, seed=seed)
+    graphs[f"barabasi_albert_8_2_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=8, m=1, seed=0)
-    graphs["barabasi_albert_8_1"] = g
+    g = nx.barabasi_albert_graph(n=8, m=1, seed=seed)
+    graphs[f"barabasi_albert_8_1_{seed}"] = g
+    """
 
     paths = []
     nodes = []

@@ -1,10 +1,19 @@
 import os
+import shutil
 
 basedir = "bd_scheduler_logs"
 
 for fn in os.listdir(basedir):
     if not os.path.isdir(os.path.join(basedir, fn)):
         continue  # Not a directory
+    """ removing corrupted experimental dirs
+    if "16_2" in fn:
+        if "mnist" in fn:
+            continue
+        shutil.rmtree(os.path.join(basedir, fn), ignore_errors=False, onerror=None)
+        print(fn)
+        print("---------")
+    """
 
     """ Renaming watts-strogatz models
     if "4_05" in fn:

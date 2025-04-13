@@ -204,9 +204,10 @@ if __name__ == "__main__":
     ]
 
     print(f"{num_experiments=}")
-    for future in futures:
+    for future, args in zip(futures, param_list):
         print(f"Waiting for {future}")
         print(f"Got result {future.result()}")
+        print(args)
 
     end = time.time()
     print("Total time: ", end - start)

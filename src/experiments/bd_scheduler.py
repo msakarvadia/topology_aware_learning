@@ -123,7 +123,7 @@ if __name__ == "__main__":
                     # iterate through topologies
                     for topo, node_set in zip(paths, nodes):
                         # iterate through different backdoor node placements
-                        # print(f"{topo=}, {node_set=}")
+                        print(f"{topo=}, {node_set=}")
                         topology = np.loadtxt(topo, dtype=float)
                         num_clients = topology.shape[0]
 
@@ -180,9 +180,10 @@ if __name__ == "__main__":
     ]
 
     print(f"{num_experiments=}")
-    for future in futures:
+    for future, args in zip(futures, param_list):
         print(f"Waiting for {future}")
         print(f"Got result {future.result()}")
+        print(args)
 
     end = time.time()
     print("Total time: ", end - start)

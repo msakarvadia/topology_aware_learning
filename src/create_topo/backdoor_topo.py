@@ -41,7 +41,7 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
         graphs[f"ws_{n}_4_05_{seed}"] = g
 
     # BA
-    for n in [8, 16, 33]:  # 16, 33
+    for n in [8, 16, 33]:  # 8 16, 33
         for m in [1, 2, 3]:
             g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
             graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g

@@ -121,15 +121,20 @@ for data in [
         placement, g = get_placements_and_graph(topo_dict)
 
         dfs = []
-        for backdoor in [True, False]:
+        for backdoor in [
+            True,
+        ]:  # False
             for x in range(1, len(placement) + 1):
                 node = placement[x - 1]  # .item()
                 for epoch in [5, 1]:  # 1]:
-                    for scheduler in [None, "exp", "CA", "osc"]:  # , "exp", "CA"]:
+                    for scheduler in [
+                        None,
+                        "CA",
+                    ]:  # , "exp", "CA"]:
                         for eta_min in [1, 0, -5, -10]:  # 1, -50]:
                             for T_0 in [66, 5, 8, 10]:  # 66,10, 5, 1]:
                                 for softmax_coeff in [2, 4, 6, 8, 10, 100, -10]:
-                                    for label_alpha in [1, 10, 1000]:
+                                    for label_alpha in [1000]:  # 1, 10
                                         for agg_strategy in [
                                             "weighted",
                                             "unweighted",

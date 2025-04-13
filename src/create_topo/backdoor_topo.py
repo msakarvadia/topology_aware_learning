@@ -37,7 +37,7 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
 
     # WS
     for n in [8, 16, 33]:  # 16, 33
-        g = nx.connected_watts_strogatz_graph(n=8, k=4, p=0.5, seed=seed)
+        g = nx.connected_watts_strogatz_graph(n=n, k=4, p=0.5, seed=seed)
         graphs[f"ws_{n}_4_05_{seed}"] = g
 
     # BA

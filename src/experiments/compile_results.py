@@ -86,11 +86,11 @@ rootdir = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 results_loc = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/figs/results"
 
 for data in [
-    "mnist",
-    "fmnist",
     "tiny_mem",
     "cifar10_vgg",
     "cifar100_vgg",
+    "mnist",
+    "fmnist",
 ]:
     wd = 0
     num_example = 5000

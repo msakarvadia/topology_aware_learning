@@ -53,40 +53,6 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
-    """
-    @python_app(executors=["experiment"])
-    def run_experiment(machine_name="aurora", **kwargs):
-        from src.decentralized_app import DecentrallearnApp
-
-        ### Parsl set up - TODO(MS): make parsl executor name an arg for polaris vs aurora
-        import parsl
-        from src.experiments.parsl_setup import get_parsl_config
-
-        experiment_config = "aurora_single_experiment"
-        if "polaris" in machine_name:
-            experiment_config = "polaris_single_experiment"
-        config, num_accelerators = get_parsl_config(experiment_config)
-        try:
-            # might have error loading config if parsl
-            # session from prior experiment isn't killed properly
-            parsl.load(config)
-        except:
-            print("parsl config already loaded")
-            # return 1
-        ### Parsl set up
-
-        decentral_app = DecentrallearnApp(**kwargs)
-        # NOTE(MS): this is my attempt to handle run failures
-        # And to ensure parsl cleans up even if app doesn't successfully run
-        try:
-            exit_value = decentral_app.run()
-        except:
-            exit_value = 1
-        parsl.dfk().cleanup()
-        decentral_app.close()
-        return exit_value
-    """
-
     paths, nodes = mk_backdoor_topos(num_nodes=4)
 
     start = time.time()
@@ -113,21 +79,25 @@ if __name__ == "__main__":
             optimizer = "adam"
             # optimizer = "adamw"
             # task_type = "sum"
-        if (data == "cifar10_vgg") or (data == "cifar100_vgg"):
-            lr = 0.001
-            # lr = 0.0001
+        if data == "cifar10_vgg":
+            lr = 0.0001
+            optimizer = "adam"
+            checkpoint_every = 5
+        if data == "cifar100_vgg":
+            lr = 0.0001
             optimizer = "adam"
             checkpoint_every = 5
         if data == "fmnist":
             lr = 0.01
-            # optimizer = "sgd"
-            optimizer = "adam"
+            optimizer = "sgd"
+            # optimizer = "adam"
         if data == "mnist":
             lr = 0.01
-            # optimizer = "sgd"
-            optimizer = "adam"
-        for softmax_coeff in [10, 100]:
-            # for softmax_coeff in [1, 2, 4, 6, 8, 10, 25, 50, 75, 100]:
+            optimizer = "sgd"
+            # optimizer = "adam"
+        # for softmax_coeff in [10, 100]:
+        for softmax_coeff in [10]:
+            # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
             # iterate through aggregation strategies
             for aggregation_strategy in [
                 "unweighted",
@@ -138,6 +108,13 @@ if __name__ == "__main__":
                 "random",
             ]:
                 for scheduler in [None]:  # , "exp", "CA"]:
+                    eta_min = 1
+                    T_0 = 66
+                    if scheduler == "CA":
+                        eta_min = -50
+                        T_0 = 10  # TODO this is worth varying between (5,8,10)
+                    if scheduler == "CA" and (softmax_coeff in [2, 4, 6, 8]):
+                        continue
                     if scheduler != None and (
                         aggregation_strategy
                         in ["unweighted", "weighted", "unweighted_fl", "random"]
@@ -146,7 +123,7 @@ if __name__ == "__main__":
                     # iterate through topologies
                     for topo, node_set in zip(paths, nodes):
                         # iterate through different backdoor node placements
-                        # print(f"{topo=}, {node_set=}")
+                        print(f"{topo=}, {node_set=}")
                         topology = np.loadtxt(topo, dtype=float)
                         num_clients = topology.shape[0]
 
@@ -157,6 +134,11 @@ if __name__ == "__main__":
                             continue
 
                         for client_idx in node_set:
+                            # don't repeat unweighted fl at multiple bd placements
+                            if aggregation_strategy == "unweighted_fl" and (
+                                client_idx != node_set[0]
+                            ):
+                                continue
 
                             num_experiments += 1
                             # model_count += num_clients
@@ -186,6 +168,8 @@ if __name__ == "__main__":
                                 "checkpoint_every": checkpoint_every,
                                 "tiny_mem_num_labels": 5,
                                 "scheduler": scheduler,
+                                "eta_min": eta_min,
+                                "T_0": T_0,
                             }
 
                             param_list.append(experiment_args)
@@ -196,9 +180,10 @@ if __name__ == "__main__":
     ]
 
     print(f"{num_experiments=}")
-    for future in futures:
+    for future, args in zip(futures, param_list):
         print(f"Waiting for {future}")
         print(f"Got result {future.result()}")
+        print(args)
 
     end = time.time()
     print("Total time: ", end - start)

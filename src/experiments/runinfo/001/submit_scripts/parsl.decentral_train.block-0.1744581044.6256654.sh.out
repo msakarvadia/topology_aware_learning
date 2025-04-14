@@ -1,0 +1,16 @@
+Found cores : 208
+Launching worker: 1
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully
+[/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9]: libpti.so.0.9: cannot open shared object file: No such file or directory
+Failed to load /opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/intel_extension_for_pytorch/lib/././libpti_view.so.0.9 successfully

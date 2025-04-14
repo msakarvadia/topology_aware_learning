@@ -135,6 +135,33 @@ class ExponentialScheduler(BaseScheduler):
         return
 
 
+class OscilateScheduler(BaseScheduler):
+    """Osciltes between positive and negative softmax"""
+
+    def __init__(
+        self,
+        T_0: int,  # this is the period
+        softmax_coeff: float = 100,
+    ):  # noqa: D107
+        self.T_0 = T_0
+        self.sign = 1
+        self.cylce_step = 0
+        self.softmax_coeff = softmax_coeff
+
+    def get_softmax_coeff(self):
+        return self.sign * self.softmax_coeff
+
+    def step(self, round_idx=None):
+        self.cylce_step += 1
+        if self.cylce_step == self.T_0:
+            if self.sign == -1:
+                self.sign = 1
+            else:
+                self.sign = -1
+            self.cylce_step = 0
+        return
+
+
 """
 if __name__ == "__main__":
     softmax_coeff_scheduler = ScheduledOptim(softmax_coeff=100, n_warmup_steps=20)

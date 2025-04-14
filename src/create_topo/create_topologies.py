@@ -64,3 +64,7 @@ np.savetxt("topology/topo_6.txt", topology, fmt="%d")
 G = nx.complete_graph(10)
 topology = nx.to_numpy_array(G)
 np.savetxt("topology/topo_7.txt", topology, fmt="%d")
+
+G = nx.barabasi_albert_graph(n=16, m=2, seed=0)
+topology = nx.to_numpy_array(G)
+np.savetxt("topology/topo_8.txt", topology, fmt="%d")

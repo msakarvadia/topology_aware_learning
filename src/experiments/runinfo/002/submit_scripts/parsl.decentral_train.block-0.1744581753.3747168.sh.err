@@ -1,0 +1,68 @@
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument
+/opt/aurora/24.180.3/frameworks/aurora_nre_models_frameworks-2024.2.1_u1/lib/python3.10/site-packages/torch/xpu/__init__.py:57: UserWarning: XPU device count is zero! (Triggered internally at /build/pytorch/c10/xpu/XPUFunctions.cpp:50.)
+  return torch._C._xpu_getDeviceCount()
+
+libgomp: Thread creation failed: Invalid argument

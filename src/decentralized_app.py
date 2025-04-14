@@ -16,6 +16,7 @@ import sys
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
 from src.decentralized_client import centrality_module_avg
+from src.decentralized_client import sim_centrality_module_avg
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
 from src.decentralized_client import test_agg
@@ -34,6 +35,7 @@ from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import CosineAnnealingWarmRestarts
 from src.aggregation_scheduler import BaseScheduler
 from src.aggregation_scheduler import ExponentialScheduler
+from src.aggregation_scheduler import OscilateScheduler
 
 # from parsl.app.app import python_app
 from src.utils import process_futures_and_ckpt
@@ -302,15 +304,21 @@ class DecentrallearnApp:
         self.softmax = softmax
         self.softmax_coeff = softmax_coeff
         self.aggregation_scheduler = BaseScheduler(self.softmax_coeff)
-        if self.aggregation_strategy == "cluster":
-            self.centrality_metric = "cluster"
-            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "betCent_sim":
+            self.centrality_metric = "betweenness"
+            self.aggregation_function = sim_centrality_module_avg
+        if self.aggregation_strategy == "degCent_sim":
+            self.centrality_metric = "degree"
+            self.aggregation_function = sim_centrality_module_avg
+        # if self.aggregation_strategy == "cluster":
+        #    self.centrality_metric = "cluster"
+        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "random":
             self.centrality_metric = "random"
             self.aggregation_function = centrality_module_avg
-        if self.aggregation_strategy == "invCluster":
-            self.centrality_metric = "invCluster"
-            self.aggregation_function = centrality_module_avg
+        # if self.aggregation_strategy == "invCluster":
+        #    self.centrality_metric = "invCluster"
+        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
             self.aggregation_function = centrality_module_avg
@@ -339,6 +347,11 @@ class DecentrallearnApp:
         if scheduler == "exp":
             self.aggregation_scheduler = ExponentialScheduler(
                 gamma=gamma,
+                softmax_coeff=self.softmax_coeff,
+            )
+        if scheduler == "osc":
+            self.aggregation_scheduler = OscilateScheduler(
+                T_0=T_0,
                 softmax_coeff=self.softmax_coeff,
             )
         # NOTE (MS): Try assigning this in the job itself.
@@ -594,9 +607,9 @@ class DecentrallearnApp:
                 *agg_neighbors,
                 centrality_metric=self.centrality_metric,
                 centrality_dict=self.centrality_dict,
-                softmax=self.aggregation_scheduler.get_softmax_coeff(),
-                # softmax=self.softmax,
-                softmax_coeff=self.softmax_coeff,
+                softmax=self.softmax,
+                # softmax_coeff=self.softmax_coeff,
+                softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

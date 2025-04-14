@@ -15,6 +15,7 @@ from pydantic import Field
 from torch.utils.data import Dataset
 from torch.utils.data import Subset
 from torch.utils.data import ConcatDataset
+import torch.nn as nn
 import networkx as nx
 
 from src.modules import create_model
@@ -448,6 +449,108 @@ def unweighted_module_avg(
 
 
 @python_app(executors=["threadpool_executor"])
+def sim_centrality_module_avg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    **kwargs: str,  # type of centrality metric
+) -> tuple(list[Result], DecentralClient):
+    """Compute the weighted average of models."""
+    # import torch
+    if seed is not None:
+        torch.manual_seed(seed)
+
+    # Grab centrality dict, centrality metric
+    centrality_dict = kwargs["centrality_dict"]
+    centrality_metric = kwargs["centrality_metric"]
+    softmax = kwargs["softmax"]
+    softmax_coeff = kwargs["softmax_coeff"]
+    print(f"{centrality_metric} aggregate round w/ {softmax=}")
+
+    # get weights
+    weights = []
+    neighborhood_weights = {}
+    for n in neighbor_futures:
+        idx = n[1].idx
+        weight = centrality_dict[centrality_metric][idx]
+        weights.append(weight)
+        neighborhood_weights[idx] = weight
+
+    # calculate similarity between client and its neighbor
+    neighborhood_sim = {}
+    client_model = client_future[1].model
+    for i in range(len(neighbor_futures)):
+        client = neighbor_futures[i]
+        neighbor_model = client[1].model
+        neighbor_idx = client[1].idx
+        if neighbor_idx == client_future[1].idx:
+            # these are both the aggregating client: same model
+            continue
+        neighbor_model.to("cpu")
+        neighborhood_sim[neighbor_idx] = cosine_similarity(client_model, neighbor_model)
+
+    # convert the softmax to positive or negative
+    client_idx = client_future[1].idx
+    client_weight = neighborhood_weights[client_idx]
+    min_weights = min(neighborhood_weights, key=neighborhood_weights.get)
+    max_weights = max(neighborhood_weights, key=neighborhood_weights.get)
+
+    # NOTE(MS): the two explicit conditions below are handed by the 3rd setting
+    """
+    # lowest degree client in neighborhood, consume neighbors
+    if client_idx == min_weights:
+        softmax_coeff = abs(softmax_coeff) 
+
+    # highest degree client in neighborhood, consume neighbors
+    if client_idx == min_weights:
+        softmax_coeff = -1 * abs(softmax_coeff) 
+    """
+
+    # middle degree client in neighborhood,
+    # consume neighbors with highest dissimilarity
+    min_similarity = min(neighborhood_sim, key=neighborhood_sim.get)
+    deg_for_dissimilar_node = neighborhood_weights[min_similarity]
+    if deg_for_dissimilar_node < client_weight:
+        softmax_coeff = -abs(softmax_coeff)
+    else:
+        softmax_coeff = abs(softmax_coeff)
+
+    # scale the weights by softmax_coeff
+    if softmax:
+        print(f"{client_idx=} softmaxing aggregation weights w/ {softmax_coeff=}")
+
+        def softmax(x):
+            """Compute softmax values for each sets of scores in x."""
+            e_x = np.exp(x - np.max(x))
+            return e_x / e_x.sum()
+
+        weights = [x * softmax_coeff for x in weights]
+        weights = softmax(weights)
+
+    else:
+        print("1/N aggregation weights")
+        # normalize weights
+        weights = [i / sum(weights) for i in weights]
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for i in range(len(neighbor_futures)):
+            client = neighbor_futures[i]
+            model = client[1].model
+            model.to("cpu")
+            w = weights[i]
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    client_future[1].model.load_state_dict(avg_weights)
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
 def centrality_module_avg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,
@@ -474,6 +577,7 @@ def centrality_module_avg(
 
     # print(f"pre-normalization {weights=}")
     if softmax:
+        print(f"softmaxing aggregation weights w/ {softmax_coeff=}")
 
         def softmax(x):
             """Compute softmax values for each sets of scores in x."""
@@ -484,6 +588,7 @@ def centrality_module_avg(
         weights = softmax(weights)
 
     else:
+        print("1/N aggregation weights")
         # normalize weights
         weights = [i / sum(weights) for i in weights]
 
@@ -551,3 +656,26 @@ def test_agg(
 ) -> tuple(list[Result], DecentralClient):
 
     return client_future
+
+
+# similarity metrics
+def cosine_similarity(model_1, model_2):
+    avg_cos = 0
+    cos = nn.CosineSimilarity(dim=1, eps=1e-6)
+    weights_1 = []
+    weights_2 = []
+    # iterate over model layers
+    with torch.no_grad():
+        for model, weights in zip([model_1, model_2], [weights_1, weights_2]):
+            for name, W in model.named_parameters():
+                weights.append(W)
+
+        # now do avg cosine sim
+        for w_1, w_2 in zip(weights_1, weights_2):
+            if len(w_1.shape) < 2:
+                w_1 = w_1.unsqueeze(dim=1)
+                w_2 = w_2.unsqueeze(dim=1)
+            sim = cos(w_1, w_2)
+            avg_cos += sim.mean()
+
+    return avg_cos / len(weights_1)

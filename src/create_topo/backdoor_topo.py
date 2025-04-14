@@ -27,7 +27,7 @@ def get_placement_locations_by_top_n_degree(g, n=3):
     return placement_neighbors.tolist()
 
 
-def mk_backdoor_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
+def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
     # return (paths of topo file names, nodes to test per topo)
     bd_dir = "bd_topology"
     os.makedirs(bd_dir, exist_ok=True)
@@ -35,40 +35,66 @@ def mk_backdoor_topos(num_nodes=5) -> tuple[list[str], list[list[int]]]:
     # graphs = []
     graphs = {}
 
-    g = nx.barabasi_albert_graph(n=33, m=1, seed=0)
-    graphs["barabasi_albert_33_1"] = g
+    # WS
+    for n in [8, 16, 33]:  # 16, 33
+        g = nx.connected_watts_strogatz_graph(n=n, k=4, p=0.5, seed=seed)
+        graphs[f"ws_{n}_4_05_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=33, m=2, seed=0)
-    graphs["barabasi_albert_33_2"] = g
+    # BA
+    for n in [8, 16, 33]:  # 8 16, 33
+        for m in [1, 2, 3]:
+            g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
+            graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
 
-    g = nx.barabasi_albert_graph(n=33, m=3, seed=0)
-    graphs["barabasi_albert_33_3"] = g
-    # graphs.append(g)
+    g = nx.barabasi_albert_graph(n=64, m=2, seed=seed)
+    graphs[f"barabasi_albert_64_2_{seed}"] = g
 
     """
-    g = nx.barabasi_albert_graph(n=66, m=2, seed=0)
-    graphs["barabasi_albert_low"] = g
+    # SB
+    sizes = [11, 11, 11]
+    self_conect = 0.5
+    community_connect = 0.009
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
+    g = nx.stochastic_block_model(sizes, probs, seed=seed)
+    graphs[f"sb_11_05_0009_{seed}"] = g
 
-    sizes = [33, 33, 33]
-    probs = [[0.4, 0.009, 0.009], [0.009, 0.4, 0.009], [0.009, 0.009, 0.4]]
-    g = nx.stochastic_block_model(sizes, probs, seed=0)
-    graphs["stochastic_block"] = g
+    sizes = [11, 11, 11]
+    self_conect = 0.5
+    community_connect = 0.05
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
+    g = nx.stochastic_block_model(sizes, probs, seed=seed)
+    graphs[f"sb_11_05_005_{seed}"] = g
 
-    g = nx.ring_of_cliques(10, 4)
-    graphs["ring_clique"] = g
-
-    # graphs.append(g)
-    g = nx.barbell_graph(m1=10, m2=3, create_using=None)
-    graphs["barbell"] = g
-
-    g = nx.complete_graph(10)
-    graphs["complete"] = g
-
-    g = nx.path_graph(10)
-    graph['path'] = g
-
-    g = nx.cycle_graph(10)
-    graphs["cycle"] = g
+    sizes = [11, 11, 11]
+    self_conect = 0.5
+    community_connect = 0.09
+    probs = [
+        [self_conect, community_connect, community_connect],
+        [community_connect, self_conect, community_connect],
+        [
+            community_connect,
+            community_connect,
+            self_conect,
+        ],
+    ]
+    g = nx.stochastic_block_model(sizes, probs, seed=seed)
+    graphs[f"sb_11_05_009_{seed}"] = g
     """
 
     paths = []

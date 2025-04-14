@@ -166,6 +166,8 @@ if __name__ == "__main__":
             "scale_agg",
             "degCent",
             "betCent",
+            "degCent_sim",
+            "betCent_sim",
             # "degCent_CA",
             # "betCent_CA",
             # "degCent_exp",
@@ -282,7 +284,7 @@ if __name__ == "__main__":
         "--T_0",
         type=float,
         default=66,
-        help="CA scheduler period.",
+        help="CA scheduler period. and Oscilate scheduler period.",
     )
     parser.add_argument(
         "--T_mult",
@@ -300,7 +302,7 @@ if __name__ == "__main__":
         "--scheduler",
         type=str,
         default=None,
-        choices=["exp", "CA"],
+        choices=["exp", "CA", "osc"],
         help="Type of softmax coefficient scheduler",
     )
     parser.add_argument(
@@ -378,7 +380,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    @python_app(executors=["experiment"])
+    # @python_app(executors=["experiment"])
     def run_experiment(args):
         from src.decentralized_app import DecentrallearnApp
 
@@ -454,16 +456,16 @@ if __name__ == "__main__":
     # print(f"{future=}")
 
     ######### Parsl
-    config, num_accelerators = get_parsl_config(args.parsl_executor)
+    # config, num_accelerators = get_parsl_config(args.parsl_executor)
 
-    parsl.load(config)
+    # parsl.load(config)
     #########
 
     start = time.time()
     future = run_experiment(args)
     print(f"Waiting on {future}")
-    exit_value = future.result()
+    # exit_value = future.result()
     end = time.time()
-    print(f"{exit_value=}")
+    # print(f"{exit_value=}")
     print("Total time: ", end - start)
-    parsl.dfk().cleanup()
+    # parsl.dfk().cleanup()

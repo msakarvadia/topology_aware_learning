@@ -1,7 +1,7 @@
 #!/bin/bash 
-#PBS -l select=1
-#PBS -l walltime=01:00:00
-#PBS -q debug
+#PBS -l select=100
+#PBS -l walltime=06:00:00
+#PBS -q prod
 #PBS -l daos=daos_user
 #PBS -l filesystems=home:flare:daos_user
 #PBS -A AuroraGPT
@@ -50,7 +50,7 @@ echo ${EXPERIMENT_DIR}
 
 pwd
 
-python ${EXPERIMENT_DIR}/src/experiments/bd_scheduler.py --rounds 30 --checkpoint_every 2 --parsl_executor aurora_local
+python ${EXPERIMENT_DIR}/src/experiments/bd_scheduler.py --rounds 40
 
 touch tmp.txt
 # To unmount

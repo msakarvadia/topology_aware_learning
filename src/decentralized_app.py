@@ -479,6 +479,11 @@ class DecentrallearnApp:
                     self.run_dir,
                 )
 
+            # if an round -1 key is in round_states dict, delete it
+            old_round = round_idx - 1
+            if old_round in self.round_states:
+                del self.round_states[round_idx - 1]
+
         process_futures_and_ckpt(
             self.client_results,
             train_result_futures,

@@ -49,7 +49,6 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
     g = nx.barabasi_albert_graph(n=64, m=2, seed=seed)
     graphs[f"barabasi_albert_64_2_{seed}"] = g
 
-    """
     # SB
     sizes = [11, 11, 11]
     self_conect = 0.5
@@ -95,7 +94,6 @@ def mk_backdoor_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
     ]
     g = nx.stochastic_block_model(sizes, probs, seed=seed)
     graphs[f"sb_11_05_009_{seed}"] = g
-    """
 
     paths = []
     nodes = []

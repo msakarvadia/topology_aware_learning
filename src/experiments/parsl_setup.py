@@ -151,6 +151,7 @@ def get_parsl_config(
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
+            worker_init="export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE",
         )
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
         accel_count = len(tile_names)

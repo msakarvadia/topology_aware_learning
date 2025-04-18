@@ -12,6 +12,7 @@ import glob
 import os
 import json
 import sys
+import shutil
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
@@ -421,14 +422,19 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
             )
-            (
-                self.start_round,
-                self.clients,
-                self.client_results,
-                self.aggregation_scheduler,
-            ) = load_checkpoint(
-                checkpoint_path, self.clients, self.aggregation_scheduler
-            )
+            try:
+                (
+                    self.start_round,
+                    self.clients,
+                    self.client_results,
+                    self.aggregation_scheduler,
+                ) = load_checkpoint(
+                    checkpoint_path, self.clients, self.aggregation_scheduler
+                )
+            except:
+                shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
+                # 2 error means corrupted ckpt
+                return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")
 

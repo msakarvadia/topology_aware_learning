@@ -59,7 +59,7 @@ if __name__ == "__main__":
     app_result_tuples = []
     num_experiments = 0
 
-    for seed in [0, 1, 2]:
+    for seed in [1, 2, 0]:
         paths, nodes = mk_backdoor_topos(num_nodes=4, seed=seed)
         for data in [
             "mnist",

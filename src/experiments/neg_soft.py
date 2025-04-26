@@ -60,7 +60,7 @@ if __name__ == "__main__":
     model_count = 0  # number of models in total created decentral Apps
     app_result_tuples = []
     num_experiments = 0
-    for seed in [0, 1, 2]:
+    for seed in [1, 2, 0]:
         paths, nodes = mk_test_topos(num_nodes=4, seed=seed)
         for data in [
             "mnist",

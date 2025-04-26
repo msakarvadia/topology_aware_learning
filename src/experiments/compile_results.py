@@ -163,7 +163,15 @@ for data in [
                                                     )
                                                 )
                                                 if exists:
-                                                    client_df = pd.read_csv(stats_path)
+                                                    try:
+                                                        client_df = pd.read_csv(
+                                                            stats_path
+                                                        )
+                                                    except:
+                                                        print(
+                                                            "error reading stats, continuing"
+                                                        )
+                                                        continue
                                                     client_df["total_epochs"] = (
                                                         client_df.round_idx
                                                         * len(client_df.epoch.unique())

@@ -113,7 +113,7 @@ for data in [
         lr = "001"
         optimizer = "sgd"
 
-    for seed in [0, 1, 2]:
+    for seed in [2, 1, 0]:
         topo_dicts = get_topo_names(seed=seed)
         for topo_dict in topo_dicts:
             topo_name = topo_dict["name"]

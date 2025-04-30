@@ -175,7 +175,7 @@ export NUMEXPR_MAX_THREADS=208
         num_accelerators = num_nodes * len(tile_names)
         accel_count = len(tile_names)
 
-        # Want to pin one experiment to one node
+        # Want to pin one experiment to one node, 12 workers (1 worker per GPU)
         node_provider = LocalProvider(
             nodes_per_block=1,
             launcher=SingleNodeLauncher(),

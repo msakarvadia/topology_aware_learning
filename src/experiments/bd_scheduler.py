@@ -184,8 +184,11 @@ if __name__ == "__main__":
     print(f"{num_experiments=}")
     for future, args in zip(futures, param_list):
         print(f"Waiting for {future}")
-        print(f"Got result {future.result()}")
+        # print(f"Got result {future.result()}")
         print(args)
+
+    # bc parsl workers keep having failures, lets try and just do a sleep while we wait for tasks
+    time.sleep(6 * 60 * 60)  # hours * 60 minutes * 60 seconds
 
     end = time.time()
     print("Total time: ", end - start)

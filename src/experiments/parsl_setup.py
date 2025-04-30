@@ -151,7 +151,9 @@ def get_parsl_config(
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
-            worker_init="export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE",
+            worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+export NUMEXPR_MAX_THREADS=208
+""",
         )
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
         accel_count = len(tile_names)
@@ -159,8 +161,8 @@ def get_parsl_config(
 
         executor = HighThroughputExecutor(
             label="experiment",
-            heartbeat_period=15,
-            heartbeat_threshold=120,
+            heartbeat_period=30,
+            heartbeat_threshold=120,  # (6 * 60 * 60),
             worker_debug=True,
             max_workers_per_node=1,  # we want to pin one experiment per node
             available_accelerators=tile_names,
@@ -181,7 +183,9 @@ def get_parsl_config(
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
-            worker_init="export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE",
+            worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+export NUMEXPR_MAX_THREADS=208
+""",
         )
 
         executor = HighThroughputExecutor(

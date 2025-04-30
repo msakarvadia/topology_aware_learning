@@ -1,8 +1,0 @@
-2025-04-13 22:02:34.893 worker_log:633 20028 MainThread [INFO]  Worker 7 started
-2025-04-13 22:02:34.894 worker_log:635 20028 MainThread [DEBUG]  Debug logging enabled
-2025-04-13 22:02:34.895 worker_log:690 20028 MainThread [INFO]  Set worker CPU affinity to [60, 61, 62, 63, 64, 65, 66, 67, 164, 165, 166, 167, 168, 169, 170, 171]
-2025-04-13 22:02:34.902 worker_log:718 20028 MainThread [INFO]  Pinned worker to accelerator: 3.1
-2025-04-13 22:02:46.997 worker_log:746 20028 MainThread [INFO]  Received executor task 4
-2025-04-13 22:04:14.069 worker_log:764 20028 MainThread [INFO]  Completed executor task 4
-2025-04-13 22:04:15.016 worker_log:775 20028 MainThread [INFO]  All processing finished for executor task 4
-2025-04-13 22:04:19.182 worker_log:746 20028 MainThread [INFO]  Received executor task 26

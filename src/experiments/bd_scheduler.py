@@ -59,7 +59,7 @@ if __name__ == "__main__":
     app_result_tuples = []
     num_experiments = 0
 
-    for seed in [1, 2, 0]:
+    for seed in [2, 1, 0]:
         paths, nodes = mk_backdoor_topos(num_nodes=4, seed=seed)
         for data in [
             "mnist",
@@ -182,13 +182,19 @@ if __name__ == "__main__":
     ]
 
     print(f"{num_experiments=}")
+    experiment_num = 0
     for future, args in zip(futures, param_list):
         print(f"Waiting for {future}")
-        # print(f"Got result {future.result()}")
-        print(args)
+        try:
+            print(f"Got result {future.result()}")
+        except Exception as e:
+            print(f"Failing w/ exception: {e}")
+            print(f"Details of failed experiment {experiment_num}:")
+            print(args)
+        experiment_num += 1
 
     # bc parsl workers keep having failures, lets try and just do a sleep while we wait for tasks
-    time.sleep(6 * 60 * 60)  # hours * 60 minutes * 60 seconds
+    # time.sleep(6 * 60 * 60)  # hours * 60 minutes * 60 seconds
 
     end = time.time()
     print("Total time: ", end - start)

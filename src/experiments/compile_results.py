@@ -171,6 +171,7 @@ for data in [
                                                         print(
                                                             "error reading stats, continuing"
                                                         )
+                                                        print(stats_path)
                                                         continue
                                                     client_df["total_epochs"] = (
                                                         client_df.round_idx

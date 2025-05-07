@@ -126,14 +126,20 @@ for data in [
             ]:  # False
                 for x in range(1, len(placement) + 1):
                     node = placement[x - 1]  # .item()
-                    for epoch in [5, 1]:  # 1]:
+                    for epoch in [5]:  # 1]:
                         for scheduler in [
                             None,
-                            "CA",
+                            # "CA",
                         ]:  # , "exp", "CA"]:
-                            for eta_min in [1, 0, -5, -10]:  # 1, -50]:
-                                for T_0 in [66, 5, 8, 10]:  # 66,10, 5, 1]:
-                                    for softmax_coeff in [2, 4, 6, 8, 10, 100, -10]:
+                            for eta_min in [
+                                1,
+                            ]:  # 0, -5, -10]:  # 1, -50]:
+                                for T_0 in [
+                                    66,
+                                ]:  # 5, 8, 10]:  # 66,10, 5, 1]:
+                                    for softmax_coeff in [
+                                        10
+                                    ]:  # 2, 4, 6, 8, 10, 100, -10]:
                                         for label_alpha in [1000]:  # 1, 10
                                             for agg_strategy in [
                                                 "weighted",
@@ -142,8 +148,8 @@ for data in [
                                                 "betCent",
                                                 "unweighted_fl",
                                                 "random",
-                                                "degCent_sim",
-                                                "betCent_sim",
+                                                # "degCent_sim",
+                                                # "betCent_sim",
                                             ]:
                                                 stats_path = f"{rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_{node}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
                                                 checkpoint_path = (

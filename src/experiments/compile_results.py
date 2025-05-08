@@ -1,6 +1,8 @@
 import networkx as nx
 from src.create_topo.backdoor_topo import get_placement_locations_by_top_n_degree
 import os
+from os import listdir
+from os.path import isfile, join
 import pandas as pd
 
 
@@ -156,6 +158,7 @@ for data in [
                                                     if node != placement[0]:
                                                         continue
                                                 stats_path = f"{rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_{node}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
+                                                experiment_dir = stats_path
                                                 checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                                                 stats_path = (
                                                     f"{stats_path}client_stats.csv"
@@ -234,6 +237,14 @@ for data in [
                                                         "Does not exist:",
                                                         checkpoint_path,
                                                     )
+                                                    onlyfiles = [
+                                                        f
+                                                        for f in listdir(experiment_dir)
+                                                        if isfile(
+                                                            join(experiment_dir, f)
+                                                        )
+                                                    ]
+                                                    print(onlyfiles)
 
             print("-------")
             csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"

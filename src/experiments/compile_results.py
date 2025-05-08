@@ -31,18 +31,19 @@ def get_topo_names(seed=0):
         property_dicts.append(d)
         # topos.append(topo)
 
-    for nodes in [8, 16, 33]:
-        for topo in [1, 2, 3]:
+    for nodes in [8, 16, 64]:
+        for topo in [2]:
             topo_name = f"barabasi_albert_{nodes}_{topo}_{seed}"
             # topo_names.append(topo_name)
             d = {"deg": topo, "name": topo_name, "seed": seed, "nodes": nodes}
             property_dicts.append(d)
 
-    for topo in [64]:
-        topo_name = f"barabasi_albert_{topo}_2_{seed}"
-        # topo_names.append(topo_name)
-        d = {"deg": 2, "name": topo_name, "seed": seed, "nodes": topo}
-        property_dicts.append(d)
+    for nodes in [33]:
+        for topo in [1, 2, 3]:
+            topo_name = f"barabasi_albert_{nodes}_{topo}_{seed}"
+            # topo_names.append(topo_name)
+            d = {"deg": topo, "name": topo_name, "seed": seed, "nodes": nodes}
+            property_dicts.append(d)
 
     return property_dicts
 
@@ -151,10 +152,11 @@ for data in [
                                                 # "degCent_sim",
                                                 # "betCent_sim",
                                             ]:
+                                                if agg_strategy == "unweighted_fl":
+                                                    if node != placement[0]:
+                                                        continue
                                                 stats_path = f"{rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_{node}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
-                                                checkpoint_path = (
-                                                    f"{stats_path}39_ckpt.pth"
-                                                )
+                                                checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                                                 stats_path = (
                                                     f"{stats_path}client_stats.csv"
                                                 )
@@ -227,8 +229,11 @@ for data in [
                                                         client_df.drop_duplicates()
                                                     )  # there is an issue with how I am loading ckpts
                                                     dfs.append(client_df.copy())
-                                            # else:
-                                            #  print(stats_path)
+                                                else:
+                                                    print(
+                                                        "Does not exist:",
+                                                        checkpoint_path,
+                                                    )
 
             print("-------")
             csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"

@@ -40,10 +40,19 @@ from src.aggregation_scheduler import OscilateScheduler
 
 # from parsl.app.app import python_app
 from src.utils import process_futures_and_ckpt
+from src.utils import set_file_logger
 
 # Used within applications
 APP_LOG_LEVEL = 21
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("decentral_app")
+
+parsl_logger = logging.getLogger("parsl")
+parsl_logger.setLevel(logging.INFO)
+
+# Optionally set a file handler
+fh = logging.FileHandler("parsl_custom.log")
+fh.setLevel(logging.DEBUG)
+parsl_logger.addHandler(fh)
 
 
 class DecentrallearnApp:
@@ -206,11 +215,17 @@ class DecentrallearnApp:
             self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
+        logger = set_file_logger(
+            filename=f"{self.run_dir}/experiment.log",
+            name="decentral_app",
+        )
+        """
         logging.basicConfig(
             filename=f"{self.run_dir}/experiment.log",
             encoding="utf-8",
             level=logging.DEBUG,
         )
+        """
 
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed

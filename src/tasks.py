@@ -88,7 +88,6 @@ def no_local_train(
             betas=(beta_1, beta_2),
         )
     loader = DataLoader(client.train_data, batch_size=batch_size)
-
     avg_time_per_epoch = 0
     for epoch in range(epochs):
         start_time = time.time()
@@ -102,6 +101,30 @@ def no_local_train(
         client.model = client.model.to(device)
         if intel_xpu_count > 0:
             client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
+
+        for batch_idx, batch in enumerate(loader):
+            inputs, targets = batch
+            inputs, targets = inputs.to(device), targets.to(device)
+            if "tiny_mem" in dataset_name:
+                model_output = client.model(inputs, labels=inputs)
+                loss = model_output.loss
+                running_perp += torch.exp(loss).cpu().item()
+                running_acc += accuracy(inputs, model_output.logits)
+
+            else:
+                preds = client.model(inputs)
+                loss = F.cross_entropy(preds, targets)
+
+            running_loss += loss.item()
+
+            loss.backward()
+            optimizer.step()
+            """
+            optimizer.zero_grad()
+            """
+
+        end_time = time.time()
+        avg_time_per_epoch += end_time - start_time
 
         # Test client on local test set TODO
 

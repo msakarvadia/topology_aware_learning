@@ -87,7 +87,7 @@ if __name__ == "__main__":
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
-                checkpoint_every = 5
+                checkpoint_every = 1
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"

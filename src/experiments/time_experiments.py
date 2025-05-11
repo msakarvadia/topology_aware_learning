@@ -162,6 +162,8 @@ if __name__ == "__main__":
                                 if not experiment_df.empty:
                                     # This means, experiment has already run
                                     continue
+                                if data == "cifar100_vgg" and num_clients >= 64:
+                                    continue
                                 future = run_experiment(
                                     machine_name=args.parsl_executor, **experiment_args
                                 )
@@ -170,7 +172,6 @@ if __name__ == "__main__":
                                     print(f"Got result {future.result()}")
                                     end = time.time()
                                     total_time = end - start
-                                    trial = seed
                                     # record in a data frame
                                     df.loc[len(df)] = [
                                         num_clients,
@@ -179,7 +180,9 @@ if __name__ == "__main__":
                                         seed,
                                     ]
                                     # save dataframe
-                                    df.to_csv("experiment_time_trials.csv")
+                                    df.to_csv(
+                                        "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/experiment_time_trials.csv"
+                                    )
                                 except Exception as e:
                                     print(f"Failing w/ exception: {e}")
                                     print(args)

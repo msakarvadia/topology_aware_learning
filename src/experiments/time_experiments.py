@@ -61,9 +61,10 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(columns=["num_clients", "time", "data", "trial"])
     # load dataframe
-    time_trial_path = "experiment_time_trials.csv"
+    time_trial_path = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/experiment_time_trials.csv"
     if os.path.exists(time_trial_path):
         df = pd.read_csv(time_trial_path)
+        df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
     for seed in [0, 1, 2]:
         paths, nodes = mk_timing_topos(num_nodes=1, seed=seed)
         for data in [
@@ -159,6 +160,7 @@ if __name__ == "__main__":
                                     & (df.data == data)
                                     & (df.trial == seed)
                                 ]
+                                print(df)
                                 if not experiment_df.empty:
                                     # This means, experiment has already run
                                     continue
@@ -167,7 +169,9 @@ if __name__ == "__main__":
                                 future = run_experiment(
                                     machine_name=args.parsl_executor, **experiment_args
                                 )
-                                print(f"Waiting for {future}")
+                                print(
+                                    f"Waiting for {future}, {seed=}, {data=}, {num_clients=}"
+                                )
                                 try:
                                     print(f"Got result {future.result()}")
                                     end = time.time()
@@ -180,9 +184,7 @@ if __name__ == "__main__":
                                         seed,
                                     ]
                                     # save dataframe
-                                    df.to_csv(
-                                        "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/experiment_time_trials.csv"
-                                    )
+                                    df.to_csv(time_trial_path)
                                 except Exception as e:
                                     print(f"Failing w/ exception: {e}")
                                     print(args)

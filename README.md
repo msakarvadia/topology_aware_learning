@@ -1,6 +1,6 @@
 # Distributed ML
 A Test Bed for Prototyping Fully-Distributed ML Experiments
-![2_recall](https://github.com/user-attachments/assets/210ab91c-d411-4b09-bc8e-b86e64d20fc3)\
+![2_recall](https://github.com/user-attachments/assets/210ab91c-d411-4b09-bc8e-b86e64d20fc3)
 
 ### Note:
 **All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in untested support for running on nodes w/ Nvidia GPU's. We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**

@@ -143,6 +143,7 @@ def get_parsl_config(
 
     if parsl_executor == "experiment_per_node":
         print(f"Experiment per node config, {num_nodes=}")
+        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
         # Want to pin one experiment to one node
         node_provider = LocalProvider(
             nodes_per_block=num_nodes,
@@ -150,14 +151,18 @@ def get_parsl_config(
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
+            worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+export NUMEXPR_MAX_THREADS=208
+""",
         )
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        accel_count = len(tile_names)
         # num_accelerators = num_nodes * len(tile_names)
 
         executor = HighThroughputExecutor(
             label="experiment",
-            heartbeat_period=15,
-            heartbeat_threshold=120,
+            heartbeat_period=30,
+            heartbeat_threshold=120,  # (6 * 60 * 60),
             worker_debug=True,
             max_workers_per_node=1,  # we want to pin one experiment per node
             available_accelerators=tile_names,
@@ -166,7 +171,11 @@ def get_parsl_config(
             # cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
         )
     if parsl_executor == "aurora_single_experiment":
-        # Want to pin one experiment to one node
+        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        num_accelerators = num_nodes * len(tile_names)
+        accel_count = len(tile_names)
+
+        # Want to pin one experiment to one node, 12 workers (1 worker per GPU)
         node_provider = LocalProvider(
             nodes_per_block=1,
             launcher=SingleNodeLauncher(),
@@ -174,9 +183,10 @@ def get_parsl_config(
             init_blocks=1,
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
+            worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
+export NUMEXPR_MAX_THREADS=208
+""",
         )
-        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
-        num_accelerators = num_nodes * len(tile_names)
 
         executor = HighThroughputExecutor(
             label="decentral_train",

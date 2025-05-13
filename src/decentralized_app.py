@@ -12,6 +12,7 @@ import glob
 import os
 import json
 import sys
+import shutil
 
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
@@ -39,10 +40,19 @@ from src.aggregation_scheduler import OscilateScheduler
 
 # from parsl.app.app import python_app
 from src.utils import process_futures_and_ckpt
+from src.utils import set_file_logger
 
 # Used within applications
 APP_LOG_LEVEL = 21
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("decentral_app")
+
+parsl_logger = logging.getLogger("parsl")
+parsl_logger.setLevel(logging.INFO)
+
+# Optionally set a file handler
+fh = logging.FileHandler("parsl_custom.log")
+fh.setLevel(logging.DEBUG)
+parsl_logger.addHandler(fh)
 
 
 class DecentrallearnApp:
@@ -205,11 +215,17 @@ class DecentrallearnApp:
             self.num_labels = tiny_mem_num_labels
 
         # Initialize logging
+        logger = set_file_logger(
+            filename=f"{self.run_dir}/experiment.log",
+            name="decentral_app",
+        )
+        """
         logging.basicConfig(
             filename=f"{self.run_dir}/experiment.log",
             encoding="utf-8",
             level=logging.DEBUG,
         )
+        """
 
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
@@ -421,14 +437,19 @@ class DecentrallearnApp:
             logger.log(
                 APP_LOG_LEVEL, f"Loading lastest checkpoint from:  {checkpoint_path}"
             )
-            (
-                self.start_round,
-                self.clients,
-                self.client_results,
-                self.aggregation_scheduler,
-            ) = load_checkpoint(
-                checkpoint_path, self.clients, self.aggregation_scheduler
-            )
+            try:
+                (
+                    self.start_round,
+                    self.clients,
+                    self.client_results,
+                    self.aggregation_scheduler,
+                ) = load_checkpoint(
+                    checkpoint_path, self.clients, self.aggregation_scheduler
+                )
+            except:
+                shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
+                # 2 error means corrupted ckpt
+                return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
             print(f"loaded latest ckpt from: {checkpoint_path}")
 
@@ -478,6 +499,11 @@ class DecentrallearnApp:
                     round_idx,
                     self.run_dir,
                 )
+
+            # if an round -1 key is in round_states dict, delete it
+            old_round = round_idx - 1
+            if old_round in self.round_states:
+                del self.round_states[round_idx - 1]
 
         process_futures_and_ckpt(
             self.client_results,

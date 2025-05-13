@@ -462,10 +462,6 @@ if __name__ == "__main__":
     #########
 
     start = time.time()
-    future = run_experiment(args)
-    print(f"Waiting on {future}")
-    # exit_value = future.result()
+    exit_value = run_experiment(args)
     end = time.time()
-    # print(f"{exit_value=}")
     print("Total time: ", end - start)
-    # parsl.dfk().cleanup()

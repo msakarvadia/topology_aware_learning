@@ -7,13 +7,13 @@ A Test Bed for Prototyping Fully-Distributed ML Experiments
 
 ## Generate Topologies
 
-- [`create_topo`](https://github.com/msakarvadia/distributed_ml/tree/main/src/create_topo) directory for all topology creation scripts (several scripts for generating differen types of topologies)
-- [`create_topologies.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/create_topo/create_topologies.py) example topologies
-- [`backdoor_topo.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/create_topo/backdoor_topo.py) All topologies that we used in official paper experiments
+- [`src/create_topo`](https://github.com/msakarvadia/distributed_ml/tree/main/src/create_topo) directory for all topology creation scripts (several scripts for generating differen types of topologies)
+- [`src/create_topo/create_topologies.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/create_topo/create_topologies.py) example topologies
+- [`src/create_topo/backdoor_topo.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/create_topo/backdoor_topo.py) All topologies that we used in official paper experiments
 
 ## Simple Decentralized learning demo
 
-- [`decentralized_main.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/decentralized_main.py) script to run a single configurable decentralized trianing experiment for a single topology
+- [`src/experiments/decentralized_main.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/decentralized_main.py) script to run a single configurable decentralized trianing experiment for a single topology
 How to configure Parsl:
   - We provide a tested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L168) for parallelizing your workflow across a single [Aurora](https://www.alcf.anl.gov/aurora) node.
   - We provide an untested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L194) for parallelizing your workflow across a single [Polaris](https://www.alcf.anl.gov/polaris) node.
@@ -28,7 +28,7 @@ python decentralized_main.py # to run w/ default args
 
 ## Run All Paper Experiments
 
-- [`bd_scheduler.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/bd_scheduler.py) script runs every single experiment in the paper
+- [`src/experiments/bd_scheduler.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/bd_scheduler.py) script runs every single experiment in the paper
   - This code relies on 2 levels of parallelization:
     - Parallelization within experiments:
       - We provide a tested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L168) for parallelizing individual experiments across a single [Aurora](https://www.alcf.anl.gov/aurora) node.

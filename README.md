@@ -19,12 +19,30 @@ How to configure Parsl:
   - We provide an untested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L194) for parallelizing your workflow across a single [Polaris](https://www.alcf.anl.gov/polaris) node.
 How to run:
 ```
+# set up and activate python environment
 # first configure your parsl config in parsl_setup.py
 python ../create_topo/create_topologies.py # create and save some topologies
 python decentralized_main.py --help # to see all argument options
 python decentralized_main.py # to run w/ default args
 ```
 
+## Run All Paper Experiments
+
+- [`bd_scheduler.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/bd_scheduler.py) script runs every single experiment in the paper
+  - This code relies on 2 levels of parallelization:
+    - Parallelization within experiments:
+      - We provide a tested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L168) for parallelizing individual experiments across a single [Aurora](https://www.alcf.anl.gov/aurora) node.
+      - We provide an untested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L194) for parallelizing individual experiments across a single [Polaris](https://www.alcf.anl.gov/polaris) node.
+    - Parallelization across experiments:
+      - We provide a tested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L144) for parallelizing your workflow across multiple [Aurora](https://www.alcf.anl.gov/aurora) nodes.
+      - We provide an untested [example parsl config](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py#L119) for parallelizing your workflow across multiple [Polaris](https://www.alcf.anl.gov/polaris) nodes.
+How to run:
+```
+# first configure your parsl config in parsl_setup.py
+# set up and activate python environment
+# first configure your parsl config in parsl_setup.py
+python bd_scheduler.py --rounds 40 
+```
 
 
 ## Installation

@@ -3,6 +3,8 @@
 Decentralized learning enables collaborative training of models across naturally distributed data without centralized coordination or maintenance of a global model. Instead, devices are organized in arbitrary communication topologies, in which they can only communicate with neighboring devices. Each device maintains its own local model by training on its local data and integrating new knowledge via model aggregation with neighbors. Therefore, knowledge is propagated across the topology via successive aggregation rounds. We study, in particular, the propagation of out-of-distribution (OOD) knowledge. We find that popular decentralized learning algorithms struggle to propagate OOD knowledge effectively to all devices. Further, we find that both the location of OOD data within a topology, and the topology itself, significantly impact OOD knowledge propagation. We then propose topology-aware aggregation strategies to accelerate (OOD) knowledge propagation across devices. These strategies improve OOD data accuracy, compared to topology-unaware baselines, by 123% on average across models in a
 topology.
 
+<img width="875" alt="overview figure" src="https://github.com/user-attachments/assets/8c96adde-4e4b-4cde-90ea-a07490497e82" />
+
 This repo is a test Bed for Prototyping Fully-Distributed ML Experiments. The provided expeirmental scripts accompany the paper.
 
 

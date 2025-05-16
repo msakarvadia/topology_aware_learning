@@ -10,7 +10,7 @@ This repo is a test Bed for Prototyping Fully-Distributed ML Experiments. The pr
 
 
 ### Note:
-**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in untested support for running on nodes w/ Nvidia GPU's. We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
+**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in support for running on nodes w/ Nvidia GPU's (tested on the Polaris supercomputer). We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
 
 ## Generate Topologies
 
@@ -30,7 +30,7 @@ How to run:
 # first configure your parsl config in parsl_setup.py
 python ../create_topo/create_topologies.py # create and save some topologies
 python decentralized_main.py --help # to see all argument options
-python decentralized_main.py # to run w/ default args
+python decentralized_main.py # to run w/ default args on Aurora (for polaris set this following flag: --parsl_executor polaris_experiment_per_node)
 ```
 
 ## Run All Paper Experiments

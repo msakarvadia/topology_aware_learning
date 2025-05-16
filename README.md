@@ -30,7 +30,7 @@ How to run:
 # first configure your parsl config in parsl_setup.py
 python ../create_topo/create_topologies.py # create and save some topologies
 python decentralized_main.py --help # to see all argument options
-python decentralized_main.py # to run w/ default args
+python decentralized_main.py # to run w/ default args on Aurora (for polaris set this following flag: --parsl_executor polaris_experiment_per_node)
 ```
 
 ## Run All Paper Experiments

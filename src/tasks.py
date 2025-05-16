@@ -55,24 +55,6 @@ def no_local_train(
     beta_2: float = 0.98,
     *neighbor_futures: list[(list[Result], DecentralClient)],
 ) -> tuple(list[Result], DecentralClient):
-    """Local training job.
-
-    Args:
-        client: The client to train.
-        round_idx: The current round number.
-        epochs: Number of epochs.
-        batch_size: Batch size when iterating through data.
-        lr: Learning rate.
-        device: Backend hardware to train with.
-
-    Returns:
-        List of results that record the training history.
-    """
-    # from datetime import datetime
-    # import torch
-    # from torch.utils.data import DataLoader
-    # from torch.nn import functional as F  # noqa: N812
-
     # NOTE(MS): assign device once task has been fired off, rather than before via a function arg
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("xpu" if torch.xpu.is_available() else device)
@@ -85,20 +67,64 @@ def no_local_train(
 
     client = future[1]
     results: list[Result] = []
-    client.model.to(device)
     client.model.train()
-    optimizer = torch.optim.SGD(client.model.parameters(), lr=lr, momentum=momentum)
-
-    if intel_xpu_count > 0:
-        # TODO (MS): add in criteion
-        # criterion = criterion.to(device)
-        model, optimizer = ipex.optimize(model, optimizer=optimizer)
+    client.model = client.model.to(device)
+    if optimizer == "sgd":
+        optimizer = torch.optim.SGD(
+            client.model.parameters(),
+            lr=lr,
+            momentum=momentum,
+            weight_decay=weight_decay,
+        )
+    if optimizer == "adam":
+        optimizer = torch.optim.Adam(
+            client.model.parameters(), lr=lr, weight_decay=weight_decay
+        )
+    if optimizer == "adamw":
+        optimizer = torch.optim.AdamW(
+            client.model.parameters(),
+            lr=lr,
+            weight_decay=weight_decay,
+            betas=(beta_1, beta_2),
+        )
     loader = DataLoader(client.train_data, batch_size=batch_size)
-
+    avg_time_per_epoch = 0
     for epoch in range(epochs):
+        start_time = time.time()
+
         epoch_results = []
-        n_batches = 1
         running_loss = 0.0
+        running_perp = 0.0
+        running_acc = 0.0
+
+        client.model.train()
+        client.model = client.model.to(device)
+        if intel_xpu_count > 0:
+            client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
+
+        for batch_idx, batch in enumerate(loader):
+            inputs, targets = batch
+            inputs, targets = inputs.to(device), targets.to(device)
+            if "tiny_mem" in dataset_name:
+                model_output = client.model(inputs, labels=inputs)
+                loss = model_output.loss
+                running_perp += torch.exp(loss).cpu().item()
+                running_acc += accuracy(inputs, model_output.logits)
+
+            else:
+                preds = client.model(inputs)
+                loss = F.cross_entropy(preds, targets)
+
+            running_loss += loss.item()
+
+            loss.backward()
+            optimizer.step()
+            """
+            optimizer.zero_grad()
+            """
+
+        end_time = time.time()
+        avg_time_per_epoch += end_time - start_time
 
         # Test client on local test set TODO
 
@@ -108,26 +134,46 @@ def no_local_train(
             client.global_test_data,
             round_idx,
             batch_size,
-            # device,
             seed,
             dataset,
         )
 
+        if backdoor:
+            # Test client on global backdoor test set
+            global_backdoor_test_result = test_model(
+                client.model,
+                client.global_backdoor_test_data,
+                round_idx,
+                batch_size,
+                seed,
+                dataset,
+            )
+
+            global_test_result = global_test_result | {
+                "backdoor_acc": global_backdoor_test_result["test_acc"],
+                "backdoor_loss": global_backdoor_test_result["test_loss"],
+            }
         epoch_results.append(
             {
-                "time": datetime.now(),
+                "avg_time_per_epoch": avg_time_per_epoch / epochs,
+                # "avg_time_per_epoch": (start_time - end_time).total_seconds(),
+                "date_time": datetime.now(),
                 "client_idx": client.idx,
                 "neighbors": client.neighbors,
                 "round_idx": round_idx,
                 "epoch": epoch,
                 "data_size": len(client.train_data),
-                "train_loss": running_loss / n_batches,
+                "train_loss": running_loss / len(loader),
+                "train_perp": running_perp / len(loader),
+                "train_acc": running_acc / len(loader),
             }
             | global_test_result,
         )
 
         results.extend(epoch_results)
 
+    # need to send model back to cpu since all coordination is happening from a non-gpu node
+    client.model.to("cpu")
     return results, client
 
 

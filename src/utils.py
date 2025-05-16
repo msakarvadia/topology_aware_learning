@@ -2,10 +2,18 @@ from concurrent.futures import as_completed
 import pathlib
 import torch
 import pandas as pd
+import logging
+from typing import Optional
 
 from src.types import Result
 from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import BaseScheduler
+
+DEFAULT_FORMAT = (
+    "%(created)f %(asctime)s %(processName)s-%(process)d "
+    "%(threadName)s-%(thread)d %(name)s:%(lineno)d %(funcName)s %(levelname)s: "
+    "%(message)s"
+)
 
 
 def save_checkpoint(
@@ -85,3 +93,39 @@ def process_futures_and_ckpt(
     client_df.to_csv(f"{run_dir}/client_stats.csv")
 
     return
+
+
+def set_file_logger(
+    filename: str,
+    name: str = "parsl",
+    level: int = logging.DEBUG,
+    format_string: Optional[str] = None,
+) -> logging.Logger:
+    """Add a file log handler.
+
+    Args:
+        - filename (string): Name of the file to write logs to
+        - name (string): Logger name
+        - level (logging.LEVEL): Set the logging level.
+        - format_string (string): Set the format string
+
+    Returns:
+       - logger for specified name
+    """
+    if format_string is None:
+        format_string = DEFAULT_FORMAT
+
+    logger = logging.getLogger(name)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.FileHandler(filename)
+    handler.setLevel(level)
+    formatter = logging.Formatter(format_string, datefmt="%Y-%m-%d %H:%M:%S")
+    handler.setFormatter(formatter)
+    logger.addHandler(handler)
+
+    # see note in set_stream_logger for notes about logging
+    # concurrent.futures
+    futures_logger = logging.getLogger("concurrent.futures")
+    futures_logger.addHandler(handler)
+
+    return logger

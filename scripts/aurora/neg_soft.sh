@@ -5,7 +5,7 @@
 #PBS -l filesystems=home:flare
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N bd_scheduler
+#PBS -N neg_soft
 #PBS -r y 
 
 cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/
@@ -16,4 +16,4 @@ cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 
 pwd
 
-python bd_scheduler.py --rounds 40 
+python neg_soft.py --rounds 40 

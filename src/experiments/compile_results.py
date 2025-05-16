@@ -4,6 +4,7 @@ import os
 from os import listdir
 from os.path import isfile, join
 import pandas as pd
+import argparse
 
 
 def get_topo_names(seed=0):
@@ -85,8 +86,23 @@ def get_placements_and_graph(topo_dict):
     return placement, g
 
 
-rootdir = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/bd_scheduler_logs"
-results_loc = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/figs/results"
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--rootdir",
+    type=str,
+    default="./bd_scheduler_logs",
+    help="directory path to where all raw experimental results are stored",
+)
+parser.add_argument(
+    "--results_loc",
+    type=str,
+    default="../../figs/results",
+    help="directory path to where all all compiled results are stored",
+)
+args = parser.parse_args()
+
+# rootdir = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/bd_scheduler_logs"
+# results_loc = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/figs/results"
 
 for data in [
     "mnist",
@@ -157,7 +173,7 @@ for data in [
                                                 if agg_strategy == "unweighted_fl":
                                                     if node != placement[0]:
                                                         continue
-                                                stats_path = f"{rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_{node}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
+                                                stats_path = f"{args.rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_{node}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
                                                 experiment_dir = stats_path
                                                 checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                                                 stats_path = (
@@ -252,6 +268,6 @@ for data in [
                 all_client_results = pd.concat(dfs)
                 # results.append(all_client_results
                 print(csv_name, all_client_results.shape)
-                all_client_results.to_csv(f"{results_loc}/{csv_name}")
+                all_client_results.to_csv(f"{args.results_loc}/{csv_name}")
             else:
                 print("NO RESULTS: ", csv_name)

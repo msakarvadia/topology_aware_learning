@@ -10,7 +10,7 @@ This repo is a test Bed for Prototyping Fully-Distributed ML Experiments. The pr
 
 
 ### Note:
-**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in untested support for running on nodes w/ Nvidia GPU's. We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
+**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in support for running on nodes w/ Nvidia GPU's (tested on the Polaris supercomputer). We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
 
 ## Generate Topologies
 

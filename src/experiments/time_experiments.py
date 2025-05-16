@@ -45,7 +45,12 @@ if __name__ == "__main__":
         ],
         help="Type of parsl executor to use. experiment_per_node=Aurora, polaris_experiment_per_node=Polaris",
     )
-
+    parser.add_argument(
+        "--time_trial_path",
+        type=str,
+        default="./experiment_time_trials.csv",
+        help="directory path to where all raw experimental results are stored",
+    )
     args = parser.parse_args()
 
     ######### Parsl
@@ -61,9 +66,9 @@ if __name__ == "__main__":
 
     df = pd.DataFrame(columns=["num_clients", "time", "data", "trial"])
     # load dataframe
-    time_trial_path = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/experiment_time_trials.csv"
-    if os.path.exists(time_trial_path):
-        df = pd.read_csv(time_trial_path)
+    # time_trial_path = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/experiment_time_trials.csv"
+    if os.path.exists(args.time_trial_path):
+        df = pd.read_csv(args.time_trial_path)
         df = df.loc[:, ~df.columns.str.contains("^Unnamed")]
     for seed in [0, 1, 2]:
         paths, nodes = mk_timing_topos(num_nodes=1, seed=seed)
@@ -184,7 +189,7 @@ if __name__ == "__main__":
                                         seed,
                                     ]
                                     # save dataframe
-                                    df.to_csv(time_trial_path)
+                                    df.to_csv(args.time_trial_path)
                                 except Exception as e:
                                     print(f"Failing w/ exception: {e}")
                                     print(args)

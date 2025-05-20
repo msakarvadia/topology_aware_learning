@@ -1,5 +1,7 @@
 # Topology-Aware Knowledge Propagation in Decentralized Learning
 
+[`Link to paper`](https://arxiv.org/abs/2505.11760)
+
 Decentralized learning enables collaborative training of models across naturally distributed data without centralized coordination or maintenance of a global model. Instead, devices are organized in arbitrary communication topologies, in which they can only communicate with neighboring devices. Each device maintains its own local model by training on its local data and integrating new knowledge via model aggregation with neighbors. Therefore, knowledge is propagated across the topology via successive aggregation rounds. We study, in particular, the propagation of out-of-distribution (OOD) knowledge. We find that popular decentralized learning algorithms struggle to propagate OOD knowledge effectively to all devices. Further, we find that both the location of OOD data within a topology, and the topology itself, significantly impact OOD knowledge propagation. We then propose topology-aware aggregation strategies to accelerate (OOD) knowledge propagation across devices. These strategies improve OOD data accuracy, compared to topology-unaware baselines, by 123% on average across models in a
 topology.
 
@@ -81,10 +83,14 @@ Once these steps are done, you just need to add files to be committed and pushed
 
 The above animation is an example of a fully-connected topology. Nodes are models and edges are commuincation links between models. Each model is given a subset of the MNIST dataset to train over. We visual the accuracies of the "2" label over training time.
 
-## Citation
-
 Please cite this work as:
 
 ```bibtex
-...
+@article{sakarvadia2025topology,
+      title={Topology-Aware Knowledge Propagation in Decentralized Learning}, 
+      author={Mansi Sakarvadia and Nathaniel Hudson and Tian Li and Ian Foster and Kyle Chard},
+      year={2025},
+      eprint={2505.11760},
+      url={https://arxiv.org/abs/2505.11760}, 
+}
 ```

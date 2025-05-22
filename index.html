@@ -179,7 +179,19 @@ DecentralizedLearning(M, S):
 		<h2 class="title is-3">How can we accelerate knowledge propagation?</h2>
 		<div class="content has-text-justified">
 			<p>
-			...
+			Existing decentralized learning strategies struggle to propagate the OOD knowledge. Further, we find that both the topology and location of data within the topology impacts OOD knowledge propagation—devices in non-central locations, for example, exhibit poor knowledge propagation.
+			<br><br>
+			To address the variability of knowledge propagation due to topology, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Traditional aggregation strategies fail to account for a node’s (non)beneficial location in a topology:
+			<ol>
+				<li><b>Unweighted:</b> Models in a neighborhood are equally weighted.</li>
+				<li><b>Weighted:</b> Models in a neighborhood are weighted by number of training data points.</li>
+				<li><b>Random:</b> Models in a neighborhood are assigned random weighted from a uniform distribution.</li>
+				<li><b>FL:</b> Assume fully-connected topology; models are uniformly weighted.</li>
+			</ol>
+
+			<br><br>
+			Topology-aware aggregation strategies instead allow each device to account for its own and its neighbors’ location in a topology when aggregating models. For example, devices with many neighbors are well positioned to act as information hubs: they can both ingest and disperse knowledge to their many neighbors:
+			<br><br>
 			</p>
 		</div>
 

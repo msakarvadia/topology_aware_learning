@@ -158,11 +158,8 @@ DecentralizedLearning():
 			m<sub>i</sub><sup>t + 1/2</sup> &larr; LocalTrain(m<sub>i</sub><sup>t</sup>)
 		for m<sub>i</sub> &isin; M do:
 			N<sub>i</sub> &larr; {neighbors(m<sub>i</sub><sup>t + 1/2</sup>) &cup; m<sub>i</sub><sup>t + 1/2</sup>}
-	
 			C<sub>i</sub> &larr; GetAggregationCoeffs(N<sub>i</sub>, S) # get aggregation coefficients for models in device i's neighborhood
-
 			m<sub>i</sub><sup>t + 1/2</sup> &larr; &sum;<sub>j&isin;N<sub>i</sub> </sub> C<sub>i,j</sub>m<sub>j</sub><sup>t + 1/2</sup>
-
 			</code></pre>
 		</div>
 

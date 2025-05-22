@@ -186,14 +186,12 @@ DecentralizedLearning(M, S):
 				<li><b>Random:</b> Models in a neighborhood are assigned random weighted from a uniform distribution.</li>
 				<li><b>FL:</b> Assume fully-connected topology; models are uniformly weighted.</li>
 			</ol>
-			<br><br>
-To use variation in topology to accelerate of knowledge propagation, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Topology-aware aggregation strategies allow each device to account for its own and its neighbors’ location in a topology when aggregating models:
+To use variation in topology to our advantage to accelerate of knowledge propagation, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Topology-aware aggregation strategies allow each device to account for its own and its neighbors’ location in a topology when aggregating models:
 			<ol>
 				<li><b>Degree:</b> Models in a neighborhood are weighted by the number of edges their respective nodes have.</li>
 				<li><b>Betweenness:</b> Models in a neighborhood are weighted by the <a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html">"betweenness"</a> score of their respective nodes.</li>
 			</ol>
 			<img src="static/images/aggregation_strategy.png" alt="Topology Aware vs. Unaware Aggregation."/></img>
-			<br><br>
 			Numerous network science metrics can be used to quantify a node’s location within a topology: some metrics quantify a node’s location with respect to its neighborhood (local) or the entire topology (global). We choose to study Degree (local) as it measures how many neighbors a node has, and by proxy, how well positioned a node is to spread knowledge to its neighbors. We also choose Betweenness (global) as it measures how often a node lies on the shortest path between all pairs of nodes in a topology, and by proxy, how well positioned a node is to bridge the number of hops needed for knowledge to travel between nodes in the topology.
 			<br><br>
 			</p>

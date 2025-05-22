@@ -179,18 +179,22 @@ DecentralizedLearning(M, S):
 		<h2 class="title is-3">How can we accelerate knowledge propagation?</h2>
 		<div class="content has-text-justified">
 			<p>
-			Existing decentralized learning strategies struggle to propagate the OOD knowledge. Further, we find that both the topology and location of data within the topology impacts OOD knowledge propagation—devices in non-central locations, for example, exhibit poor knowledge propagation.
-			<br><br>
-			To address the variability of knowledge propagation due to topology, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Traditional aggregation strategies fail to account for a node’s (non)beneficial location in a topology:
+			Traditional decentralized learning strategies struggle to propagate the OOD knowledge. We hypothesize that this may be because they fail to account for a node’s (non)beneficial location in a topology:
 			<ol>
 				<li><b>Unweighted:</b> Models in a neighborhood are equally weighted.</li>
 				<li><b>Weighted:</b> Models in a neighborhood are weighted by number of training data points.</li>
 				<li><b>Random:</b> Models in a neighborhood are assigned random weighted from a uniform distribution.</li>
 				<li><b>FL:</b> Assume fully-connected topology; models are uniformly weighted.</li>
 			</ol>
-
 			<br><br>
-			Topology-aware aggregation strategies instead allow each device to account for its own and its neighbors’ location in a topology when aggregating models. For example, devices with many neighbors are well positioned to act as information hubs: they can both ingest and disperse knowledge to their many neighbors:
+To use variation in topology to accelerate of knowledge propagation, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Topology-aware aggregation strategies allow each device to account for its own and its neighbors’ location in a topology when aggregating models:
+			<ol>
+				<li><b>Degree:</b> Models in a neighborhood are weighted by the number of edges their respective nodes have.</li>
+				<li><b>Betweenness:</b> Models in a neighborhood are weighted by the <a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html">"betweenness"</a> score of their respective nodes.</li>
+			</ol>
+			<img src="static/images/aggregation_strategy.png" alt="Topology Aware vs. Unaware Aggregation."/></img>
+			<br><br>
+			Numerous network science metrics can be used to quantify a node’s location within a topology: some metrics quantify a node’s location with respect to its neighborhood (local) or the entire topology (global). We choose to study Degree (local) as it measures how many neighbors a node has, and by proxy, how well positioned a node is to spread knowledge to its neighbors. We also choose Betweenness (global) as it measures how often a node lies on the shortest path between all pairs of nodes in a topology, and by proxy, how well positioned a node is to bridge the number of hops needed for knowledge to travel between nodes in the topology.
 			<br><br>
 			</p>
 		</div>

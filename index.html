@@ -140,8 +140,22 @@
 		<h2 class="title is-3">What is decentralized learning?</h2>
 		<div class="content has-text-justified">
 			<p>
-			...
+			Most machine learning training data are generated, collected, and sensed from <b>decentralized</b> sources: Internet-of-Things, edge/fog/cloudlet computing systems, sensor networks, smart grids, and smart transportation networks. Because most data are naturally decentralized, a question arises:<i>How do we train models across decentralized data?</i>
+			<br><br>
+			<b>Decentralized Learning</b> Decentralized learning enables collaborative learning across devices without creating a single global model or requiring that data be centralized. Instead, each device maintains its model by training over local data and integrating additional (non-local) knowledge by periodically receiving neighboring devices’ models and aggregating them with its local model. Devices are organized in a flexible topology in which nodes represent devices and edges/links represent communication channels.  Devices can be located at data generation sites, with communication channels between devices dependent on factors like physical locality, administrative connections, and privacy concerns.
 			</p>
+			<pre><code>
+argument descriptions:
+	M: set of models in topology
+	S: aggregation strategy
+DecentralizedLearning():
+	for m<sub>i</sub> &isin; M do:
+		Initialize m<sub>i</sub><sup>0</sup> # model at device i
+		Initialize x<sub>i</sub> # data at device i
+	
+	
+
+			</code></pre>
 		</div>
 
 		<h2 class="title is-3">What is knowledge propagation?</h2>
@@ -151,7 +165,7 @@
 			</p>
 		</div>
 
-		<h2 class="title is-3">Topology-Aware Aggregation Strategies</h2>
+		<h2 class="title is-3">How can we accelerate knowledge propagation?</h2>
 		<div class="content has-text-justified">
 			<p>
 			...

@@ -218,7 +218,7 @@ To use variation in topology to our advantage to accelerate of knowledge propaga
 		<h2 class="title is-3">Impact of Topology on Knowledge Propagation</h2>
 		<div class="content has-text-justified">
 			<p>
-			We study the impact of network topology on OOD data propagation from the perspective of topology degree, modularity, and number of nodes. In the figure below, we study learning over the CIFAR10 dataset.
+			We study the impact of network topology on OOD data propagation from the perspective of topology degree, modularity, and number of nodes. <b>Topology-aware aggregation strategies outperform topology-unaware strategies in a diverse set of topologies.</b> In the figure below, we study learning over the CIFAR10 dataset.
 			<br><br>
 			<img src="static/images/cifar10_topo_impact.png" alt="Impact of data placement."/></img>
 			</p>
@@ -227,7 +227,7 @@ To use variation in topology to our advantage to accelerate of knowledge propaga
 			To study the impact of <b>modularity</b>, we study a set of Stochastic-Block (SB) topologies each with 33 nodes and varying modularity. SB commonly models topologies with modular sub-communities in fields such as social network analysis. We find that as modularity decreases, OOD data propagates futher in a topology (see below).
 			<br><br>
 			<img src="static/images/cifar10_modularity_impact.png" alt="Impact of data placement."/></img>
-
+			To study impact of <b>node count</b>, we study both  Barabási-Albert (BA) and Watts-Strogatz (WS) topologies. While BA more realistically model many real-world phenomena, WS also generates topologies with small-world properties. However, unlike BA, WS topologies do not have a power law degree distribution observed in many real-world networks. We find that While node count does not seem to impact knowledge propagation for topology-aware strategies in BA topologies, it negatively affects knowledge propagation for topology-unaware strategies. For WS topologies, however, both topology-aware and -unaware strategies are negatively impacted by node count. We explain this as the degree distribution in BA topologies follows a power-law distribution so the two topology-aware metrics we studied (degree and betweenness) can both successfully disambiguate devices with different locations; WS topologies, however, have a more uniform degree distribution and therefore topology-aware metrics do not differ significantly in their aggregation coefficient assignment compared to topology-unaware metrics.
 			</p>
 		</div>
 

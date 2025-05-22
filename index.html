@@ -148,13 +148,16 @@
 argument descriptions:
 	M: set of models in topology
 	S: aggregation strategy
+	Rounds: number of communication rounds between devices
 DecentralizedLearning():
 	for m<sub>i</sub> &isin; M do:
 		Initialize m<sub>i</sub><sup>0</sup> # model at device i
 		Initialize x<sub>i</sub> # data at device i
 	for t &isin; Rounds do:
 		for m<sub>i</sub> &isin; M do:
-			m<sub>i</sub><sup>t + 1/2</sup> &larr; LocalTrain(m<sub>i</sub><sup>t</sup> 
+			m<sub>i</sub><sup>t + 1/2</sup> &larr; LocalTrain(m<sub>i</sub><sup>t</sup>)
+		for m<sub>i</sub> &isin; M do:
+			N<sub>i</sub> &larr; {neighbors(m<sub>i</sub><sup>t + 1/2</sup>) &cup; m<sub>i</sub><sup>t + 1/2</sup>}
 	
 	
 

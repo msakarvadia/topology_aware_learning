@@ -140,9 +140,9 @@
 		<h2 class="title is-3">What is decentralized learning?</h2>
 		<div class="content has-text-justified">
 			<p>
-			Most machine learning training data are generated, collected, and sensed from <b>decentralized</b> sources: Internet-of-Things, edge/fog/cloudlet computing systems, sensor networks, smart grids, and smart transportation networks. Because most data are naturally decentralized, a question arises:<i>How do we train models across decentralized data?</i>
+			Most machine learning training data are generated, collected, and sensed from <b>decentralized</b> sources: Internet-of-Things, edge/fog/cloudlet computing systems, sensor networks, smart grids, and smart transportation networks. Because most data are naturally decentralized, a question arises: <i>How do we train models across decentralized data?</i>
 			<br><br>
-			<b>Decentralized Learning</b> Decentralized learning enables collaborative learning across devices without creating a single global model or requiring that data be centralized. Instead, each device maintains its model by training over local data and integrating additional (non-local) knowledge by periodically receiving neighboring devices’ models and aggregating them with its local model. Devices are organized in a flexible topology in which nodes represent devices and edges/links represent communication channels.  Devices can be located at data generation sites, with communication channels between devices dependent on factors like physical locality, administrative connections, and privacy concerns.
+			<b>Decentralized Learning</b> enables collaborative learning across decentralized data without creating a single global model or requiring that data be centralized. Instead, training devices are located at/near data generation sites. Each device maintains its model by training over local data and integrating additional (non-local) knowledge by periodically receiving neighboring devices’ models and aggregating them with its local model. Devices are organized in a flexible topology in which nodes represent devices and edges/links represent communication channels. Communication channels between devices can be a function offactors like physical locality, administrative connections, and privacy concerns.
 			</p>
 			<pre><code>
 argument descriptions:
@@ -152,6 +152,9 @@ DecentralizedLearning():
 	for m<sub>i</sub> &isin; M do:
 		Initialize m<sub>i</sub><sup>0</sup> # model at device i
 		Initialize x<sub>i</sub> # data at device i
+	for round &isin; Rounds do:
+		for m<sub>i</sub> &isin; M do:
+
 	
 	
 

@@ -159,7 +159,7 @@ DecentralizedLearning():
 		for m<sub>i</sub> &isin; M do:
 			N<sub>i</sub> &larr; {neighbors(m<sub>i</sub><sup>t + 1/2</sup>) &cup; m<sub>i</sub><sup>t + 1/2</sup>} # models in device i's neighborhood
 			C<sub>i</sub> &larr; GetAggregationCoeffs(N<sub>i</sub>, S) # aggregation coefficients for models in neighborhood
-			m<sub>i</sub><sup>t + 1</sup> &larr; &sum;<sub>j&isin;N<sub>i</sub> </sub>C<sub>i,j</sub> * m<sub>j</sub><sup>t + 1/2</sup>
+			m<sub>i</sub><sup>t + 1</sup> &larr; &sum;<sub>j&isin;N<sub>i</sub> </sub>C<sub>i,j</sub> * m<sub>j</sub><sup>t + 1/2</sup> # weighted average of models in neighborhood
 			</code></pre>
 		</div>
 

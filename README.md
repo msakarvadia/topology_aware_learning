@@ -58,8 +58,8 @@ python bd_scheduler.py --rounds 40
 Requirements:
 - `python >=3.7,<3.11`
 ```bash
-git clone https://github.com/msakarvadia/distributed_ml.git
-cd distributed_ml
+git clone https://github.com/msakarvadia/topology_aware_learning.git
+cd topology_aware_learning
 conda create -p env python==3.10
 conda activate env
 pip install -r requirements.txt

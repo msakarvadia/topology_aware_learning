@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <!-- Meta tags for social media banners, these should be filled in appropriatly as they are your "business card" -->
+  <!-- Replace the content tag with appropriate information -->
+  <meta name="description" content="Topology-Aware Knowledge Propagation in Decentralized Learning">
+  <meta property="og:title" content="Topology-Aware Knowledge Propagation in Decentralized Learning"/>
+  <meta property="og:description" content="Topology-Aware Knowledge Propagation in Decentralized Learning"/>
+  <meta property="og:url" content="https://mansisak.com/topology_aware_learning/"/>
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X630-->
+  <meta property="og:image" content="static/image/overview_fig.png" />
+  <meta property="og:image:width" content="1200"/>
+  <meta property="og:image:height" content="630"/>
+
+
+  <meta name="twitter:title" content="Topology-Aware Knowledge Propagation in Decentralized Learning">
+  <meta name="twitter:description" content="Topology-Aware Knowledge Propagation in Decentralized Learning">
+  <!-- Path to banner image, should be in the path listed below. Optimal dimenssions are 1200X600-->
+  <meta name="twitter:image" content="static/images/overview_fig.png">
+  <meta name="twitter:card" content="Topology-Aware Knowledge Propagation in Decentralized Learning">
+  <!-- Keywords for your paper to be indexed by-->
+  <meta name="keywords" content="Decentralized Learning, Machine Learning">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+
+  <title>Topology Aware Decentralized Learning</title>
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+  rel="stylesheet">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/bulma-carousel.min.css">
+  <link rel="stylesheet" href="static/css/bulma-slider.min.css">
+  <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+  href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://documentcloud.adobe.com/view-sdk/main.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script src="static/js/bulma-carousel.min.js"></script>
+  <script src="static/js/bulma-slider.min.js"></script>
+  <script src="static/js/index.js"></script>
+</head>
+<body>
+
+
+  <section class="hero">
+    <div class="hero-body">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered">
+          <div class="column has-text-centered">
+            <h1 class="title is-1 publication-title">Topology-Aware Knowledge Propagation in Decentralized Learning</h1>
+            <div class="is-size-5 publication-authors">
+              <!-- Paper authors -->
+              <span class="author-block">
+                <a href="https://mansisak.com/" target="_blank">Mansi Sakarvadia</a>,</span>
+                <span class="author-block">
+                  <a href="https://nathaniel-hudson.github.io/" target="_blank">Nathaniel Hudson</a>,</span>
+                  <span class="author-block">
+                  <a href="https://litian96.github.io/" target="_blank">Tian Li</a>,</span>
+                  <span class="author-block">
+                  <a href="https://computerscience.uchicago.edu/people/ian-foster/" target="_blank">Ian Foster</a>,</span>
+                  <span class="author-block">
+                    <a href="https://kylechard.com/" target="_blank">Kyle Chard</a>
+                  </span>
+                  </div>
+
+                  <div class="is-size-5 publication-authors">
+                    <span class="author-block">University of Chicago</span>
+                  </div>
+
+                  <div class="column has-text-centered">
+                    <div class="publication-links">
+
+                  <!-- Github link -->
+                  <span class="link-block">
+                    <a href="https://github.com/msakarvadia/topology_aware_learning" target="_blank"
+                    class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon">
+                      <i class="fab fa-github"></i>
+                    </span>
+                    <span>Code</span>
+                  </a>
+                </span>
+
+                <!-- ArXiv abstract Link -->
+                <span class="link-block">
+                  <a href="https://arxiv.org/abs/2505.11760" target="_blank"
+                  class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                    <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+		<!-- Teaser video-->
+		<section class="hero teaser">
+			<div class="container is-max-desktop">
+				<!-- Your image here -->
+				<img src="static/images/overview_fig.png" alt="TOPOLOGY AWARE vs. UNAWARE DECENTRALIZED LEARNING"/>
+				<h2 class="subtitle has-text-centered">Topology-(un)aware aggregation for IID vs. OOD knowledge propagation. CIFAR10 is distributed across 64 nodes: OOD data placed on node with the fourth highest degree. Aggregation strategy for topology-unaware is Unweighted and topology-aware is Degree. Green indicates higher test accuracy on the respective dataset after 40 rounds of training; white indicates the opposite. Our proposed topology-aware method (right) achieves higher test OOD accuracies without sacrificing IID accuracies.
+				</h2>
+				</img>
+			</div>
+		</section>
+		<!-- End teaser video -->
+
+<!-- Paper abstract -->
+<section class="section hero is-light">
+  <div class="container is-max-desktop">
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+	  Decentralized learning enables collaborative training of models across naturally distributed data without centralized coordination or maintenance of a global model. Instead, devices are organized in arbitrary communication topologies, in which they can only communicate with neighboring devices. Each device maintains its own local model by training on its local data and integrating new knowledge via model aggregation with neighbors. Therefore, knowledge is propagated across the topology via successive aggregation rounds. We study, in particular, the propagation of out-of-distribution (OOD) knowledge. We find that popular decentralized learning algorithms struggle to propagate OOD knowledge effectively to all devices. Further, we find that both the location of OOD data within a topology, and the topology itself, significantly impact OOD knowledge propagation. We then propose topology-aware aggregation strategies to accelerate (OOD) knowledge propagation across devices. These strategies improve OOD data accuracy, compared to topology-unaware baselines, by 123% on average across models in a topology.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- End paper abstract -->
+
+<!--Paper Discussion-->
+<section class="section">
+	<div class="container is-max-desktop">
+
+		<h2 class="title is-3">What is decentralized learning?</h2>
+		<div class="content has-text-justified">
+			<p>
+			Most machine learning training data are generated, collected, and sensed from <b>decentralized</b> sources: Internet-of-Things, edge/fog/cloudlet computing systems, sensor networks, smart grids, and smart transportation networks. Because most data are naturally decentralized, a question arises: <i>How do we train models across decentralized data?</i>
+			<br><br>
+			<b>Decentralized Learning</b> enables collaborative learning across decentralized data without creating a single global model or requiring that data be centralized. Instead, training devices are located at/near data generation sites. Each device maintains its model by training over local data and integrating additional (non-local) knowledge by periodically receiving neighboring devices’ models and aggregating them with its local model. Devices are organized in a flexible topology in which nodes represent devices and edges/links represent communication channels. Communication channels between devices can be a function offactors like physical locality, administrative connections, and privacy concerns.
+			</p>
+			<pre><code>
+argument descriptions:
+	M: set of models in topology
+	S: aggregation strategy
+DecentralizedLearning(M, S):
+	for m<sub>i</sub> &isin; M do:
+		Initialize m<sub>i</sub><sup>0</sup> # model at device i
+		Initialize x<sub>i</sub> # data at device i
+	for t &isin; Rounds do:
+		for m<sub>i</sub> &isin; M do:
+			m<sub>i</sub><sup>t + 1/2</sup> &larr; LocalTrain(m<sub>i</sub><sup>t</sup>)
+		for m<sub>i</sub> &isin; M do:
+			N<sub>i</sub> &larr; {neighbors(m<sub>i</sub><sup>t + 1/2</sup>) &cup; m<sub>i</sub><sup>t + 1/2</sup>} # models in device i's neighborhood
+			C<sub>i</sub> &larr; GetAggregationCoeffs(N<sub>i</sub>, S) # aggregation coefficients for models in neighborhood
+			m<sub>i</sub><sup>t + 1</sup> &larr; &sum;<sub>j&isin;N<sub>i</sub> </sub>C<sub>i,j</sub> * m<sub>j</sub><sup>t + 1/2</sup> # weighted average of models in neighborhood
+			</code></pre>
+		</div>
+
+		<h2 class="title is-3">What is knowledge propagation?</h2>
+		<div class="content has-text-justified">
+			<p>
+			The flexibility afforded by decentralized learning can come at a cost, in particular slower convergence and regional/hyperpersonalized models that lack knowledge from distant devices. To prevent this from happening, we aim for each device-specific model to be performant over the global data distribution across all devices in a topology; device-specific models must be generalizable beyond their local data distribution so that they are performant on out-of-distribution (OOD) inference requests. This is especially challenging in decentralized learning as the only way for device-specific knowledge to <b>propagate</b> in a topology is by “hopping” between devices via successive aggregation rounds.
+			<br><br>
+			Here, we study <b>knowledge propagation</b> in decentralized topologies by asking: <i>How can each device-specific model learn from <b>all</b> data present in a topology, regardless of its location, in as few aggregation rounds as possible?</i> This goal is especially challenging in settings where data are not independently and identically distributed (IID) across devices as devices have no knowledge of how data are distributed globally.
+			<br><br>
+			We study the extreme case in which most data in a topology are IID, with the exception of a single device which contains OOD data. In the figure below, we report average percent difference in test accuracy AUC between IID and OOD data over 40 rounds of training across all devices in a topology; averaged again over 3 realistic 33 device topologies and 3 seeds. OOD data was placed on the node with the fourth highest degree. Lower percent difference indicates that the OOD data did not propagate to as many nodes as the IID data.
+			<br><br>
+			<img src="static/images/knowledge_propagation.png" alt="OOD vs IID knowledge propagation."/></img>
+			<b>Existing decentralized learning strategies (i.e., FL, Unweighted, Weighted, Random) struggle to propagate the OOD knowledge.</b>
+			</p>
+		</div>
+
+		<h2 class="title is-3">How can we accelerate knowledge propagation?</h2>
+		<div class="content has-text-justified">
+			<p>
+			Traditional decentralized learning strategies struggle to propagate the OOD knowledge. We hypothesize that this may be because they fail to account for a node’s (non)beneficial location in a topology:
+			<ol>
+				<li><b>Unweighted:</b> Models in a neighborhood are equally weighted.</li>
+				<li><b>Weighted:</b> Models in a neighborhood are weighted by number of training data points.</li>
+				<li><b>Random:</b> Models in a neighborhood are assigned random weighted from a uniform distribution.</li>
+				<li><b>FL:</b> Assume fully-connected topology; models are uniformly weighted.</li>
+			</ol>
+To use variation in topology to our advantage to accelerate of knowledge propagation, <b>we propose topology-aware aggregation strategies for decentralized learning</b>. Topology-aware aggregation strategies allow each device to account for its own and its neighbors’ location in a topology when aggregating models:
+			<ol start="5">
+				<li><b>Degree:</b> Models in a neighborhood are weighted by the number of edges their respective nodes have.</li>
+				<li><b>Betweenness:</b> Models in a neighborhood are weighted by the <a href="https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.centrality.betweenness_centrality.html">"betweenness"</a> score of their respective nodes.</li>
+			</ol>
+			<img src="static/images/aggregation_strategy.png" alt="Topology Aware vs. Unaware Aggregation."/></img>
+			Numerous network science metrics can be used to quantify a node’s location within a topology: some metrics quantify a node’s location with respect to its neighborhood (local) or the entire topology (global). We choose to study Degree (local) as it measures how many neighbors a node has, and by proxy, how well positioned a node is to spread knowledge to its neighbors. We also choose Betweenness (global) as it measures how often a node lies on the shortest path between all pairs of nodes in a topology, and by proxy, how well positioned a node is to bridge the number of hops needed for knowledge to travel between nodes in the topology.
+			<br><br>
+			</p>
+		</div>
+
+		<h2 class="title is-3">Topology-Aware vs. Topology-Unaware Learning</h2>
+		<div class="content has-text-justified">
+			<p>
+			<b>Topology-aware aggregation strategies (Degree, Betweenness) lead to higher levels of OOD knowledge prorogation for each topology and dataset.</b> In the figure below, OOD data are located on node with highest degree. Green indicates node with OOD data.
+			<br><br>
+			<img src="static/images/topo_aware_v_unaware.png" alt="Topology Aware vs. Unaware Aggregation."/></img>
+			</p>
+		</div>
+
+		<h2 class="title is-3">Impact of Data Placement on Knowledge Propagation</h2>
+		<div class="content has-text-justified">
+			<p>
+			There is a negative relationship between degree of device on which OOD data is located and propagation of OOD data. While this negative trend holds across all aggregation strategies, the topology-aware strategies (Degree, Betweenness) outperform non-topology-aware aggregation strategies (i.e., weighted, unweighted, random and even traditional FL). In the figure below, OOD data location is varied across the four highest degree nodes in each topology (we successively palce the OOD data on nodes with lower degree). 
+			<br><br>
+			<img src="static/images/placement_impact.png" alt="Impact of data placement."/></img>
+			</p>
+		</div>
+
+		<h2 class="title is-3">Impact of Topology on Knowledge Propagation</h2>
+		<div class="content has-text-justified">
+			<p>
+			We study the impact of network topology on OOD data propagation from the perspective of topology degree, modularity, and number of nodes. <b>Topology-aware aggregation strategies outperform topology-unaware strategies in a diverse set of topologies.</b> In the figure below, we study learning over the CIFAR10 dataset.
+			<br><br>
+			<img src="static/images/cifar10_topo_impact.png" alt="Impact of data placement."/></img>
+			</p>
+			To study the impact of <b>degree</b>, we study a set of Barabási-Albert (BA) topologies each with 33 nodes varying degrees parameters. BA are scale-free models often used to model real-world networks such as the internet, citation networks, and social networks. We find that as degree increases, OOD data propagates further in a topology.
+			<br><br>
+			To study the impact of <b>modularity</b>, we study a set of Stochastic-Block (SB) topologies each with 33 nodes and varying modularity. SB commonly models topologies with modular sub-communities in fields such as social network analysis. We find that as modularity decreases, OOD data propagates futher in a topology (see below).
+			<br><br>
+			<img src="static/images/cifar10_modularity_impact.png" alt="Impact of data placement."/></img>
+			To study impact of <b>node count</b>, we study both  Barabási-Albert (BA) and Watts-Strogatz (WS) topologies. While BA more realistically model many real-world phenomena, WS also generates topologies with small-world properties. However, unlike BA, WS topologies do not have a power law degree distribution observed in many real-world networks. We find that While node count does not seem to impact knowledge propagation for topology-aware strategies in BA topologies, it negatively affects knowledge propagation for topology-unaware strategies. For WS topologies, however, both topology-aware and -unaware strategies are negatively impacted by node count. We explain this as the degree distribution in BA topologies follows a power-law distribution so the two topology-aware metrics we studied (degree and betweenness) can both successfully disambiguate devices with different locations; WS topologies, however, have a more uniform degree distribution and therefore topology-aware metrics do not differ significantly in their aggregation coefficient assignment compared to topology-unaware metrics.
+			</p>
+		</div>
+
+		<h2 class="title is-3">Conclusion</h2>
+		<div class="content has-text-justified">
+			<p>
+			Machine learning training data are largely generated, collected, and sensed from decentralized sources. Decentralized learning algorithms enable learning over these naturally decentralized data without centralized coordination; instead, training devices self-organize into communication topologies that arise from real-world constraints (e.g., physical locality, administrative connections, privacy concerns). In decentralized learning, because devices can only communicate with neighboring devices, knowledge propagates via model aggregation between neighbors. We find a critical limitation in existing decentralized learning strategies: they struggle to propagate OOD knowledge to the same extent at IID knowledge. This limitation affects the performance of models that are not able to learn from OOD data present in the topology.
+			<br><br>
+			We find that the propagation of OOD knowledge is greatly impacted by both the location of OOD data in a topology and the topology itself. To address these challenges, we introduce topology-aware decentralized learning strategies that enable reliable propagation of OOD knowledge in arbitrary communication topologies. We demonstrate that our proposed topology-aware aggregation strategies outperform traditional aggregation strategies. We also study the impact of topology node count, modularity, and degree distribution on topology-aware aggregation strategy performance. We show that regardless of how these values are varied, topology-aware methods perform as well as, or better than, traditional aggregation strategies.
+			<br><br>
+			Further details about all experiments and figures discussed in this blog can be found in the main paper. If there are any questions feel free to email the first author for clarification.
+			</p>
+		</div>
+	</div>
+
+</section>
+<!--End Paper Discussion-->
+
+<!--BibTex citation -->
+  <section class="section" id="BibTeX">
+    <div class="container is-max-desktop content">
+      <h2 class="title">BibTeX</h2>
+      <pre><code>
+@article{sakarvadia2025topology,
+      title={Topology-Aware Knowledge Propagation in Decentralized Learning}, 
+      author={Mansi Sakarvadia and Nathaniel Hudson and Tian Li and Ian Foster and Kyle Chard},
+      year={2025},
+      eprint={2505.11760},
+      url={https://arxiv.org/abs/2505.11760}, 
+}
+      </code></pre>
+    </div>
+</section>
+<!--End BibTex citation -->
+
+
+  <footer class="footer">
+  <div class="container">
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            You are free to borrow the source code of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- Statcounter tracking code -->
+  
+<!-- You can add a tracker to track page visits by creating an account at statcounter.com -->
+
+    <!-- End of Statcounter Code -->
+
+  </body>
+  </html>

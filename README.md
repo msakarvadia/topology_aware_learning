@@ -1,5 +1,7 @@
 # Topology-Aware Knowledge Propagation in Decentralized Learning
 
+[`Link to paper`](https://arxiv.org/abs/2505.11760)
+
 Decentralized learning enables collaborative training of models across naturally distributed data without centralized coordination or maintenance of a global model. Instead, devices are organized in arbitrary communication topologies, in which they can only communicate with neighboring devices. Each device maintains its own local model by training on its local data and integrating new knowledge via model aggregation with neighbors. Therefore, knowledge is propagated across the topology via successive aggregation rounds. We study, in particular, the propagation of out-of-distribution (OOD) knowledge. We find that popular decentralized learning algorithms struggle to propagate OOD knowledge effectively to all devices. Further, we find that both the location of OOD data within a topology, and the topology itself, significantly impact OOD knowledge propagation. We then propose topology-aware aggregation strategies to accelerate (OOD) knowledge propagation across devices. These strategies improve OOD data accuracy, compared to topology-unaware baselines, by 123% on average across models in a
 topology.
 
@@ -10,7 +12,7 @@ This repo is a test Bed for Prototyping Fully-Distributed ML Experiments. The pr
 
 
 ### Note:
-**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in untested support for running on nodes w/ Nvidia GPU's. We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
+**All scripts have been configured/parallelized to run on the [Aurora](https://www.anl.gov/aurora) supercomputer. Aurora has Intel GPUs. This code has only been tested on Intel GPUs. We have built in support for running on nodes w/ Nvidia GPU's (tested on the Polaris supercomputer). We use the [`parsl`](https://parsl.readthedocs.io/en/stable/index.html) Python parallelization framework. Thereofore, to run on your machine, you must first set up a Parsl `config` in [`parsl_setup.py`](https://github.com/msakarvadia/distributed_ml/blob/main/src/experiments/parsl_setup.py).**
 
 ## Generate Topologies
 
@@ -30,7 +32,7 @@ How to run:
 # first configure your parsl config in parsl_setup.py
 python ../create_topo/create_topologies.py # create and save some topologies
 python decentralized_main.py --help # to see all argument options
-python decentralized_main.py # to run w/ default args
+python decentralized_main.py # to run w/ default args on Aurora (for polaris set this following flag: --parsl_executor polaris_experiment_per_node)
 ```
 
 ## Run All Paper Experiments
@@ -56,8 +58,8 @@ python bd_scheduler.py --rounds 40
 Requirements:
 - `python >=3.7,<3.11`
 ```bash
-git clone https://github.com/msakarvadia/distributed_ml.git
-cd distributed_ml
+git clone https://github.com/msakarvadia/topology_aware_learning.git
+cd topology_aware_learning
 conda create -p env python==3.10
 conda activate env
 pip install -r requirements.txt
@@ -81,10 +83,14 @@ Once these steps are done, you just need to add files to be committed and pushed
 
 The above animation is an example of a fully-connected topology. Nodes are models and edges are commuincation links between models. Each model is given a subset of the MNIST dataset to train over. We visual the accuracies of the "2" label over training time.
 
-## Citation
-
 Please cite this work as:
 
 ```bibtex
-...
+@article{sakarvadia2025topology,
+      title={Topology-Aware Knowledge Propagation in Decentralized Learning}, 
+      author={Mansi Sakarvadia and Nathaniel Hudson and Tian Li and Ian Foster and Kyle Chard},
+      year={2025},
+      eprint={2505.11760},
+      url={https://arxiv.org/abs/2505.11760}, 
+}
 ```

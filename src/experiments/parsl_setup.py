@@ -227,9 +227,9 @@ export NUMEXPR_MAX_THREADS=208
 
     config = Config(
         executors=[executor, threadpool_executor],
-        checkpoint_mode="task_exit",
+        # checkpoint_mode="task_exit",
         retries=2,
-        app_cache=True,
+        # app_cache=True,
     )
 
     return config, num_accelerators

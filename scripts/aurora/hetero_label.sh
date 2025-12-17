@@ -1,6 +1,6 @@
 #!/bin/bash 
-#PBS -l select=32
-#PBS -l walltime=06:00:00
+#PBS -l select=10
+#PBS -l walltime=02:00:00
 #PBS -q prod
 #PBS -l filesystems=home:flare
 #PBS -A AuroraGPT

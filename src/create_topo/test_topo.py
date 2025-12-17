@@ -37,8 +37,8 @@ def mk_test_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
 
     # BA
     for n in [
-        8,
-        16,
+        # 8,
+        # 16,
         33,
     ]:  # 33
         for m in [1, 2, 3]:

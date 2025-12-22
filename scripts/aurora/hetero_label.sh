@@ -1,6 +1,6 @@
 #!/bin/bash 
-#PBS -l select=10
-#PBS -l walltime=02:00:00
+#PBS -l select=2
+#PBS -l walltime=00:20:00
 #PBS -q prod
 #PBS -l filesystems=home:flare
 #PBS -A AuroraGPT
@@ -11,6 +11,8 @@
 cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/
 module load frameworks
 source env/bin/activate
+
+export TMPDIR=/tmp
 
 cd /lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments
 

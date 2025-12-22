@@ -492,12 +492,21 @@ class DecentrallearnApp:
             train_result_futures.extend(futures)
             # save a checkpoint here
             if (round_idx % self.checkpoint_every == 0) and (round_idx != 0):
+                preface = f"({round_idx+1}/{self.rounds})"
+                logger.log(
+                    APP_LOG_LEVEL,
+                    f"{preface} Attempting to save ckpt",
+                )
                 process_futures_and_ckpt(
                     self.client_results,
                     train_result_futures,
                     self.round_states,
                     round_idx,
                     self.run_dir,
+                )
+                logger.log(
+                    APP_LOG_LEVEL,
+                    f"{preface} Have saved a ckpt",
                 )
 
             # if an round -1 key is in round_states dict, delete it
@@ -591,7 +600,7 @@ class DecentrallearnApp:
             self.round_states[round_idx + 1][client.idx] = {"train": future}
 
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
-            logger.log(APP_LOG_LEVEL, f"{preface} Finished local training")
+            logger.log(APP_LOG_LEVEL, f"{preface} Got 'future' for local training")
 
         # need to update random centrality metric before each round
         if self.centrality_metric == "random":

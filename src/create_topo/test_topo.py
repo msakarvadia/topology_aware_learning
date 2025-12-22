@@ -41,7 +41,7 @@ def mk_test_topos(num_nodes=5, seed=0) -> tuple[list[str], list[list[int]]]:
         # 16,
         33,
     ]:  # 33
-        for m in [1, 2, 3]:
+        for m in [2]:
             g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
             graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
 

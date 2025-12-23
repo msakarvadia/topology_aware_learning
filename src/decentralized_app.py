@@ -430,6 +430,7 @@ class DecentrallearnApp:
 
         self.client_results: list[Result] = []
 
+        logger.log(APP_LOG_LEVEL, f"{os.listdir(self.run_dir)=}")
         list_of_ckpts = glob.glob(f"{self.run_dir}/*.pth")
         if list_of_ckpts:
             # get the latest (most recently saved) ckpt
@@ -446,8 +447,12 @@ class DecentrallearnApp:
                 ) = load_checkpoint(
                     checkpoint_path, self.clients, self.aggregation_scheduler
                 )
-            except:
-                shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
+            except Exception as error:
+                logger.log(
+                    APP_LOG_LEVEL, f"ERROR: Corrupted checkpoint:  {checkpoint_path}"
+                )
+                logger.log(APP_LOG_LEVEL, f"{error}")
+                # shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
                 # 2 error means corrupted ckpt
                 return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round

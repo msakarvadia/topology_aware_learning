@@ -44,7 +44,7 @@ def load_checkpoint(
     softmax_coeff_scheduler: BaseScheduler,
 ) -> tuple[int, list[DecentralClient], list[Result], BaseScheduler]:
 
-    ckpt = torch.load(ckpt_path, map_location=torch.device("cpu"))
+    ckpt = torch.load(ckpt_path, map_location=torch.device("cpu"), weights_only=False)
     for i in range(len(clients)):
         sd = ckpt["client_state_dicts"][i]
         clients[i].model.load_state_dict(sd)

@@ -61,7 +61,7 @@ if __name__ == "__main__":
         ]:
             wd = 0
             num_example = 5000
-            checkpoint_every = 2
+            checkpoint_every = 5
             task_type = "multiply"
             if data == "tiny_mem":
                 num_example = 33000

@@ -452,7 +452,7 @@ class DecentrallearnApp:
                     APP_LOG_LEVEL, f"ERROR: Corrupted checkpoint:  {checkpoint_path}"
                 )
                 logger.log(APP_LOG_LEVEL, f"{error}")
-                # shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
+                shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
                 # 2 error means corrupted ckpt
                 return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round

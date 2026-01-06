@@ -67,7 +67,7 @@ parser.add_argument(
 parser.add_argument(
     "--results_loc",
     type=str,
-    default="../../figs/results",
+    default="../../figs/results/hetero_label",
     help="directory path to where all all compiled results are stored",
 )
 args = parser.parse_args()

@@ -341,6 +341,12 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "degCent":
             self.centrality_metric = "degree"
             self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "closeCent":
+            self.centrality_metric = "closeness"
+            self.aggregation_function = centrality_module_avg
+        if self.aggregation_strategy == "eigenCent":
+            self.centrality_metric = "eigen"
+            self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":

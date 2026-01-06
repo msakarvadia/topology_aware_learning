@@ -190,11 +190,15 @@ def create_centrality_dict(
     G = nx.from_numpy_array(topology)
 
     centrality_dict = {}
-    for centrality_type in ["degree", "betweenness", "random"]:
+    for centrality_type in ["degree", "betweenness", "random", "closeness", "eigen"]:
         if centrality_type == "degree":
             cent = nx.degree_centrality(G)
         if centrality_type == "betweenness":
             cent = nx.betweenness_centrality(G, normalized=True, endpoints=True)
+        if centrality_type == "closeness":
+            cent = nx.closeness_centrality(G)
+        if centrality_type == "eigen":
+            cent = nx.eigenvector_centrality_numpy(G)
         """
         if centrality_type == "cluster":
             cent = nx.degree_centrality(G)

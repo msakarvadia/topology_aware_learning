@@ -166,6 +166,8 @@ if __name__ == "__main__":
             "scale_agg",
             "degCent",
             "betCent",
+            "eigenCent",
+            "closenessCent",
             "degCent_sim",
             "betCent_sim",
             # "degCent_CA",

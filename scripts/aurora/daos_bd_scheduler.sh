@@ -1,6 +1,6 @@
 #!/bin/bash 
-#PBS -l select=100
-#PBS -l walltime=06:00:00
+#PBS -l select=1
+#PBS -l walltime=00:20:00
 #PBS -q prod
 #PBS -l daos=daos_user
 #PBS -l filesystems=home:flare:daos_user

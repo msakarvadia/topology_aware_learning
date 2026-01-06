@@ -1,12 +1,12 @@
 #!/bin/bash 
 #PBS -l select=10
-#PBS -l walltime=06:00:00
-#PBS -q prod
+#PBS -l walltime=01:00:00
+#PBS -q debug-scaling
 #PBS -l daos=daos_user
 #PBS -l filesystems=home:flare:daos_user
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N daos_hetero_label
+#PBS -N daos_extra_centrality
 #PBS -r y 
 
 export http_proxy="http://proxy.alcf.anl.gov:3128"
@@ -53,7 +53,7 @@ echo ${EXPERIMENT_DIR}
 
 pwd
 
-python ${EXPERIMENT_DIR}/src/experiments/hetero_label.py --rounds 40
+python ${EXPERIMENT_DIR}/src/experiments/extra_centrality.py --rounds 40
 
 # To unmount
 fusermount3 -u /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}

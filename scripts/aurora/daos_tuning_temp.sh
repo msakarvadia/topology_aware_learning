@@ -6,7 +6,7 @@
 #PBS -l filesystems=home:flare:daos_user
 #PBS -A AuroraGPT
 #PBS -M sakarvadia@uchicago.edu
-#PBS -N daos_hetero_label
+#PBS -N daos_tuning_temp
 #PBS -r y 
 
 export http_proxy="http://proxy.alcf.anl.gov:3128"
@@ -53,7 +53,7 @@ echo ${EXPERIMENT_DIR}
 
 pwd
 
-python ${EXPERIMENT_DIR}/src/experiments/hetero_label.py --rounds 40
+python ${EXPERIMENT_DIR}/src/experiments/tuning_temp.py --rounds 40
 
 # To unmount
 fusermount3 -u /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}

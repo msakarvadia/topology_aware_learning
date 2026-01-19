@@ -26,11 +26,16 @@ def get_parsl_config(
     src_dir = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/src/"
     env = "/eagle/projects/argonne_tpc/mansisak/distributed_ml/env/"
 
+    print(f"{parsl_executor=}")
     # Get the number of nodes:
-    node_file = os.getenv("PBS_NODEFILE")
-    with open(node_file, "r") as f:
-        node_list = f.readlines()
-        num_nodes = len(node_list)
+    if parsl_executor == "aurora_single_experiment":
+        # NOTE(MS): hardcoding 1 node for debugging
+        num_nodes = 1
+    else:
+        node_file = os.getenv("PBS_NODEFILE")
+        with open(node_file, "r") as f:
+            node_list = f.readlines()
+            num_nodes = len(node_list)
 
     user_opts = {
         "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
@@ -263,6 +268,6 @@ def run_experiment(machine_name="aurora", **kwargs):
         exit_value = decentral_app.run()
     except:
         exit_value = 1
-    parsl.dfk().cleanup()
+    # parsl.dfk().cleanup()
     decentral_app.close()
     return exit_value

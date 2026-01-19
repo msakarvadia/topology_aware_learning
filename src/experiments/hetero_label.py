@@ -91,7 +91,7 @@ if __name__ == "__main__":
             for label_alpha, sample_alpha in zip(
                 [1, 10, 1000, 1000, 1000], [1000, 1000, 1000, 10, 1]
             ):
-                for softmax_coeff in [10]:
+                for softmax_coeff in [10, 100]:
                     # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                     # iterate through aggregation strategies
                     for aggregation_strategy in [
@@ -118,11 +118,12 @@ if __name__ == "__main__":
                                         topology = np.loadtxt(topo, dtype=float)
                                         num_clients = topology.shape[0]
 
+                                        # test different softmax_coeffs w/ topo-aware only!
                                         if softmax_coeff != 10 and (
                                             aggregation_strategy
                                             in [
-                                                "degCent",
-                                                "betCent",
+                                                # "degCent",
+                                                # "betCent",
                                                 "random",
                                                 "unweighted",
                                                 "weighted",

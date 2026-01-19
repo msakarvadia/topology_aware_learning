@@ -453,6 +453,9 @@ class DecentrallearnApp:
                 ) = load_checkpoint(
                     checkpoint_path, self.clients, self.aggregation_scheduler
                 )
+                logger.log(APP_LOG_LEVEL, f"ckpt loaded from: {checkpoint_path}")
+                logger.log(APP_LOG_LEVEL, f"{len(self.client_results)=}")
+
             except Exception as error:
                 logger.log(
                     APP_LOG_LEVEL, f"ERROR: Corrupted checkpoint:  {checkpoint_path}"
@@ -494,19 +497,27 @@ class DecentrallearnApp:
         train_result_futures = []
         # this is to check if we are trying to resume training from a checkpoint that has already been completed
         if self.start_round >= self.rounds:
+            logger.log(
+                APP_LOG_LEVEL,
+                f"{self.start_round=}, {self.rounds=}; resuming from ckpt that has already been completed...retuning",
+            )
             # return []
             return 0
             # return self.client_results, [], self.round_states, self.run_dir
 
         for round_idx in range(self.start_round, self.rounds):
+            preface = f"({round_idx+1}/{self.rounds})"
             futures = self._federated_round(round_idx)
             train_result_futures.extend(futures)
             # save a checkpoint here
             if (round_idx % self.checkpoint_every == 0) and (round_idx != 0):
-                preface = f"({round_idx+1}/{self.rounds})"
                 logger.log(
                     APP_LOG_LEVEL,
-                    f"{preface} Attempting to save ckpt",
+                    f"INTERIM: {preface} {len(futures)=}, {len(train_result_futures)=}, {len(self.client_results)=}",
+                )
+                logger.log(
+                    APP_LOG_LEVEL,
+                    f"INTERIM: {preface} Attempting to save ckpt",
                 )
                 process_futures_and_ckpt(
                     self.client_results,
@@ -517,7 +528,7 @@ class DecentrallearnApp:
                 )
                 logger.log(
                     APP_LOG_LEVEL,
-                    f"{preface} Have saved a ckpt",
+                    f"INTERIM: {preface} Have saved a ckpt",
                 )
 
             # if an round -1 key is in round_states dict, delete it
@@ -525,12 +536,24 @@ class DecentrallearnApp:
             if old_round in self.round_states:
                 del self.round_states[round_idx - 1]
 
+        logger.log(
+            APP_LOG_LEVEL,
+            f"{preface} {len(futures)=}, {len(train_result_futures)=}, {len(self.client_results)=}",
+        )
+        logger.log(
+            APP_LOG_LEVEL,
+            f"{preface} Attempting to save ckpt",
+        )
         process_futures_and_ckpt(
             self.client_results,
             train_result_futures,
             self.round_states,
             self.rounds,
             self.run_dir,
+        )
+        logger.log(
+            APP_LOG_LEVEL,
+            f"{preface} Have saved a ckpt",
         )
 
         # NOTE(MS): how would we do parsl clean up?

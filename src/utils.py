@@ -57,13 +57,13 @@ def load_checkpoint(
 
 
 def process_futures_and_ckpt(
-    client_results: list[Result],
+    client_results_init: list[Result],
     train_result_futures: tuple[list[Result], DecentralClient],
     round_states: dict[int, dict[int, tuple[list[Result], DecentralClient]]],
     rounds: int,
     run_dir: pathlib.Path,
 ) -> None:
-
+    client_results = client_results_init.copy()
     # NOTE(MS): need to handle the case where rounds < ckpted rounds
     # aka user requested a shorter experiment than what exists
     # since we save a ckpt to round_idx - 1, make the same comparison here

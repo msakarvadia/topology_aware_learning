@@ -88,12 +88,21 @@ def process_futures_and_ckpt(
         ckpt_clients.append(client)
     # NOTE (MS): we only train until N-1 round so name ckpt accordingly
     checkpoint_path = f"{run_dir}/{rounds-1}_ckpt.pth"
-    save_checkpoint(rounds - 1, ckpt_clients, client_results, checkpoint_path)
 
-    if not os.path.exists(checkpoint_path):
-        raise FileNotFoundError(
-            f"Error: The checkpoint '{checkpoint_path}' was not saved on disk."
-        )
+    retries = 0
+    max_retries = 3
+    while retries < max_retries:
+        retries += 1
+        save_checkpoint(rounds - 1, ckpt_clients, client_results, checkpoint_path)
+
+        if not os.path.exists(checkpoint_path):
+            if retries >= max_retries:
+                raise FileNotFoundError(
+                    f"Error: The checkpoint '{checkpoint_path}' was not saved on disk."
+                )
+        else:
+            # ckpt is saved...break loop
+            break
 
     client_df = pd.DataFrame(client_results)
     client_df.to_csv(f"{run_dir}/client_stats.csv")

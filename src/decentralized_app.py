@@ -161,7 +161,6 @@ class DecentrallearnApp:
         arg_path = arg_path.replace("/", "")
         self.run_dir = Path(f"{log_dir}/{arg_path}/")
         # check if run_dir exists, if not, make it
-        print(f"{self.run_dir}")
         if not os.path.exists(self.run_dir):
             os.makedirs(self.run_dir)
 
@@ -230,7 +229,6 @@ class DecentrallearnApp:
         self.rng = numpy.random.default_rng(seed)
         self.seed = seed
         self.train_test_val = train_test_val
-        # print(f"{train_test_val=}")
         if self.seed is not None:
             torch.manual_seed(seed)
 
@@ -293,7 +291,7 @@ class DecentrallearnApp:
         self.random_data_placement = random_data_placement
         self.trigger = trigger
         if self.backdoor:
-            print("setting backdoor data")
+            logger.log(APP_LOG_LEVEL, f"setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
             self.test_data, self.backdoor_test_data = backdoor_data(
                 dataset + "_test",
@@ -465,7 +463,7 @@ class DecentrallearnApp:
                 # 2 error means corrupted ckpt
                 return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
-            print(f"loaded latest ckpt from: {checkpoint_path}")
+            logger.log(APP_LOG_LEVEL, f"loaded latest ckpt from: {checkpoint_path}")
 
     def close(self) -> None:
         """Close the application."""
@@ -593,7 +591,6 @@ class DecentrallearnApp:
         Returns:
             List of results from each client.
         """
-        print("round idx: ", round_idx)
         job = local_train if self.train else no_local_train
 
         # select client indexes
@@ -604,12 +601,11 @@ class DecentrallearnApp:
             size=size,
             replace=False,
         ).tolist()
-        print(f"{selected_client_idxs=}")
 
         preface = f"({round_idx+1}/{self.rounds})"
         logger.log(
             APP_LOG_LEVEL,
-            f"{preface} Starting local training for this round",
+            f"""{preface} Starting local training for {round_idx}, {selected_client_idxs=}""",
         )
         futures = []
         self.round_states[round_idx + 1] = {}
@@ -624,9 +620,6 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 fed_prox_neighbors.append(self.round_states[round_idx][i]["agg"])
 
-            print(f"{client.idx=}")
-            # print(f"{client.idx=}, {fed_prox_neighbors=}")
-            # print(f"{self.dataset=}")
             future = job(
                 train_input,
                 round_idx,
@@ -645,7 +638,6 @@ class DecentrallearnApp:
                 self.beta_2,
                 *fed_prox_neighbors,
             )
-            print(f"Launched Future: {future=}")
             self.round_states[round_idx + 1][client.idx] = {"train": future}
 
             preface = f"({round_idx+1}/{self.rounds}, client {client.idx}, )"
@@ -681,7 +673,7 @@ class DecentrallearnApp:
             # need to combine neighbors w/ client and pass to aggregate function
             agg_neighbors = []
             neighbor_idxs.append(client.idx)
-            print(f"{neighbor_idxs=}")
+            logger.log(APP_LOG_LEVEL, f"{neighbor_idxs=}")
             for i in neighbor_idxs:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])

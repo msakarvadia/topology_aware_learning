@@ -409,7 +409,6 @@ def test_model(
 
             n_batches += 1
 
-    # print("test acc: ", total_acc / n_batches)
     report = classification_report(
         y_true, y_pred, digits=4, output_dict=True, zero_division=0
     )
@@ -417,11 +416,8 @@ def test_model(
     stats_dict = {}
     for k in report:
         if dict == type(report[k]):
-            # print(k, report[k])
             for header in report[k]:
                 stats_dict[f"{k}_{header}"] = report[k][header]
-                # print(f'{k}_{header}: {report[k][header]}')
-    # print(stats_dict)
 
     res: Result = {
         # "time": datetime.now(),

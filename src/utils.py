@@ -11,6 +11,7 @@ from src.decentralized_client import DecentralClient
 from src.aggregation_scheduler import BaseScheduler
 
 DEFAULT_FORMAT = (
+    "DECENTRAL_TRAIN LOGGER: "
     "%(created)f %(asctime)s %(processName)s-%(process)d "
     "%(threadName)s-%(thread)d %(name)s:%(lineno)d %(funcName)s %(levelname)s: "
     "%(message)s"
@@ -34,7 +35,6 @@ def save_checkpoint(
     }
 
     torch.save(ckpt, ckpt_path)
-    print(f"Saved checkpoint for round: {round_idx}")
 
     return
 
@@ -69,9 +69,6 @@ def process_futures_and_ckpt(
     # aka user requested a shorter experiment than what exists
     # since we save a ckpt to round_idx - 1, make the same comparison here
     if rounds < (max(round_states.keys()) - 1):
-        with open("out.txt", "a") as f:
-            print(f"{rounds} < {max(round_states.keys())}", file=f)
-
         return
 
     ######### Process and Save training results

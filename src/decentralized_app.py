@@ -499,7 +499,7 @@ class DecentrallearnApp:
         if self.start_round >= self.rounds:
             logger.log(
                 APP_LOG_LEVEL,
-                f"{self.start_round=}, {self.rounds=}; resuming from ckpt that has already been completed...retuning",
+                f"{self.start_round=}, {self.rounds=}; resuming from ckpt that has already been completed...returning",
             )
             # return []
             return 0
@@ -519,13 +519,21 @@ class DecentrallearnApp:
                     APP_LOG_LEVEL,
                     f"INTERIM: {preface} Attempting to save ckpt",
                 )
-                process_futures_and_ckpt(
-                    self.client_results,
-                    train_result_futures,
-                    self.round_states,
-                    round_idx,
-                    self.run_dir,
-                )
+                try:
+                    process_futures_and_ckpt(
+                        self.client_results,
+                        train_result_futures,
+                        self.round_states,
+                        round_idx,
+                        self.run_dir,
+                    )
+                except FileNotFoundError as e:
+                    # failed to save ckpt file
+                    logger.log(
+                        APP_LOG_LEVEL,
+                        f"{e}",
+                    )
+                    return 2
                 logger.log(
                     APP_LOG_LEVEL,
                     f"INTERIM: {preface} Have saved a ckpt",
@@ -544,13 +552,20 @@ class DecentrallearnApp:
             APP_LOG_LEVEL,
             f"{preface} Attempting to save ckpt",
         )
-        process_futures_and_ckpt(
-            self.client_results,
-            train_result_futures,
-            self.round_states,
-            self.rounds,
-            self.run_dir,
-        )
+        try:
+            process_futures_and_ckpt(
+                self.client_results,
+                train_result_futures,
+                self.round_states,
+                self.rounds,
+                self.run_dir,
+            )
+        except FileNotFoundError as e:
+            logger.log(
+                APP_LOG_LEVEL,
+                f"{e}",
+            )
+            return 2
         logger.log(
             APP_LOG_LEVEL,
             f"{preface} Have saved a ckpt",

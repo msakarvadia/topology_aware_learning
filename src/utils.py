@@ -4,6 +4,7 @@ import torch
 import pandas as pd
 import logging
 from typing import Optional
+import os
 
 from src.types import Result
 from src.decentralized_client import DecentralClient
@@ -88,6 +89,11 @@ def process_futures_and_ckpt(
     # NOTE (MS): we only train until N-1 round so name ckpt accordingly
     checkpoint_path = f"{run_dir}/{rounds-1}_ckpt.pth"
     save_checkpoint(rounds - 1, ckpt_clients, client_results, checkpoint_path)
+
+    if not os.path.exists(checkpoint_path):
+        raise FileNotFoundError(
+            f"Error: The checkpoint '{checkpoint_path}' was not saved on disk."
+        )
 
     client_df = pd.DataFrame(client_results)
     client_df.to_csv(f"{run_dir}/client_stats.csv")

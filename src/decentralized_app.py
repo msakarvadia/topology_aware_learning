@@ -46,13 +46,13 @@ from src.utils import set_file_logger
 APP_LOG_LEVEL = 21
 logger = logging.getLogger("decentral_app")
 
-parsl_logger = logging.getLogger("parsl")
-parsl_logger.setLevel(logging.INFO)
+# parsl_logger = logging.getLogger("parsl")
+# parsl_logger.setLevel(logging.INFO)
 
 # Optionally set a file handler
-fh = logging.FileHandler("parsl_custom.log")
-fh.setLevel(logging.DEBUG)
-parsl_logger.addHandler(fh)
+# fh = logging.FileHandler("parsl_custom.log")
+# fh.setLevel(logging.DEBUG)
+# parsl_logger.addHandler(fh)
 
 
 class DecentrallearnApp:
@@ -434,6 +434,7 @@ class DecentrallearnApp:
 
         self.client_results: list[Result] = []
 
+        logger.log(APP_LOG_LEVEL, f"{self.run_dir=}")
         logger.log(APP_LOG_LEVEL, f"{os.listdir(self.run_dir)=}")
         list_of_ckpts = glob.glob(f"{self.run_dir}/*.pth")
         if list_of_ckpts:
@@ -459,7 +460,7 @@ class DecentrallearnApp:
                     APP_LOG_LEVEL, f"ERROR: Corrupted checkpoint:  {checkpoint_path}"
                 )
                 logger.log(APP_LOG_LEVEL, f"{error}")
-                shutil.rmtree(self.run_dir, ignore_errors=False, onerror=None)
+                os.remove(checkpoint_path)
                 # 2 error means corrupted ckpt
                 return 2
             self.start_round += 1  # we save the ckpt after the last round, so we add 1 to start the next round
@@ -525,7 +526,7 @@ class DecentrallearnApp:
                         round_idx,
                         self.run_dir,
                     )
-                except FileNotFoundError as e:
+                except Exception as e:
                     # failed to save ckpt file
                     logger.log(
                         APP_LOG_LEVEL,
@@ -558,7 +559,7 @@ class DecentrallearnApp:
                 self.rounds,
                 self.run_dir,
             )
-        except FileNotFoundError as e:
+        except Exception as e:
             logger.log(
                 APP_LOG_LEVEL,
                 f"{e}",

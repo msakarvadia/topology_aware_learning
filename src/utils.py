@@ -97,6 +97,7 @@ def process_futures_and_ckpt(
                 raise FileNotFoundError(
                     f"Error: The checkpoint '{checkpoint_path}' was not saved on disk."
                 )
+                return 2
         else:
             # ckpt is saved...break loop
             break
@@ -104,7 +105,7 @@ def process_futures_and_ckpt(
     client_df = pd.DataFrame(client_results)
     client_df.to_csv(f"{run_dir}/client_stats.csv")
 
-    return
+    return 0
 
 
 def set_file_logger(

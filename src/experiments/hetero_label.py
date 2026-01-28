@@ -177,7 +177,13 @@ if __name__ == "__main__":
 
     for future in futures:
         print(f"Waiting for {future}")
-        print(f"Got result {future.result()}")
+        try:
+            print(f"Got result {future.result()}")
+        except Exception as e:
+            # Code to run if any general exception occurs
+            print(f"An exception occurred: {e}")
+            # Optional: print the type of the exception
+            print(f"Exception type: {type(e).__name__}")
 
     end = time.time()
     print("Total time: ", end - start)

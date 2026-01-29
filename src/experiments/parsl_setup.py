@@ -141,7 +141,7 @@ def get_parsl_config(
             worker_debug=True,
             max_workers_per_node=1,
             # available_accelerators=4,
-            available_accelerators=["0", "1", "2", "3"],
+            # available_accelerators=["0", "1", "2", "3"],
             prefetch_capacity=0,
             provider=node_provider,
         )
@@ -170,7 +170,7 @@ export NUMEXPR_MAX_THREADS=208
             heartbeat_threshold=120,  # (6 * 60 * 60),
             worker_debug=True,
             max_workers_per_node=1,  # we want to pin one experiment per node
-            available_accelerators=tile_names,
+            # available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=node_provider,
             # cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",

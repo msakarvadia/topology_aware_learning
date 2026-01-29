@@ -93,10 +93,10 @@ if __name__ == "__main__":
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
-                    "degCent",
-                    "betCent",
                     "closenessCent",
                     "eigenCent",
+                    "degCent",
+                    "betCent",
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
@@ -117,6 +117,7 @@ if __name__ == "__main__":
                                             label_alpha = 1000
                                             sample_alpha = 1000
                                             bd_node_idx = node_set[-1]
+                                        print(f"{bd_node_idx=}")
                                         topology = np.loadtxt(topo, dtype=float)
                                         num_clients = topology.shape[0]
 
@@ -166,7 +167,13 @@ if __name__ == "__main__":
 
     for future in futures:
         print(f"Waiting for {future}")
-        print(f"Got result {future.result()}")
+        try:
+            print(f"Got result {future.result()}")
+        except Exception as e:
+            # Code to run if any general exception occurs
+            print(f"An exception occurred: {e}")
+            # Optional: print the type of the exception
+            print(f"Exception type: {type(e).__name__}")
 
     end = time.time()
     print("Total time: ", end - start)

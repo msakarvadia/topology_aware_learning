@@ -75,6 +75,9 @@ args = parser.parse_args()
 # rootdir = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/bd_scheduler_logs"
 # results_loc = "/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/figs/results"
 
+pending_exp = 0
+total_exp = 0
+
 for data in [
     "mnist",
     "fmnist",
@@ -125,7 +128,10 @@ for data in [
                             for T_0 in [
                                 66,
                             ]:  # 5, 8, 10]:  # 66,10, 5, 1]:
-                                for softmax_coeff in [10]:  # 2, 4, 6, 8, 10, 100, -10]:
+                                for softmax_coeff in [
+                                    10,
+                                    100,
+                                ]:  # 2, 4, 6, 8, 10, 100, -10]:
                                     # for softmax_coeff in [10, 100]:
                                     for label_alpha, sample_alpha in zip(
                                         [1, 10, 1000, 1000, 1000],
@@ -141,6 +147,16 @@ for data in [
                                             # "degCent_sim",
                                             # "betCent_sim",
                                         ]:
+                                            # test different softmax_coeffs w/ topo-aware only!
+                                            if (
+                                                softmax_coeff != 10
+                                            ) and agg_strategy in [
+                                                "unweighted",
+                                                "weighted",
+                                                "unweighted_fl",
+                                                "random",
+                                            ]:
+                                                continue
                                             stats_path = f"{args.rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_{sample_alpha}_10_{seed}_{agg_strategy}_0_None_{backdoor}_01_0_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens/"
                                             experiment_dir = stats_path
                                             checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
@@ -171,7 +187,7 @@ for data in [
                                                 client_df["T_0"] = T_0
                                                 client_df["epoch"] = epoch
                                                 client_df["label_alpha"] = label_alpha
-                                                client_df["sample_alpha"] = label_alpha
+                                                client_df["sample_alpha"] = sample_alpha
                                                 client_df["backdoor"] = backdoor
                                                 if not backdoor:
                                                     client_df["backdoor_acc"] = 0
@@ -203,20 +219,13 @@ for data in [
                                                 )  # there is an issue with how I am loading ckpts
                                                 dfs.append(client_df.copy())
                                             else:
+                                                pending_exp += 1
+
                                                 print(
                                                     "Does not exist:",
                                                     checkpoint_path,
                                                 )
-                                                """
-                                                onlyfiles = [
-                                                    f
-                                                    for f in listdir(experiment_dir)
-                                                    if isfile(
-                                                        join(experiment_dir, f)
-                                                    )
-                                                ]
-                                                print(onlyfiles)
-                                                """
+                                            total_exp += 1
 
             print("-------")
             csv_name = f"hetero_label_{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"
@@ -227,3 +236,6 @@ for data in [
                 all_client_results.to_csv(f"{args.results_loc}/{csv_name}")
             else:
                 print("NO RESULTS: ", csv_name)
+
+print(f"{pending_exp=}")
+print(f"{total_exp=}")

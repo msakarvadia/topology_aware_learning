@@ -94,7 +94,6 @@ def get_parsl_config(
             available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=aurora_local_provider,
-            cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
         )
     if parsl_executor == "local":
         executor = HighThroughputExecutor(
@@ -158,6 +157,7 @@ def get_parsl_config(
             max_blocks=1,  # Can increase more to have more parallel jobs
             worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
 export NUMEXPR_MAX_THREADS=208
+export TMPDIR=/tmp
 """,
         )
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
@@ -173,7 +173,6 @@ export NUMEXPR_MAX_THREADS=208
             # available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=node_provider,
-            # cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
         )
     if parsl_executor == "aurora_single_experiment":
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
@@ -190,6 +189,7 @@ export NUMEXPR_MAX_THREADS=208
             max_blocks=1,  # Can increase more to have more parallel jobs
             worker_init="""export ZE_FLAT_DEVICE_HIERARCHY=COMPOSITE
 export NUMEXPR_MAX_THREADS=208
+export TMPDIR=/tmp
 """,
         )
 
@@ -202,7 +202,8 @@ export NUMEXPR_MAX_THREADS=208
             available_accelerators=tile_names,
             prefetch_capacity=0,
             provider=node_provider,
-            cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
+            cpu_affinity="list:1-8,105-112:9-16,113-120:17-24,121-128:25-32,129-136:33-40,137-144:41-48,145-152:53-60,157-164:61-68,165-172:69-76,173-180:77-84,181-188:85-92,189-196:93-100,197-204",
+            # cpu_affinity="list:0-7,104-111:8-15,112-119:16-23,120-127:24-31,128-135:32-39,136-143:40-47,144-151:52-59,156-163:60-67,164-171:68-75,172-179:76-83,180-187:84-91,188-195:92-99,196-203",
             worker_port_range=(44000, 45000),
             interchange_port_range=(45000, 46000),
         )

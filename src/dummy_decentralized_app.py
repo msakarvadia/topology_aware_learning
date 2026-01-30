@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from concurrent.futures import as_completed
 from parsl.app.app import python_app
 import logging
 
@@ -8,7 +9,6 @@ logger = logging.getLogger("decentral_app")
 
 
 class DummyDecentrallearnApp:
-
     def __init__(
         self,
         rounds: int = 5,
@@ -41,7 +41,7 @@ class DummyDecentrallearnApp:
             # launch 'num_models' parsl tasks
             futures = [train(i) for i in range(self.num_models)]
             # wait for all tasks
-            for future in futures:
+            for future in as_completed(futures):
                 out = future.result()
                 print(out)
 
@@ -88,5 +88,7 @@ def train(model_idx):
         loss = criterion(output, fake_labels)  # Calculate loss
         loss.backward()  # Backward pass (compute gradients)
         optimizer.step()
+
+    model.to("cpu")
 
     return f"trained model = {model_idx=}"

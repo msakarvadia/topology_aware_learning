@@ -12,7 +12,7 @@ class DummyDecentrallearnApp:
     def __init__(
         self,
         rounds: int = 5,
-        num_models: int = 16,
+        num_models: int = 3,
     ) -> None:
 
         logger.log(APP_LOG_LEVEL, f"Initilizing decentral app")
@@ -61,7 +61,7 @@ def train():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("xpu" if torch.xpu.is_available() else device)
 
-    num_batches = 1000
+    num_batches = 10
     batch_size = 256
     x_dim = y_dim = 64
     fake_training_batch = torch.zeros(batch_size, 3, x_dim, y_dim)

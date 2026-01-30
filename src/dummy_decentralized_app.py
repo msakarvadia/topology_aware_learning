@@ -12,7 +12,7 @@ class DummyDecentrallearnApp:
     def __init__(
         self,
         rounds: int = 5,
-        num_models: int = 3,
+        num_models: int = 12,
     ) -> None:
 
         logger.log(APP_LOG_LEVEL, f"Initilizing decentral app")
@@ -86,4 +86,4 @@ def train(model_idx):
 
     model.to("cpu")
 
-    return f"trained model = {model_idx=}"
+    return f"trained model = {model_idx=} on {device=}"

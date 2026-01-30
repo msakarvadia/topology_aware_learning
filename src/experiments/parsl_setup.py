@@ -36,6 +36,7 @@ def get_parsl_config(
         with open(node_file, "r") as f:
             node_list = f.readlines()
             num_nodes = len(node_list)
+            print(f"COUNTING NUMBER OF NODES {num_nodes=}")
 
     user_opts = {
         "worker_init": f"module use /soft/modulefiles; module load conda; conda activate {env}; cd {src_dir}",  # load the environment where parsl is installed
@@ -131,8 +132,6 @@ def get_parsl_config(
             min_blocks=0,
             max_blocks=1,  # Can increase more to have more parallel jobs
         )
-        tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
-        # num_accelerators = num_nodes * len(tile_names)
 
         executor = HighThroughputExecutor(
             label="experiment",
@@ -149,6 +148,7 @@ def get_parsl_config(
     if parsl_executor == "experiment_per_node":
         print(f"Experiment per node config, {num_nodes=}")
         tile_names = [f"{gid}.{tid}" for gid in range(6) for tid in range(2)]
+        num_accelerators = num_nodes * len(tile_names)
         # Want to pin one experiment to one node
         node_provider = LocalProvider(
             nodes_per_block=num_nodes,
@@ -248,6 +248,8 @@ def run_experiment(machine_name="aurora", **kwargs):
     import parsl
     from src.experiments.parsl_setup import get_parsl_config
 
+    parsl.dfk().cleanup()
+
     experiment_config = "aurora_single_experiment"
     if "polaris" in machine_name:
         experiment_config = "polaris_single_experiment"
@@ -277,7 +279,8 @@ def run_experiment(machine_name="aurora", **kwargs):
 def run_dummy_experiment(machine_name="aurora", **kwargs):
     from src.dummy_decentralized_app import DummyDecentrallearnApp
 
-    ### Parsl set up     import parsl
+    ### Parsl set up
+    import parsl
     from src.experiments.parsl_setup import get_parsl_config
 
     experiment_config = "aurora_single_experiment"
@@ -288,6 +291,7 @@ def run_dummy_experiment(machine_name="aurora", **kwargs):
         # might have error loading config if parsl
         # session from prior experiment isn't killed properly
         parsl.load(config)
+        print("decentral_train parsl config loaded")
     except:
         print("parsl config already loaded")
         # return 1
@@ -298,8 +302,7 @@ def run_dummy_experiment(machine_name="aurora", **kwargs):
     # And to ensure parsl cleans up even if app doesn't successfully run
     try:
         exit_value = decentral_app.run()
-    except:
+    except Exception as e:
+        print(e)
         exit_value = 1
-    # parsl.dfk().cleanup()
-    decentral_app.close()
     return exit_value

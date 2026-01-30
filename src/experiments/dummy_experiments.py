@@ -5,9 +5,15 @@ import parsl
 from src.experiments.parsl_setup import get_parsl_config
 from src.experiments.parsl_setup import run_dummy_experiment
 
+import os
+
+# Set a new environment variable
+os.environ["TMPDIR"] = "/tmp"
+
 if __name__ == "__main__":
     ######### Parsl
     config, num_accelerators = get_parsl_config("experiment_per_node")
+    print(config)
     print(f"{num_accelerators=}")
 
     parsl.load(config)
@@ -23,5 +29,5 @@ if __name__ == "__main__":
             print(f"Got result {future.result()}")
         except Exception as e:
             print(f"Failing w/ exception: {e}")
-            # print(f"Details of failed experiment {experiment_num}:")
         experiment_num += 1
+    parsl.dfk().cleanup()

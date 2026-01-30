@@ -39,16 +39,17 @@ class DummyDecentrallearnApp:
         for round_idx in range(self.rounds):
             print(f"launching tasks for {round_idx=}")
             # launch 'num_models' parsl tasks
-            futures = [train() for i in range(self.num_models)]
+            futures = [train(i) for i in range(self.num_models)]
             # wait for all tasks
             for future in futures:
-                future.result()
+                out = future.result()
+                print(out)
 
         return 0
 
 
 @python_app(executors=["decentral_train"])
-def train():
+def train(model_idx):
     import torch
     import torchvision.models as models
     import torch.optim as optim
@@ -60,10 +61,11 @@ def train():
     logger.log(APP_LOG_LEVEL, f"Starting Training")
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     device = torch.device("xpu" if torch.xpu.is_available() else device)
+    print(f"{device=}")
 
     num_batches = 10
-    batch_size = 256
-    x_dim = y_dim = 64
+    batch_size = 64
+    x_dim = y_dim = 28
     fake_training_batch = torch.zeros(batch_size, 3, x_dim, y_dim)
 
     # Load ResNet18 with default pre-trained ImageNet weights
@@ -86,3 +88,5 @@ def train():
         loss = criterion(output, fake_labels)  # Calculate loss
         loss.backward()  # Backward pass (compute gradients)
         optimizer.step()
+
+    return f"trained model = {model_idx=}"

@@ -27,13 +27,7 @@ class DummyDecentrallearnApp:
         tuple(list[Result], DecentralClient),
         dict[int, dict[int, tuple(list[Result], DecentralClient)]],
     ):
-        """Run the application.
-
-        Args:
-
-        Returns:
-            List of results from each client after each round.
-        """
+        """Run the application."""
 
         # dummy parsl workflow that runs for 'rounds'
         for round_idx in range(self.rounds):
@@ -50,6 +44,7 @@ class DummyDecentrallearnApp:
 
 @python_app(executors=["decentral_train"])
 def train(model_idx):
+    # dummy trianing loop
     import torch
     import torchvision.models as models
     import torch.optim as optim

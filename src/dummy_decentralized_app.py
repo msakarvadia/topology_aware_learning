@@ -3,6 +3,8 @@ from __future__ import annotations
 from concurrent.futures import as_completed
 from parsl.app.app import python_app
 import logging
+import time
+import os
 
 APP_LOG_LEVEL = 21
 logger = logging.getLogger("decentral_app")
@@ -11,14 +13,22 @@ logger = logging.getLogger("decentral_app")
 class DummyDecentrallearnApp:
     def __init__(
         self,
-        rounds: int = 5,
-        num_models: int = 12,
+        rounds: int = 10,
+        num_models: int = 33,
+        ckpt_freq: int = 1,
+        log_dir: str = "dummy_logs",
     ) -> None:
 
         logger.log(APP_LOG_LEVEL, f"Initilizing decentral app")
         print("Initializing decentral app")
         self.rounds = rounds
         self.num_models = num_models
+        self.log_dir = log_dir
+
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir)
+
+        self.ckpt_freq = ckpt_freq
 
     def run(
         self,
@@ -28,16 +38,45 @@ class DummyDecentrallearnApp:
         dict[int, dict[int, tuple(list[Result], DecentralClient)]],
     ):
         """Run the application."""
+        import torch
 
         # dummy parsl workflow that runs for 'rounds'
         for round_idx in range(self.rounds):
             print(f"launching tasks for {round_idx=}")
             # launch 'num_models' parsl tasks
             futures = [train(i) for i in range(self.num_models)]
+            print("waiting for futures")
             # wait for all tasks
+            model_state_dicts = []
+            start_time = time.perf_counter()
             for future in as_completed(futures):
-                out = future.result()
-                print(out)
+                resolved_future = future.result()
+                message = resolved_future[0]
+                model = resolved_future[1]
+                model_state_dicts.append(model.state_dict())
+                # print(message)
+            end_time = time.perf_counter()
+            elapsed_time = end_time - start_time
+            print(f"Model training took: {elapsed_time:.4f} seconds")
+
+            print(f"Ckpting all models")
+            try:
+                if round_idx % self.ckpt_freq == 0:
+                    ckpt = {
+                        "model_state_dicts": model_state_dicts,
+                        "round_idx": round_idx,
+                    }
+                    ckpt_path = f"{self.log_dir}/{round_idx}_ckpt.pth"
+
+                    start_time = time.perf_counter()
+                    torch.save(ckpt, ckpt_path)
+                    end_time = time.perf_counter()
+                    elapsed_time = end_time - start_time
+                    print(
+                        f"I/O operation (network request) took: {elapsed_time:.4f} seconds"
+                    )
+            except Exception as e:
+                print(e)
 
         return 0
 
@@ -58,7 +97,7 @@ def train(model_idx):
     device = torch.device("xpu" if torch.xpu.is_available() else device)
     print(f"{device=}")
 
-    num_batches = 10
+    num_batches = 1000
     batch_size = 64
     x_dim = y_dim = 28
     fake_training_batch = torch.zeros(batch_size, 3, x_dim, y_dim)
@@ -86,4 +125,4 @@ def train(model_idx):
 
     model.to("cpu")
 
-    return f"trained model = {model_idx=} on {device=}"
+    return f"trained model = {model_idx=} on {device=}", model

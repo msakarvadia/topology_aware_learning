@@ -154,6 +154,7 @@ def run_experiment(machine_name="aurora", **kwargs):
     return exit_value
 
 
+"""
 @python_app(executors=["experiment"])
 def run_dummy_experiment(machine_name="aurora", **kwargs):
     from src.dummy_decentralized_app import DummyDecentrallearnApp
@@ -185,3 +186,4 @@ def run_dummy_experiment(machine_name="aurora", **kwargs):
         print(e)
         exit_value = 1
     return exit_value
+"""

@@ -10,6 +10,9 @@
 
 
 export http_proxy="http://proxy.alcf.anl.gov:3128"
+# use intercept io library
+echo "using intercept library"
+export LD_PRELOAD=$DAOS_PRELOAD
 
 
 module use /soft/modulefiles
@@ -32,9 +35,6 @@ mkdir /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT} -p
 launch-dfuse.sh ${DAOS_POOL}:${DAOS_CONT}
 mount | grep dfuse # To confirm if its mounted
 
-# use intercept io library
-echo "using intercept library"
-export LD_PRELOAD=$DAOS_PRELOAD
 
 # List the content of the container
 ls /tmp/${USER}/${DAOS_POOL}/${DAOS_CONT}

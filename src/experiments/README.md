@@ -11,7 +11,7 @@ source new_env/bin/activate
 pip install parsl 
 ```
 
-How to run to minimum viable product to reproduce errors:
+How to run to minimum viable product to reproduce errors (assuming you have an interactive compute allocation and are launch experiments mannually):
 
 ```
 cd topology_aware_learning
@@ -25,6 +25,27 @@ python dummy_main.py
 
 # For a string of experiments to be deployed and managed within another parsl instance: "outer loop" manages "inner loop"
 python dummy_experiments.py
+```
+
+How to submit experiment to the job scheduler:
+
+ - One experiment at a time (open the *.sh script and modify the project allocation/username info before launching)
+```
+cd topology_aware_learning/scripts/aurora/io_scaling_scripts
+
+# Flare filesystem
+qsub -l select=<NUM_NODES> dummy_experiment_launch_flare.sh
+
+# daos w/ dfuse
+qsub -l select=<NUM_NODES> dummy_experiment_launch_wo_intercept_daos.sh
+
+# daos w/ intercept
+qsub -l select=<NUM_NODES> dummy_experiment_launch_w_intercept_daos.sh
+```
+
+- Scaling runs across {16, 32, 64, 128, 256} node (open `scaling.sh` and comment out the qsub commands that don't correspond to desired filesystem)
+```
+./scaling.sh
 ```
 
 Running a REAL experiment

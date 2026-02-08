@@ -1,6 +1,6 @@
 # Experiments
 
-Set up
+## Set up
 
 ```
 git clone https://github.com/msakarvadia/topology_aware_learning.git
@@ -10,6 +10,8 @@ python3 -m venv new_env --system-site-packages
 source new_env/bin/activate
 pip install parsl 
 ```
+
+## MVP
 
 How to run to minimum viable product to reproduce errors (assuming you have an interactive compute allocation and are launch experiments mannually):
 
@@ -26,6 +28,8 @@ python dummy_main.py
 # For a string of experiments to be deployed and managed within another parsl instance: "outer loop" manages "inner loop"
 python dummy_experiments.py
 ```
+
+## Using PBS
 
 How to submit experiment to the job scheduler:
 
@@ -48,7 +52,7 @@ qsub -l select=<NUM_NODES> dummy_experiment_launch_w_intercept_daos.sh
 ./scaling.sh
 ```
 
-Running a REAL experiment
+## Running a REAL experiment
 
 ```
 # Follow the above environment setup instructions

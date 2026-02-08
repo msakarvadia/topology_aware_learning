@@ -1,6 +1,6 @@
 from __future__ import annotations
 import parsl
-
+import argparse
 from parsl.app.app import python_app
 from src.experiments.parsl_setup import get_parsl_config
 
@@ -47,6 +47,26 @@ def run_dummy_experiment(machine_name="aurora", **kwargs):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--experiment_dir",
+        type=str,
+        default="dummy_logs",
+        help="Path to overarching experiment dir where subsequent experiment specific log_dirs will be created.",
+    )
+    parser.add_argument(
+        "--num_experiments",
+        type=int,
+        default=2000,
+        help="Number of fake experiments to launch.",
+    )
+    parser.add_argument(
+        "--num_models_per_experiment",
+        type=int,
+        default=33,
+        help="Number of models trained in each experiment. increasing this increase I/O load.",
+    )
+    args = parser.parse_args()
     ######### Parsl
     config, num_accelerators = get_parsl_config("experiment_per_node")
     print(config)
@@ -55,13 +75,12 @@ if __name__ == "__main__":
     parsl.load(config)
     #########
 
-    num_experiments = 2
-    num_models_per_experiment = 3
     futures = [
         run_dummy_experiment(
-            num_models=num_models_per_experiment, log_dir=f"dummy_logs/exp_{i}"
+            num_models=args.num_models_per_experiment,
+            log_dir=f"{args.experiment_dir}/exp_{i}",
         )
-        for i in range(num_experiments)
+        for i in range(args.num_experiments)
     ]
 
     experiment_num = 0

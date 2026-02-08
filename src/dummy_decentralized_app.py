@@ -5,6 +5,7 @@ from parsl.app.app import python_app
 import logging
 import time
 import os
+import pandas as pd
 
 APP_LOG_LEVEL = 21
 logger = logging.getLogger("decentral_app")
@@ -25,8 +26,12 @@ class DummyDecentrallearnApp:
         self.num_models = num_models
         self.log_dir = log_dir
 
+        self.df = pd.DataFrame(
+            columns=["round", "ckpt_write_time", "successful_ckpt", "ckpt_size_gb"]
+        )
         if not os.path.exists(self.log_dir):
             os.makedirs(self.log_dir)
+            self.df.to_csv(f"{self.log_dir}/io_stats.csv", index=False)
 
         self.ckpt_freq = ckpt_freq
 
@@ -75,6 +80,19 @@ class DummyDecentrallearnApp:
                     print(
                         f"I/O operation (network request) took: {elapsed_time:.4f} seconds"
                     )
+                    successful_ckpt = os.path.exists(ckpt_path)
+                    size_of_file = "n/a"
+                    if successful_ckpt:
+                        size_of_file = os.path.getsize(ckpt_path) / (1024**3)
+
+                    self.df.loc[len(self.df)] = [
+                        round_idx,
+                        elapsed_time,
+                        successful_ckpt,
+                        size_of_file,
+                    ]
+                    self.df.to_csv(f"{self.log_dir}/io_stats.csv", index=False)
+
             except Exception as e:
                 print(e)
 

@@ -84,6 +84,8 @@ class DummyDecentrallearnApp:
                     size_of_file = "n/a"
                     if successful_ckpt:
                         size_of_file = os.path.getsize(ckpt_path) / (1024**3)
+                    else:
+                        return 1
 
                     self.df.loc[len(self.df)] = [
                         round_idx,
@@ -95,6 +97,7 @@ class DummyDecentrallearnApp:
 
             except Exception as e:
                 print(e)
+                return e
 
         return 0
 

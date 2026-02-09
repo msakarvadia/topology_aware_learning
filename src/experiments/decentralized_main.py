@@ -233,10 +233,10 @@ if __name__ == "__main__":
         help="Proportion of node local training data that is backdoored",
     )
     parser.add_argument(
-        "--backdoor_node_idx",
-        type=int,
-        default=0,
-        help="Node index in network with backdoored data",
+        "--backdoor_node_idxs",
+        type=str,
+        default="[0,]",
+        help="String of int list (hack to deal with argument passing); No spaces. List of node indices in network with backdoored data",
     )
     parser.add_argument(
         "--random_bd",
@@ -418,7 +418,7 @@ if __name__ == "__main__":
             ),
             backdoor=args.backdoor,
             backdoor_proportion=args.backdoor_proportion,
-            backdoor_node_idx=args.backdoor_node_idx,
+            backdoor_node_idxs=args.backdoor_node_idxs,
             random_bd=args.random_bd,
             many_to_one=args.many_to_one,
             offset_clients_data_placement=args.offset_clients_data_placement,

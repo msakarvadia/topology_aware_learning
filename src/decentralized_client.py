@@ -242,7 +242,7 @@ def create_clients(
     backdoor_test_data: Dataset,
     backdoor: bool,
     backdoor_proportion: float,
-    backdoor_node_idx: int,
+    backdoor_node_idxs: list[int],
     random_bd: bool = False,
     # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
     many_to_one: bool = True,
@@ -317,35 +317,36 @@ def create_clients(
 
     if backdoor:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
-        stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
-        clean_data, bd_data = backdoor_data(
-            data_name.value.lower(),
-            train_subsets[backdoor_node_idx],
-            stratify_targets,
-            backdoor_proportion,
-            rng_seed,
-            rng,
-            num_labels,
-            random_bd,
-            many_to_one,
-            # for propoer checkpointing purposes we need to save some additional info
-            offset_clients_data_placement,
-            centrality_metric_data_placement,
-            random_data_placement,
-            backdoor_node_idx,
-            num_clients=len(client_ids),
-            test_data=0,  # this is trianing data
-            trigger=trigger,
-        )
-        # combine clean + bd training data
-        concat_data = ConcatDataset([clean_data, bd_data])
-        clean_len = len(clean_data)
-        bd_len = len(bd_data)
-        new_indices = list(range(clean_len + bd_len))
-        # new_indices = list(range(len(stratify_targets)))
-        # wrap new bd-ed data in Subset class
-        train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
-        print(f"backdoored client {backdoor_node_idx} data")
+        for backdoor_node_idx in backdoor_node_idxs:
+            stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
+            clean_data, bd_data = backdoor_data(
+                data_name.value.lower(),
+                train_subsets[backdoor_node_idx],
+                stratify_targets,
+                backdoor_proportion,
+                rng_seed,
+                rng,
+                num_labels,
+                random_bd,
+                many_to_one,
+                # for propoer checkpointing purposes we need to save some additional info
+                # offset_clients_data_placement,
+                # centrality_metric_data_placement,
+                # random_data_placement,
+                # backdoor_node_idx,
+                # num_clients=len(client_ids),
+                # test_data=0,  # this is trianing data
+                trigger=trigger,
+            )
+            # combine clean + bd training data
+            concat_data = ConcatDataset([clean_data, bd_data])
+            clean_len = len(clean_data)
+            bd_len = len(bd_data)
+            new_indices = list(range(clean_len + bd_len))
+            # new_indices = list(range(len(stratify_targets)))
+            # wrap new bd-ed data in Subset class
+            train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
+            print(f"backdoored client {backdoor_node_idx} data")
 
     clients = []
     for idx in client_ids:

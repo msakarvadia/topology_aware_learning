@@ -49,15 +49,13 @@ if __name__ == "__main__":
     model_count = 0  # number of models in total created decentral Apps
     app_result_tuples = []
     num_experiments = 0
-    for seed in [0, 1, 2]:
+    for seed in [
+        0,
+    ]:
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{len(paths)=}")
         for data in [
             "mnist",
-            "fmnist",
-            "tiny_mem",
-            "cifar10_vgg",
-            "cifar100_vgg",
         ]:
             wd = 0
             num_example = 5000
@@ -93,12 +91,7 @@ if __name__ == "__main__":
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
-                    "closenessCent",
-                    "eigenCent",
                     "degCent",
-                    "betCent",
-                    # "degCent_sim",
-                    # "betCent_sim",
                 ]:
                     for scheduler in [None]:  # , "exp", "CA"]:
                         for eta_min in [
@@ -107,52 +100,46 @@ if __name__ == "__main__":
                             for T_0 in [66]:  # 5, 8, 10]:
                                 # iterate through topologies
                                 for topo, node_set in zip(paths, nodes):
-                                    for label_alpha, sample_alpha in zip(
-                                        ["bd"], ["bd"]
-                                    ):
-                                        backdoor = False
-                                        bd_node_idx = 0
-                                        if label_alpha == "bd":
-                                            backdoor = True
-                                            label_alpha = 1000
-                                            sample_alpha = 1000
-                                            bd_node_idx = node_set[-1]
-                                        print(f"{bd_node_idx=}")
-                                        topology = np.loadtxt(topo, dtype=float)
-                                        num_clients = topology.shape[0]
+                                    backdoor = True
+                                    label_alpha = 1000
+                                    sample_alpha = 1000
+                                    bd_node_idx = 0
+                                    print(f"{bd_node_idx=}")
+                                    topology = np.loadtxt(topo, dtype=float)
+                                    num_clients = topology.shape[0]
 
-                                        num_experiments += 1
-                                        experiment_args = {
-                                            "dataset": data,
-                                            "rounds": args.rounds,
-                                            "topology_path": topo,
-                                            "backdoor": backdoor,
-                                            "prox_coeff": 0,
-                                            "epochs": 5,
-                                            "backdoor_node_idxs": f"[{bd_node_idx},]",
-                                            "aggregation_strategy": aggregation_strategy,
-                                            "log_dir": "extra_centrality_logs",
-                                            "softmax": True,
-                                            "optimizer": optimizer,
-                                            "softmax_coeff": softmax_coeff,
-                                            "sample_alpha": sample_alpha,
-                                            "label_alpha": label_alpha,
-                                            "lr": lr,
-                                            "batch_size": 64,
-                                            "weight_decay": wd,
-                                            "beta_1": 0.9,
-                                            "beta_2": 0.98,
-                                            "n_layer": 1,
-                                            "task_type": task_type,
-                                            "num_example": num_example,
-                                            "checkpoint_every": checkpoint_every,
-                                            "tiny_mem_num_labels": 5,
-                                            "scheduler": scheduler,
-                                            "eta_min": eta_min,
-                                            "T_0": T_0,
-                                            "seed": seed,
-                                        }
-                                        param_list.append(experiment_args)
+                                    num_experiments += 1
+                                    experiment_args = {
+                                        "dataset": data,
+                                        "rounds": args.rounds,
+                                        "topology_path": topo,
+                                        "backdoor": backdoor,
+                                        "prox_coeff": 0,
+                                        "epochs": 5,
+                                        "backdoor_node_idxs": f"[{bd_node_idx},]",
+                                        "aggregation_strategy": aggregation_strategy,
+                                        "log_dir": "small_exp_logs",
+                                        "softmax": True,
+                                        "optimizer": optimizer,
+                                        "softmax_coeff": softmax_coeff,
+                                        "sample_alpha": sample_alpha,
+                                        "label_alpha": label_alpha,
+                                        "lr": lr,
+                                        "batch_size": 64,
+                                        "weight_decay": wd,
+                                        "beta_1": 0.9,
+                                        "beta_2": 0.98,
+                                        "n_layer": 1,
+                                        "task_type": task_type,
+                                        "num_example": num_example,
+                                        "checkpoint_every": checkpoint_every,
+                                        "tiny_mem_num_labels": 5,
+                                        "scheduler": scheduler,
+                                        "eta_min": eta_min,
+                                        "T_0": T_0,
+                                        "seed": seed,
+                                    }
+                                    param_list.append(experiment_args)
 
     print(f"{num_experiments=}")
     ######### Parsl

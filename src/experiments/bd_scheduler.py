@@ -150,7 +150,7 @@ if __name__ == "__main__":
                                     "backdoor": True,
                                     "prox_coeff": 0,
                                     "epochs": 5,
-                                    "backdoor_node_idx": client_idx,
+                                    "backdoor_node_idxs": f"[{client_idx},]",
                                     "aggregation_strategy": aggregation_strategy,
                                     "log_dir": "bd_scheduler_logs",
                                     "softmax": True,

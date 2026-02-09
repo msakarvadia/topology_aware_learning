@@ -126,7 +126,7 @@ if __name__ == "__main__":
                                             "backdoor": backdoor,
                                             "prox_coeff": 0,
                                             "epochs": 5,
-                                            "backdoor_node_idx": bd_node_idx,
+                                            "backdoor_node_idxs": f"[{client_idx},]",
                                             "aggregation_strategy": aggregation_strategy,
                                             "log_dir": "tuning_temp_logs",
                                             "softmax": True,

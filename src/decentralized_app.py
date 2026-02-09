@@ -115,7 +115,9 @@ class DecentrallearnApp:
         train_test_val: tuple[int] = None,
         backdoor: bool = False,
         backdoor_proportion: float = 0.1,
-        backdoor_node_idx: int = 0,
+        backdoor_node_idxs: list[int] = [
+            0,
+        ],
         random_bd: bool = False,
         # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
         many_to_one: bool = True,
@@ -281,7 +283,7 @@ class DecentrallearnApp:
 
         self.backdoor = backdoor
         self.backdoor_proportion = backdoor_proportion
-        self.backdoor_node_idx = backdoor_node_idx
+        self.backdoor_node_idxs = eval(backdoor_node_idxs)
         self.backdoor_test_data = None
         self.random_bd = random_bd
         self.many_to_one = many_to_one
@@ -304,12 +306,12 @@ class DecentrallearnApp:
                 self.random_bd,
                 self.many_to_one,
                 # for propoer checkpointing purposes we need to save some additional info
-                self.offset_clients_data_placement,
-                self.centrality_metric_data_placement,
-                self.random_data_placement,
-                self.backdoor_node_idx,
-                num_clients=num_clients,
-                test_data=1,  # this is trianing data
+                # self.offset_clients_data_placement,
+                # self.centrality_metric_data_placement,
+                # self.random_data_placement,
+                # self.backdoor_node_idx,
+                # num_clients=num_clients,
+                # test_data=1,  # this is trianing data
                 trigger=self.trigger,
             )
 
@@ -400,7 +402,7 @@ class DecentrallearnApp:
         self.label_alpha = label_alpha
         self.sample_alpha = sample_alpha
 
-        if backdoor_node_idx >= num_clients:
+        if max(self.backdoor_node_idxs) >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
         self.clients = create_clients(
@@ -419,7 +421,7 @@ class DecentrallearnApp:
             self.backdoor_test_data,
             self.backdoor,
             self.backdoor_proportion,
-            self.backdoor_node_idx,
+            self.backdoor_node_idxs,
             self.random_bd,
             self.many_to_one,
             self.offset_clients_data_placement,

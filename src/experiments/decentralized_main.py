@@ -228,6 +228,8 @@ if __name__ == "__main__":
         choices=[
             "bd",
             "noise",
+            "blur",
+            "weather",
         ],  # weather, blur
         help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/digital are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets.",
     )

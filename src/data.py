@@ -13,8 +13,6 @@ import os
 # distortion helpers
 from skimage.filters import gaussian
 import skimage as sk
-from scipy.ndimage import zoom as scizoom
-from PIL import Image as PILImage
 
 from src.modules import load_data
 from src.modules import CustomLMDataset
@@ -407,7 +405,8 @@ def ensure_2_sample_per_split(stratify_targets):
 # from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py
 
 
-def impulse_noise_mnist(x, severity=4):
+def impulse_noise_mnist(x, severity=5):
+    # https://github.com/google-research/mnist-c/blob/master/corruptions.py#L231
     c = [0.03, 0.06, 0.09, 0.17, 0.27][severity - 1]
     x = sk.util.random_noise(np.array(x), mode="s&p", amount=c)
     x = np.clip(x, 0, 1)
@@ -415,10 +414,190 @@ def impulse_noise_mnist(x, severity=4):
 
 
 def impulse_noise(x, severity=5):
+    # https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py#L144
     c = [0.01, 0.02, 0.03, 0.05, 0.07][severity - 1]
 
     x = sk.util.random_noise(np.array(x) / 255.0, mode="s&p", amount=c)
     return torch.from_numpy(np.clip(x, 0, 1) * 255)
+
+
+def glass_blur(x, severity=3):
+    #  modified from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py#L165
+    # sigma, max_delta, iterations
+    c = [(0.05, 1, 1), (0.25, 1, 1), (0.4, 1, 1), (0.25, 1, 2), (0.4, 1, 2)][
+        severity - 1
+    ]
+
+    # x = np.array(x)
+    x = gaussian(np.array(x), sigma=c[0], channel_axis=0)
+
+    # locally shuffle pixels
+    for i in range(c[2]):
+        for h in range(32 - c[1], c[1], -1):
+            for w in range(32 - c[1], c[1], -1):
+                dx, dy = np.random.randint(-c[1], c[1], size=(2,))
+                h_prime, w_prime = h + dy, w + dx
+                # swap
+                x[:, h, w], x[:, h_prime, w_prime] = x[:, h_prime, w_prime], x[:, h, w]
+
+    return torch.from_numpy(np.clip(gaussian(x, sigma=c[0], channel_axis=0), 0, 1))
+
+
+def glass_blur_mnist(x, severity=3):
+    # modified from: https://github.com/google-research/mnist-c/blob/master/corruptions.py#L265
+    # sigma, max_delta, iterations
+    c = [(0.7, 1, 2), (0.9, 2, 1), (1, 2, 3), (1.1, 3, 2), (1.5, 4, 2)][severity - 1]
+
+    # x = np.array(x)
+    x = gaussian(np.array(x), sigma=c[0], channel_axis=0)
+
+    # locally shuffle pixels
+    for i in range(c[2]):
+        for h in range(28 - c[1], c[1], -1):
+            for w in range(28 - c[1], c[1], -1):
+                dx, dy = np.random.randint(-c[1], c[1], size=(2,))
+                h_prime, w_prime = h + dy, w + dx
+                # swap
+                x[:, h, w], x[:, h_prime, w_prime] = x[:, h_prime, w_prime], x[:, h, w]
+
+    return torch.from_numpy(np.clip(gaussian(x, sigma=c[0], channel_axis=0), 0, 1))
+
+
+# modification of https://github.com/FLHerne/mapgen/blob/master/diamondsquare.py
+def plasma_fractal(mapsize=32, wibbledecay=3):
+    # https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py#L63
+    """
+    Generate a heightmap using diamond-square algorithm.
+    Return square 2d array, side length 'mapsize', of floats in range 0-255.
+    'mapsize' must be a power of two.
+    """
+    assert mapsize & (mapsize - 1) == 0
+    maparray = np.empty((mapsize, mapsize), dtype=np.float32)
+    maparray[0, 0] = 0
+    stepsize = mapsize
+    wibble = 100
+
+    def wibbledmean(array):
+        return array / 4 + wibble * np.random.uniform(-wibble, wibble, array.shape)
+
+    def fillsquares():
+        """For each square of points stepsize apart,
+        calculate middle value as mean of points + wibble"""
+        cornerref = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
+        squareaccum += np.roll(squareaccum, shift=-1, axis=1)
+        maparray[
+            stepsize // 2 : mapsize : stepsize, stepsize // 2 : mapsize : stepsize
+        ] = wibbledmean(squareaccum)
+
+    def filldiamonds():
+        """For each diamond of points stepsize apart,
+        calculate middle value as mean of points + wibble"""
+        mapsize = maparray.shape[0]
+        drgrid = maparray[
+            stepsize // 2 : mapsize : stepsize, stepsize // 2 : mapsize : stepsize
+        ]
+        ulgrid = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        ldrsum = drgrid + np.roll(drgrid, 1, axis=0)
+        lulsum = ulgrid + np.roll(ulgrid, -1, axis=1)
+        ltsum = ldrsum + lulsum
+        maparray[0:mapsize:stepsize, stepsize // 2 : mapsize : stepsize] = wibbledmean(
+            ltsum
+        )
+        tdrsum = drgrid + np.roll(drgrid, 1, axis=1)
+        tulsum = ulgrid + np.roll(ulgrid, -1, axis=0)
+        ttsum = tdrsum + tulsum
+        maparray[stepsize // 2 : mapsize : stepsize, 0:mapsize:stepsize] = wibbledmean(
+            ttsum
+        )
+
+    while stepsize >= 2:
+        fillsquares()
+        filldiamonds()
+        stepsize //= 2
+        wibble /= wibbledecay
+
+    maparray -= maparray.min()
+    return maparray / maparray.max()
+
+
+def fog(x, severity=5):
+    # https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py#L228
+    c = [(1.5, 2), (0.5, 3), (0.75, 2.5), (1, 2), (1.5, 1.75)][severity - 1]
+
+    x = np.array(x)  # / 255.
+    max_val = x.max()
+    x += c[0] * plasma_fractal(wibbledecay=c[1])[:32, :32][np.newaxis, ...]
+    return torch.from_numpy(np.clip(x * max_val / (max_val + c[0]), 0, 1))  #
+
+
+# modification of https://github.com/FLHerne/mapgen/blob/master/diamondsquare.py
+def plasma_fractal_mnist(mapsize=256, wibbledecay=3):
+    # https://github.com/google-research/mnist-c/blob/master/corruptions.py#L123
+    """
+    Generate a heightmap using diamond-square algorithm.
+    Return square 2d array, side length 'mapsize', of floats in range 0-255.
+    'mapsize' must be a power of two.
+    """
+    assert mapsize & (mapsize - 1) == 0
+    maparray = np.empty((mapsize, mapsize), dtype=np.float32)
+    maparray[0, 0] = 0
+    stepsize = mapsize
+    wibble = 100
+
+    def wibbledmean(array):
+        return array / 4 + wibble * np.random.uniform(-wibble, wibble, array.shape)
+
+    def fillsquares():
+        """For each square of points stepsize apart,
+        calculate middle value as mean of points + wibble"""
+        cornerref = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
+        squareaccum += np.roll(squareaccum, shift=-1, axis=1)
+        maparray[
+            stepsize // 2 : mapsize : stepsize, stepsize // 2 : mapsize : stepsize
+        ] = wibbledmean(squareaccum)
+
+    def filldiamonds():
+        """For each diamond of points stepsize apart,
+        calculate middle value as mean of points + wibble"""
+        mapsize = maparray.shape[0]
+        drgrid = maparray[
+            stepsize // 2 : mapsize : stepsize, stepsize // 2 : mapsize : stepsize
+        ]
+        ulgrid = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        ldrsum = drgrid + np.roll(drgrid, 1, axis=0)
+        lulsum = ulgrid + np.roll(ulgrid, -1, axis=1)
+        ltsum = ldrsum + lulsum
+        maparray[0:mapsize:stepsize, stepsize // 2 : mapsize : stepsize] = wibbledmean(
+            ltsum
+        )
+        tdrsum = drgrid + np.roll(drgrid, 1, axis=1)
+        tulsum = ulgrid + np.roll(ulgrid, -1, axis=0)
+        ttsum = tdrsum + tulsum
+        maparray[stepsize // 2 : mapsize : stepsize, 0:mapsize:stepsize] = wibbledmean(
+            ttsum
+        )
+
+    while stepsize >= 2:
+        fillsquares()
+        filldiamonds()
+        stepsize //= 2
+        wibble /= wibbledecay
+
+    maparray -= maparray.min()
+    return maparray / maparray.max()
+
+
+def fog_mnist(x, severity=5):
+    # https://github.com/google-research/mnist-c/blob/master/corruptions.py#L327
+    c = [(1.5, 2), (2.0, 2), (2.5, 1.7), (2.5, 1.5), (3.0, 1.4)][severity - 1]
+
+    x = np.array(x)  # / 255.
+    max_val = x.max()
+    x = x + c[0] * plasma_fractal_mnist(wibbledecay=c[1])[:28, :28]
+    x = np.clip(x * max_val / (max_val + c[0]), 0, 1)  # * 255
+    return torch.from_numpy(x.astype(np.float32))
 
 
 ###
@@ -553,6 +732,16 @@ def ood_data(
                     img = impulse_noise(img)
                 if "mnist" in data_name:
                     img = impulse_noise_mnist(img)
+            if ood_type == "blur":
+                if "cifar" in data_name:
+                    img = glass_blur(img)
+                if "mnist" in data_name:
+                    img = glass_blur_mnist(img)
+            if ood_type == "weather":
+                if "cifar" in data_name:
+                    img = fog(img)
+                if "mnist" in data_name:
+                    img = fog_mnist(img)
 
             backdoored_data.append((img, label))  # label modification
 

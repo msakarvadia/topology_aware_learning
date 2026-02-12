@@ -222,18 +222,23 @@ if __name__ == "__main__":
         help="By default flag is True and local training will be run. If you set this flag, then no-op version of this application will be performed where no training is done (used for debugging purposes).",
     )
     parser.add_argument(
-        "--backdoor",
-        action="store_true",
-        help="By default flag is false and no backdoor will be set. If you set this flag, backdoor training will be performed..",
+        "--ood_type",
+        type=str,
+        default=None,
+        choices=[
+            "bd",
+            "noise",
+        ],  # weather, blur
+        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/digital are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets.",
     )
     parser.add_argument(
-        "--backdoor_proportion",
+        "--ood_proportion",
         type=float,
         default=0.1,
         help="Proportion of node local training data that is backdoored",
     )
     parser.add_argument(
-        "--backdoor_node_idxs",
+        "--ood_node_idxs",
         type=str,
         default="[0,]",
         help="String of int list (hack to deal with argument passing); No spaces. List of node indices in network with backdoored data",
@@ -416,9 +421,9 @@ if __name__ == "__main__":
             train_test_val=(
                 tuple(args.train_test_val) if args.train_test_val != None else None
             ),
-            backdoor=args.backdoor,
-            backdoor_proportion=args.backdoor_proportion,
-            backdoor_node_idxs=args.backdoor_node_idxs,
+            ood_type=args.ood_type,
+            ood_proportion=args.ood_proportion,
+            ood_node_idxs=args.ood_node_idxs,
             random_bd=args.random_bd,
             many_to_one=args.many_to_one,
             offset_clients_data_placement=args.offset_clients_data_placement,

@@ -24,7 +24,7 @@ from src.decentralized_client import test_agg
 from src.decentralized_client import scale_agg
 from src.decentralized_client import update_random_agg_coeffs
 from src.modules import create_model
-from src.data import backdoor_data
+from src.data import ood_data
 from src.modules import load_data
 from src.utils import load_checkpoint
 from src.tasks import local_train
@@ -113,9 +113,10 @@ class DecentrallearnApp:
         aggregation_strategy: str = "weighted",
         prox_coeff: float = 0.1,
         train_test_val: tuple[int] = None,
-        backdoor: bool = False,
-        backdoor_proportion: float = 0.1,
-        backdoor_node_idxs: list[int] = [
+        ood_type: str = None,  # bd, weather, blur, noise, digital
+        # backdoor: bool = False,
+        ood_proportion: float = 0.1,
+        ood_node_idxs: list[int] = [
             0,
         ],
         random_bd: bool = False,
@@ -281,10 +282,10 @@ class DecentrallearnApp:
         self.topology = numpy.loadtxt(topology_path, dtype=float)
         num_clients = self.topology.shape[0]
 
-        self.backdoor = backdoor
-        self.backdoor_proportion = backdoor_proportion
-        self.backdoor_node_idxs = eval(backdoor_node_idxs)
-        self.backdoor_test_data = None
+        self.ood_type = ood_type
+        self.ood_proportion = ood_proportion
+        self.ood_node_idxs = eval(ood_node_idxs)
+        self.ood_test_data = None
         self.random_bd = random_bd
         self.many_to_one = many_to_one
 
@@ -292,10 +293,10 @@ class DecentrallearnApp:
         self.centrality_metric_data_placement = centrality_metric_data_placement
         self.random_data_placement = random_data_placement
         self.trigger = trigger
-        if self.backdoor:
+        if self.ood_type:
             logger.log(APP_LOG_LEVEL, f"setting backdoor data")
             rng_seed = self.rng.integers(low=0, high=4294967295, size=1).item()
-            self.test_data, self.backdoor_test_data = backdoor_data(
+            self.test_data, self.ood_test_data = ood_data(
                 dataset + "_test",
                 self.test_data,
                 self.test_data.targets,
@@ -309,10 +310,11 @@ class DecentrallearnApp:
                 # self.offset_clients_data_placement,
                 # self.centrality_metric_data_placement,
                 # self.random_data_placement,
-                # self.backdoor_node_idx,
+                # self.ood_node_idx,
                 # num_clients=num_clients,
                 # test_data=1,  # this is trianing data
                 trigger=self.trigger,
+                ood_type=self.ood_type,
             )
 
         self.aggregation_strategy = aggregation_strategy
@@ -402,7 +404,7 @@ class DecentrallearnApp:
         self.label_alpha = label_alpha
         self.sample_alpha = sample_alpha
 
-        if max(self.backdoor_node_idxs) >= num_clients:
+        if max(self.ood_node_idxs) >= num_clients:
             raise ValueError("Backdoor node index must be less than the # of clients.")
 
         self.clients = create_clients(
@@ -418,10 +420,10 @@ class DecentrallearnApp:
             self.prox_coeff,
             self.run_dir,
             self.train_test_val,
-            self.backdoor_test_data,
-            self.backdoor,
-            self.backdoor_proportion,
-            self.backdoor_node_idxs,
+            self.ood_test_data,
+            self.ood_type,
+            self.ood_proportion,
+            self.ood_node_idxs,
             self.random_bd,
             self.many_to_one,
             self.offset_clients_data_placement,
@@ -633,7 +635,7 @@ class DecentrallearnApp:
                 self.prox_coeff,
                 # self.device,
                 self.seed,
-                self.backdoor,
+                self.ood_type,
                 self.dataset,
                 self.optimizer,
                 self.weight_decay,

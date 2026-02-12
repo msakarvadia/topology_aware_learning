@@ -10,6 +10,12 @@ from torch.utils.data import Subset
 import torch
 import os
 
+# distortion helpers
+from skimage.filters import gaussian
+import skimage as sk
+from scipy.ndimage import zoom as scizoom
+from PIL import Image as PILImage
+
 from src.modules import load_data
 from src.modules import CustomLMDataset
 from src.types import DataChoices
@@ -396,7 +402,29 @@ def ensure_2_sample_per_split(stratify_targets):
     return stratify_targets
 
 
-def backdoor_data(
+### common data corruptions
+# https://arxiv.org/pdf/1903.12261
+# from: https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py
+
+
+def impulse_noise_mnist(x, severity=4):
+    c = [0.03, 0.06, 0.09, 0.17, 0.27][severity - 1]
+    x = sk.util.random_noise(np.array(x), mode="s&p", amount=c)
+    x = np.clip(x, 0, 1)
+    return torch.from_numpy(x.astype(np.float32))
+
+
+def impulse_noise(x, severity=5):
+    c = [0.01, 0.02, 0.03, 0.05, 0.07][severity - 1]
+
+    x = sk.util.random_noise(np.array(x) / 255.0, mode="s&p", amount=c)
+    return torch.from_numpy(np.clip(x, 0, 1) * 255)
+
+
+###
+
+
+def ood_data(
     data_name: str,
     data: Dataset,
     stratify_targets: list[int],  # the labels to preserve class proportion in the split
@@ -410,15 +438,17 @@ def backdoor_data(
     # for propoer checkpointing purposes we need to save some additional info
     offset_clients_data_placement: int = 0,
     centrality_metric_data_placement: str = "degree",
-    random_data_placement: bool = True,
-    backdoor_node_idx: int = 0,
-    num_clients: int = 0,
-    test_data: int = 0,
+    # random_data_placement: bool = True,
+    # backdoor_node_idx: int = 0,
+    # num_clients: int = 0,
+    # test_data: int = 0,
     trigger: int = 100,
+    ood_type: str = "bd",
 ) -> (Dataset, Dataset):
     # print(data)
-    data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
-    os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
+    print("+++++++++Converting to OOD data.++++++++++")
+    # data_path_name = f"data/{data_name}_{proportion_backdoor}_{rng_seed}_{rng}_{random}_{many_to_one}_{offset_clients_data_placement}_{random_data_placement}_{backdoor_node_idx}_{num_clients}_{test_data}_backdoor.pt"
+    # os.makedirs(os.path.dirname(data_path_name), exist_ok=True)
 
     """
     if os.path.isfile(data_path_name):
@@ -461,6 +491,10 @@ def backdoor_data(
     backdoored_data = []
 
     if "tiny_mem" in data_name:
+        if ood_type != "bd":
+            raise Exception(
+                "Language models only support backdoored OOD data right now. Support for additional form of OOD data coming."
+            )
         print("backdooring LM data")
         seqs = []
         labels = []
@@ -510,7 +544,16 @@ def backdoor_data(
             img = backdoor_data[idx][0]
             label = backdoor_data[idx][1]
 
-            img, label = trigger_image(img, label, num_labels, rng, random, many_to_one)
+            if ood_type == "bd":
+                img, label = trigger_image(
+                    img, label, num_labels, rng, random, many_to_one
+                )
+            if ood_type == "noise":
+                if "cifar" in data_name:
+                    img = impulse_noise(img)
+                if "mnist" in data_name:
+                    img = impulse_noise_mnist(img)
+
             backdoored_data.append((img, label))  # label modification
 
         indices = list(range(len(backdoored_data)))

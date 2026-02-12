@@ -22,7 +22,7 @@ from src.modules import create_model
 from src.types import DataChoices
 from src.data import federated_split
 from src.data import random_generator
-from src.data import backdoor_data
+from src.data import ood_data
 
 from parsl.app.app import python_app
 
@@ -47,8 +47,8 @@ class DecentralClient(BaseModel):
     global_test_data: Dataset = Field(
         description="global set of test data that every client and global model is evaluated on."
     )
-    global_backdoor_test_data: Optional[Subset] = Field(  # noqa: UP007
-        description="Subset of global test data that has been backdoored (for testing ASR).",
+    global_ood_test_data: Optional[Subset] = Field(  # noqa: UP007
+        description="Subset of global test data that has been ooded (for testing ASR).",
     )
     neighbors: list[int] = Field(description="list of this clients neighbors")
     neighbor_probs: list[float] = Field(
@@ -239,10 +239,10 @@ def create_clients(
     prox_coeff: float,
     run_dir: pathlib.Path,
     train_test_val_split: tuple[float],
-    backdoor_test_data: Dataset,
-    backdoor: bool,
-    backdoor_proportion: float,
-    backdoor_node_idxs: list[int],
+    ood_test_data: Dataset,
+    ood_type: bool,
+    ood_proportion: float,
+    ood_node_idxs: list[int],
     random_bd: bool = False,
     # many-to-many or many-to-one backdoor from https://arxiv.org/pdf/1708.06733
     many_to_one: bool = True,
@@ -315,15 +315,15 @@ def create_clients(
         random_data_placement=random_data_placement,  # experiment arg (MS): default behavior needs to be over turned in the args when making a client
     )
 
-    if backdoor:
+    if ood_type:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
-        for backdoor_node_idx in backdoor_node_idxs:
-            stratify_targets = [label for x, label in train_subsets[backdoor_node_idx]]
-            clean_data, bd_data = backdoor_data(
+        for ood_node_idx in ood_node_idxs:
+            stratify_targets = [label for x, label in train_subsets[ood_node_idx]]
+            clean_data, bd_data = ood_data(
                 data_name.value.lower(),
-                train_subsets[backdoor_node_idx],
+                train_subsets[ood_node_idx],
                 stratify_targets,
-                backdoor_proportion,
+                ood_proportion,
                 rng_seed,
                 rng,
                 num_labels,
@@ -333,10 +333,11 @@ def create_clients(
                 # offset_clients_data_placement,
                 # centrality_metric_data_placement,
                 # random_data_placement,
-                # backdoor_node_idx,
+                # ood_node_idx,
                 # num_clients=len(client_ids),
                 # test_data=0,  # this is trianing data
                 trigger=trigger,
+                ood_type=ood_type,
             )
             # combine clean + bd training data
             concat_data = ConcatDataset([clean_data, bd_data])
@@ -345,8 +346,8 @@ def create_clients(
             new_indices = list(range(clean_len + bd_len))
             # new_indices = list(range(len(stratify_targets)))
             # wrap new bd-ed data in Subset class
-            train_subsets[backdoor_node_idx] = Subset(concat_data, new_indices)
-            print(f"backdoored client {backdoor_node_idx} data")
+            train_subsets[ood_node_idx] = Subset(concat_data, new_indices)
+            print(f"ooded client {ood_node_idx} data")
 
     clients = []
     for idx in client_ids:
@@ -365,7 +366,7 @@ def create_clients(
             neighbors=neighbors,
             neighbor_probs=probs,
             prox_coeff=prox_coeff,
-            global_backdoor_test_data=backdoor_test_data,
+            global_ood_test_data=ood_test_data,
             # centrality_dict=centrality_dict,
         )
         clients.append(client)

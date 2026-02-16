@@ -142,7 +142,7 @@ if __name__ == "__main__":
                                     "T_0": T_0,
                                     "seed": seed,
                                     "matrix_type": "sinkhorn_knopp",
-                                    "R": R,
+                                    "frob_radius": R,
                                 }
                                 param_list.append(experiment_args)
 

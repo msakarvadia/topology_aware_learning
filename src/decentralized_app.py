@@ -17,6 +17,7 @@ import shutil
 from src.decentralized_client import create_clients
 from src.decentralized_client import create_centrality_dict
 from src.decentralized_client import centrality_module_avg
+from src.decentralized_client import updated_centrality_module_avg
 from src.decentralized_client import sim_centrality_module_avg
 from src.decentralized_client import unweighted_module_avg
 from src.decentralized_client import weighted_module_avg
@@ -27,6 +28,8 @@ from src.modules import create_model
 from src.data import ood_data
 from src.modules import load_data
 from src.utils import load_checkpoint
+from src.utils import get_client_aggregation_weights
+from src.utils import get_adj_mat
 from src.tasks import local_train
 from src.tasks import no_local_train
 from src.tasks import test_model
@@ -148,6 +151,9 @@ class DecentrallearnApp:
         task_type: str = "multiply",  # TinyMem Task type: multiply | sum
         data_dis: str = "evens",  # Tiny mem data dir: primes | evens
         checkpoint_every: int = 5,  # checkpoint every X rounds
+        frob_radius: float = 2,  # frobenius radius for double stoch
+        matrix_type: str = "row_stoch",  # row_stoch vs. double stoch
+        sink_temp: float = 0.01,  # HP for sinkhorn_knopp for double stoch (not high impact)
     ) -> None:
 
         # make the outdir
@@ -328,27 +334,24 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "degCent_sim":
             self.centrality_metric = "degree"
             self.aggregation_function = sim_centrality_module_avg
-        # if self.aggregation_strategy == "cluster":
-        #    self.centrality_metric = "cluster"
-        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "random":
             self.centrality_metric = "random"
             self.aggregation_function = centrality_module_avg
-        # if self.aggregation_strategy == "invCluster":
-        #    self.centrality_metric = "invCluster"
-        #    self.aggregation_function = centrality_module_avg
         if self.aggregation_strategy == "betCent":
             self.centrality_metric = "betweenness"
-            self.aggregation_function = centrality_module_avg
+            self.aggregation_function = updated_centrality_module_avg
         if self.aggregation_strategy == "degCent":
             self.centrality_metric = "degree"
-            self.aggregation_function = centrality_module_avg
+            self.aggregation_function = updated_centrality_module_avg
         if self.aggregation_strategy == "closeCent":
             self.centrality_metric = "closeness"
-            self.aggregation_function = centrality_module_avg
+            self.aggregation_function = updated_centrality_module_avg
         if self.aggregation_strategy == "eigenCent":
             self.centrality_metric = "eigen"
-            self.aggregation_function = centrality_module_avg
+            self.aggregation_function = updated_centrality_module_avg
+        if self.aggregation_strategy == "mhCent":
+            self.centrality_metric = "metro_hast"
+            self.aggregation_function = updated_centrality_module_avg
         if self.aggregation_strategy == "weighted":
             self.aggregation_function = weighted_module_avg
         if self.aggregation_strategy == "unweighted":
@@ -360,6 +363,19 @@ class DecentrallearnApp:
         if self.aggregation_strategy == "scale_agg":
             self.aggregation_function = scale_agg
 
+        self.frob_radius = frob_radius
+        self.matrix_type = matrix_type
+        self.sink_temp = sink_temp
+        self.adj_mat = get_adj_mat(
+            centrality_metric=self.centrality_metric,
+            softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
+            softmax_bool=self.softmax,
+            matrix_type=self.matrix_type,
+            topology=self.topology,
+            centrality_dict=self.centrality_dict,
+            R=self.frob_radius,
+            sink_temp=self.sink_temp,
+        )
         if scheduler == "CA":
             self.aggregation_scheduler = CosineAnnealingWarmRestarts(
                 T_0=T_0,
@@ -682,6 +698,12 @@ class DecentrallearnApp:
             for i in neighbor_idxs:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
+
+            weights = get_client_aggregation_weight(
+                adj_mat=self.adj_mat,
+                client_idx=client.idx,
+                neighbor_idxs=neighbor_idxs,
+            )
             future = self.aggregation_function(
                 agg_client,
                 self.seed,
@@ -691,6 +713,7 @@ class DecentrallearnApp:
                 softmax=self.softmax,
                 # softmax_coeff=self.softmax_coeff,
                 softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
+                weights=weights,
             )
             futures.append(future)
             self.round_states[round_idx + 1][client.idx].update({"agg": future})

@@ -167,6 +167,7 @@ if __name__ == "__main__":
             "degCent",
             "betCent",
             "eigenCent",
+            "mhCent",
             "closenessCent",
             "degCent_sim",
             "betCent_sim",
@@ -386,6 +387,25 @@ if __name__ == "__main__":
         choices=["evens", "primes"],
         help="TinyMem data distribution type",
     )
+    parser.add_argument(
+        "--matrix_type",
+        type=str,
+        default="row_stoch",
+        choices=["row_stoch", "sinkhorn_knopp"],
+        help="Row stoch vs. double stochastic (methodolgy)",
+    )
+    parser.add_argument(
+        "--frob_radius",
+        type=float,
+        default=2.0,
+        help="Frobenius radius enforced for double stochastic matrices",
+    )
+    parser.add_argument(
+        "--sink_temp",
+        type=float,
+        default=0.01,
+        help="HP for sinkhorn_knopp for double stoch matrices, not high impact ariable to change",
+    )
 
     args = parser.parse_args()
 
@@ -454,6 +474,9 @@ if __name__ == "__main__":
             task_type=args.task_type,  # TinyMem Task type: multiply | sum
             data_dis=args.data_dis,  # Tiny mem data distribution: primes | evens
             checkpoint_every=args.checkpoint_every,
+            frob_radius=args.frob_radius,  # frobenius radius for double stoch
+            matrix_type=args.matrix_type,  # row_stoch vs. double stoch
+            sink_temp=args.sink_temp,  # HP for sinkhorn_knopp for double stoch (not high impact)
         )
         # client_results = decentral_app.run()
         exit_value = decentral_app.run()

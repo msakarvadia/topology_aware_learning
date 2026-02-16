@@ -557,6 +557,39 @@ def sim_centrality_module_avg(
 
 
 @python_app(executors=["threadpool_executor"])
+def updated_centrality_module_avg(
+    client_future: tuple(list[Result], DecentralClient),
+    seed: int,
+    *neighbor_futures: list[(list[Result], DecentralClient)],
+    **kwargs: str,  # type of centrality metric
+) -> tuple(list[Result], DecentralClient):
+    """Compute the weighted average of models."""
+    # import torch
+    if seed is not None:
+        torch.manual_seed(seed)
+
+    # Grab neighborhood weights
+    weights = kwargs["weights"]
+
+    with torch.no_grad():
+        avg_weights = OrderedDict()
+        for i in range(len(neighbor_futures)):
+            client = neighbor_futures[i]
+            model = client[1].model
+            model.to("cpu")
+            w = weights[i]
+            for name, value in model.state_dict().items():
+                partial = w * torch.clone(value)
+                if name not in avg_weights:
+                    avg_weights[name] = partial
+                else:
+                    avg_weights[name] += partial
+
+    client_future[1].model.load_state_dict(avg_weights)
+    return client_future
+
+
+@python_app(executors=["threadpool_executor"])
 def centrality_module_avg(
     client_future: tuple(list[Result], DecentralClient),
     seed: int,

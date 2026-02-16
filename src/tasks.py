@@ -308,7 +308,7 @@ def local_train(
             # Test client on global backdoor test set
             global_backdoor_test_result = test_model(
                 client.model,
-                client.global_backdoor_test_data,
+                client.global_ood_test_data,
                 round_idx,
                 batch_size,
                 seed,

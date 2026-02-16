@@ -219,13 +219,13 @@ def get_client_aggregation_weights(
     client_idx: int,
     neighbor_idxs: list[int],
 ):
-    if not adj_mat:
+    if not isinstance(adj_mat, np.ndarray):
         # adj_mat doesn't exist, fall back on different agg strategy
         return None
 
     weights = []
     for neighbor_idx in neighbor_idxs:
-        weights.append(adj_mat[client_idx][neighbor_idx])
+        weights.append(adj_mat[client_idx][neighbor_idx].item())
     return weights
 
 

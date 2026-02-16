@@ -167,6 +167,9 @@ class DecentrallearnApp:
 
         # Need to remove any . or / to ensure a single continuous file path
         arg_path = arg_path.replace(".", "")
+        arg_path = arg_path.replace(",", "_")
+        arg_path = arg_path.replace("[", "")
+        arg_path = arg_path.replace("]", "")
         arg_path = arg_path.replace("/", "")
         self.run_dir = Path(f"{log_dir}/{arg_path}/")
         # check if run_dir exists, if not, make it
@@ -366,6 +369,7 @@ class DecentrallearnApp:
         self.frob_radius = frob_radius
         self.matrix_type = matrix_type
         self.sink_temp = sink_temp
+        self.centrality_dict = create_centrality_dict(self.topology, self.rng)
         self.adj_mat = get_adj_mat(
             centrality_metric=self.centrality_metric,
             softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
@@ -449,7 +453,6 @@ class DecentrallearnApp:
             self.trigger,
         )
 
-        self.centrality_dict = create_centrality_dict(self.topology, self.rng)
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")
 
         self.client_results: list[Result] = []
@@ -699,11 +702,12 @@ class DecentrallearnApp:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
 
-            weights = get_client_aggregation_weight(
+            weights = get_client_aggregation_weights(
                 adj_mat=self.adj_mat,
                 client_idx=client.idx,
                 neighbor_idxs=neighbor_idxs,
             )
+            logger.log(APP_LOG_LEVEL, f"***************{weights=}")
             future = self.aggregation_function(
                 agg_client,
                 self.seed,

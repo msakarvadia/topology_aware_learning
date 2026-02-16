@@ -168,7 +168,7 @@ if __name__ == "__main__":
             "betCent",
             "eigenCent",
             "mhCent",
-            "closenessCent",
+            "closeCent",
             "degCent_sim",
             "betCent_sim",
             # "degCent_CA",

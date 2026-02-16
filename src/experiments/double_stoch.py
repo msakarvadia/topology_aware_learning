@@ -121,7 +121,7 @@ if __name__ == "__main__":
                                     "epochs": 5,
                                     "ood_node_idxs": f"[{ood_node},]",
                                     "aggregation_strategy": aggregation_strategy,
-                                    "log_dir": "extra_centrality_multi_node_ood_logs",
+                                    "log_dir": "double_stoch_ood_logs",
                                     "softmax": True,
                                     "optimizer": optimizer,
                                     "softmax_coeff": softmax_coeff,

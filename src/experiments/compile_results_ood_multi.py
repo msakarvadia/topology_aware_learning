@@ -47,7 +47,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--rootdir",
     type=str,
-    default="./extra_centrality_multi_node_ood_logs/",
+    default="./multi_node_ood_logs/",
     help="directory path to where all raw experimental results are stored",
 )
 parser.add_argument(
@@ -134,6 +134,7 @@ for data in [
                         experiment_dir = stats_path
                         checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                         stats_path = f"{stats_path}client_stats.csv"
+
                         exists = os.path.exists(checkpoint_path)
 
                         if exists:

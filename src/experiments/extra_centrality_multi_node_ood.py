@@ -84,6 +84,8 @@ if __name__ == "__main__":
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
+                    "unweighted",
+                    "unweighted_fl",
                     "closeCent",
                     "eigenCent",
                     "degCent",
@@ -91,8 +93,6 @@ if __name__ == "__main__":
                     "mhCent",
                     "weighted",
                     "random",
-                    "unweighted",
-                    "unweighted_fl",
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
@@ -129,7 +129,7 @@ if __name__ == "__main__":
                                 "epochs": 5,
                                 "ood_node_idxs": f"{node_set}",
                                 "aggregation_strategy": aggregation_strategy,
-                                "log_dir": "extra_centrality_multi_node_ood_logs",
+                                "log_dir": "multi_node_ood_logs",
                                 "softmax": True,
                                 "optimizer": optimizer,
                                 "softmax_coeff": softmax_coeff,

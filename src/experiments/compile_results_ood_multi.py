@@ -6,6 +6,7 @@ from os import listdir
 from os.path import isfile, join
 import pandas as pd
 import argparse
+from pathlib import Path
 
 
 def get_topo_names(seed=0):
@@ -47,13 +48,13 @@ parser = argparse.ArgumentParser()
 parser.add_argument(
     "--rootdir",
     type=str,
-    default="./multi_node_ood_logs/",
+    default="/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/src/experiments/multi_node_ood_logs",
     help="directory path to where all raw experimental results are stored",
 )
 parser.add_argument(
     "--results_loc",
     type=str,
-    default="../../figs/ood_results",
+    default="/lus/flare/projects/AuroraGPT/mansisak/distributed_ml/figs/ood_results",
     help="directory path to where all all compiled results are stored",
 )
 args = parser.parse_args()
@@ -63,11 +64,11 @@ args = parser.parse_args()
 
 num_exp = 0
 for data in [
+    "cifar10_vgg",
+    "cifar100_vgg",
     "mnist",
     "fmnist",
     "tiny_mem",
-    "cifar10_vgg",
-    "cifar100_vgg",
 ]:
     wd = 0
     num_example = 5000
@@ -125,17 +126,19 @@ for data in [
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
+                    os.chdir(f"{args.rootdir}")
                     for ood_type in ["bd", "weather", "blur", "noise"]:
                         # NOTE(MS): TinyMem only has bd OOD data rn
                         if data == "tiny_mem" and (ood_type != "bd"):
                             continue
                         num_exp += 1
-                        stats_path = f"{args.rootdir}/data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_01_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001/"
+                        stats_path = f"data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_01_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001/"
                         experiment_dir = stats_path
                         checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                         stats_path = f"{stats_path}client_stats.csv"
 
                         exists = os.path.exists(checkpoint_path)
+                        my_dir = Path(stats_path)
 
                         if exists:
                             try:
@@ -199,12 +202,6 @@ for data in [
                                 "Does not exist:",
                                 checkpoint_path,
                             )
-                            onlyfiles = [
-                                f
-                                for f in listdir(experiment_dir)
-                                if isfile(join(experiment_dir, f))
-                            ]
-                            print(onlyfiles)
 
             print("-------")
             csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"

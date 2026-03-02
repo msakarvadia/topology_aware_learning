@@ -397,7 +397,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--frob_radius",
         type=float,
-        default=2.0,
+        default=2,
         help="Frobenius radius enforced for double stochastic matrices",
     )
     parser.add_argument(

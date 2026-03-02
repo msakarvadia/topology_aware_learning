@@ -51,11 +51,11 @@ if __name__ == "__main__":
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{nodes=}")
         for data in [
-            "mnist",
+            # "mnist",
             "fmnist",
-            "tiny_mem",
+            # "tiny_mem",
             "cifar10_vgg",
-            "cifar100_vgg",
+            # "cifar100_vgg",
         ]:
             wd = 0
             num_example = 5000
@@ -69,10 +69,14 @@ if __name__ == "__main__":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
+                # NOTE(MS):
+                ood_proportion = 0.5
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
+                # NOTE(MS):
+                ood_proportion = 0.5
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"
@@ -86,11 +90,11 @@ if __name__ == "__main__":
                 for aggregation_strategy in [
                     "unweighted",
                     "unweighted_fl",
-                    "closeCent",
-                    "eigenCent",
+                    # "closeCent",
+                    # "eigenCent",
                     "degCent",
                     "betCent",
-                    "mhCent",
+                    # "mhCent",
                     "weighted",
                     "random",
                     # "degCent_sim",
@@ -102,6 +106,11 @@ if __name__ == "__main__":
                     sample_alpha = 1000
                     label_alpha = 1000
                     for ood_type in ["bd", "weather", "blur", "noise"]:
+                        # NOTE(MS): temp conditional to cut exp volume
+                        if "mnist" in data and (ood_type != "bd"):
+                            continue
+                        if "mnist" in data and (ood_type == "bd"):
+                            ood_proportion = 0.02
                         # NOTE(MS): TinyMem only has bd OOD data rn
                         if data == "tiny_mem" and (ood_type != "bd"):
                             continue
@@ -149,6 +158,7 @@ if __name__ == "__main__":
                                 "eta_min": eta_min,
                                 "T_0": T_0,
                                 "seed": seed,
+                                "ood_proportion": ood_proportion,
                             }
                             param_list.append(experiment_args)
 

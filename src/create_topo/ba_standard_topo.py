@@ -15,6 +15,7 @@ In this file we create the topologies we will use in our backdoor experiments.
 
 def get_placement_locations_by_top_n_degree(g, n=3):
     deg_cent = nx.degree_centrality(g)
+    print(f"Getting degree based placement: {len(g)=}, {n=}")
 
     start = 0
     interval = len(g) // n
@@ -56,7 +57,7 @@ def mk_ba_topos(
     for n in [
         33,
     ]:
-        for m in [1, 2, 3]:
+        for m in [3]:  # 1, 2
             g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
             graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
 
@@ -64,15 +65,19 @@ def mk_ba_topos(
     nodes = []
     for graph_name, G in graphs.items():
 
-        num_nodes = [2, 4, 6]
+        num_nodes_placement = [2, 4, 6]
         if placement_type == "degree":
-            num_nodes = [
+            num_nodes_placement = [
                 num_nodes,
             ]
-        for num_placements in num_nodes:
+        for num_placements in num_nodes_placement:
+            deg_placement_nodes = get_placement_locations_by_top_n_degree(
+                G, num_placements
+            )
             if placement_type == "degree":
-                ood_nodes = get_placement_locations_by_top_n_degree(G, num_placements)
+                ood_nodes = deg_placement_nodes
             if placement_type == "multi":
+                fourth_high_deg_node = f"[{deg_placement_nodes[-1]},]"
                 ood_nodes = get_ood_node_placements(G, num_placements, seed)
 
             topology = nx.to_numpy_array(G)
@@ -83,4 +88,6 @@ def mk_ba_topos(
                 ood_nodes
             )  # these are the list of nodes for each graph that need to be backdoored
 
+        paths.append(path)
+        nodes.append(fourth_high_deg_node)
     return paths, nodes

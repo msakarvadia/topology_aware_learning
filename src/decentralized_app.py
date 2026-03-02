@@ -370,6 +370,8 @@ class DecentrallearnApp:
         self.matrix_type = matrix_type
         self.sink_temp = sink_temp
         self.centrality_dict = create_centrality_dict(self.topology, self.rng)
+
+        logger.log(APP_LOG_LEVEL, f"{self.centrality_metric}")
         self.adj_mat = get_adj_mat(
             centrality_metric=self.centrality_metric,
             softmax_coeff=self.aggregation_scheduler.get_softmax_coeff(),
@@ -697,7 +699,7 @@ class DecentrallearnApp:
             # need to combine neighbors w/ client and pass to aggregate function
             agg_neighbors = []
             neighbor_idxs.append(client.idx)
-            logger.log(APP_LOG_LEVEL, f"{neighbor_idxs=}")
+            logger.log(APP_LOG_LEVEL, f"{neighbor_idxs=}, {self.adj_mat=}")
             for i in neighbor_idxs:
                 # NOTE (MS): we want to grab neighbors from the PRIOR round (as the current round still requires finishing)
                 agg_neighbors.append(self.round_states[round_idx + 1][i]["train"])
@@ -707,7 +709,7 @@ class DecentrallearnApp:
                 client_idx=client.idx,
                 neighbor_idxs=neighbor_idxs,
             )
-            logger.log(APP_LOG_LEVEL, f"***************{weights=}")
+            logger.log(APP_LOG_LEVEL, f"***************{client.idx=}, {weights=}")
             future = self.aggregation_function(
                 agg_client,
                 self.seed,

@@ -156,7 +156,7 @@ for data in [
                             )
                             client_df["softmax_coeff"] = softmax_coeff
                             client_df["ood_node"] = node_set
-                            client_df["num_ood_nodes"] = len(placements)
+                            client_df["num_ood_nodes"] = num_nodes
                             client_df["eta_min"] = eta_min
                             client_df["T_0"] = T_0
                             client_df["epoch"] = epoch
@@ -185,7 +185,6 @@ for data in [
                                     "T_0",
                                     "eta_min",
                                     "epoch",
-                                    "ood_type",
                                     "label_alpha",
                                     "matrix_type",
                                     "R",

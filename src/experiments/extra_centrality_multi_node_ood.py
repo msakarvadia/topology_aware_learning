@@ -51,7 +51,7 @@ if __name__ == "__main__":
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{nodes=}")
         for data in [
-            # "mnist",
+            "mnist",
             "fmnist",
             # "tiny_mem",
             "cifar10_vgg",
@@ -70,13 +70,13 @@ if __name__ == "__main__":
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
-                ood_proportion = 0.5
+                # ood_proportion = 0.5
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
-                ood_proportion = 0.5
+                # ood_proportion = 0.5
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"
@@ -107,9 +107,10 @@ if __name__ == "__main__":
                     label_alpha = 1000
                     for ood_type in ["bd", "weather", "blur", "noise"]:
                         # NOTE(MS): temp conditional to cut exp volume
-                        if "mnist" in data and (ood_type != "bd"):
-                            continue
-                        if "mnist" in data and (ood_type == "bd"):
+                        # if "mnist" in data and (ood_type != "bd"):
+                        #    continue
+                        # if "mnist" in data and (ood_type == "bd"):
+                        if ood_type == "bd":
                             ood_proportion = 0.02
                         # NOTE(MS): TinyMem only has bd OOD data rn
                         if data == "tiny_mem" and (ood_type != "bd"):

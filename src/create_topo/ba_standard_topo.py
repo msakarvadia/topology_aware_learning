@@ -57,7 +57,7 @@ def mk_ba_topos(
     for n in [
         33,
     ]:
-        for m in [3]:  # 1, 2
+        for m in [1, 2, 3]:  # 1, 2
             g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
             graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
 
@@ -77,7 +77,6 @@ def mk_ba_topos(
             if placement_type == "degree":
                 ood_nodes = deg_placement_nodes
             if placement_type == "multi":
-                fourth_high_deg_node = f"[{deg_placement_nodes[-1]},]"
                 ood_nodes = get_ood_node_placements(G, num_placements, seed)
 
             topology = nx.to_numpy_array(G)
@@ -88,6 +87,13 @@ def mk_ba_topos(
                 ood_nodes
             )  # these are the list of nodes for each graph that need to be backdoored
 
+        deg_placement_nodes = get_placement_locations_by_top_n_degree(G, 4)
+        fourth_high_deg_node = f"[{deg_placement_nodes[3]},]"
+        first_high_deg_node = f"[{deg_placement_nodes[0]},]"
+
         paths.append(path)
         nodes.append(fourth_high_deg_node)
+
+        paths.append(path)
+        nodes.append(first_high_deg_node)
     return paths, nodes

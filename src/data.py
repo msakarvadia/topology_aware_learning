@@ -623,6 +623,9 @@ def ood_data(
     # test_data: int = 0,
     trigger: int = 100,
     ood_type: str = "bd",
+    blur_level: int = 3,  # HP for blur corruption
+    noise_level: int = 5,  # HP for noise curroption
+    fog_level: int = 5,  # HP for fog corruption
 ) -> (Dataset, Dataset):
     # print(data)
     print("+++++++++Converting to OOD data.++++++++++")
@@ -729,19 +732,19 @@ def ood_data(
                 )
             if ood_type == "noise":
                 if "cifar" in data_name:
-                    img = impulse_noise(img)
+                    img = impulse_noise(img, noise_level)
                 if "mnist" in data_name:
-                    img = impulse_noise_mnist(img)
+                    img = impulse_noise_mnist(img, noise_level)
             if ood_type == "blur":
                 if "cifar" in data_name:
-                    img = glass_blur(img)
+                    img = glass_blur(img, blur_level)
                 if "mnist" in data_name:
-                    img = glass_blur_mnist(img)
+                    img = glass_blur_mnist(img, blur_level)
             if ood_type == "weather":
                 if "cifar" in data_name:
-                    img = fog(img)
+                    img = fog(img, fog_level)
                 if "mnist" in data_name:
-                    img = fog_mnist(img)
+                    img = fog_mnist(img, fog_level)
 
             backdoored_data.append((img, label))  # label modification
 

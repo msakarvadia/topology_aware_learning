@@ -154,6 +154,9 @@ class DecentrallearnApp:
         frob_radius: float = 2,  # frobenius radius for double stoch
         matrix_type: str = "row_stoch",  # row_stoch vs. double stoch
         sink_temp: float = 0.01,  # HP for sinkhorn_knopp for double stoch (not high impact)
+        blur_level: int = 3,  # HP for blur corruption
+        noise_level: int = 5,  # HP for noise curroption
+        fog_level: int = 5,  # HP for fog corruption
     ) -> None:
 
         # make the outdir
@@ -291,6 +294,9 @@ class DecentrallearnApp:
         self.topology = numpy.loadtxt(topology_path, dtype=float)
         num_clients = self.topology.shape[0]
 
+        self.blur_level = blur_level
+        self.noise_level = noise_level
+        self.fog_level = fog_level
         self.ood_type = ood_type
         self.ood_proportion = ood_proportion
         self.ood_node_idxs = eval(ood_node_idxs)
@@ -324,6 +330,9 @@ class DecentrallearnApp:
                 # test_data=1,  # this is trianing data
                 trigger=self.trigger,
                 ood_type=self.ood_type,
+                blur_level=self.blur_level,
+                noise_level=self.noise_level,
+                fog_level=self.fog_level,
             )
 
         self.aggregation_strategy = aggregation_strategy
@@ -453,6 +462,9 @@ class DecentrallearnApp:
             self.random_data_placement,
             self.run_dir,
             self.trigger,
+            self.blur_level,
+            self.noise_level,
+            self.fog_level,
         )
 
         logger.log(APP_LOG_LEVEL, f"Created {len(self.clients)} clients")

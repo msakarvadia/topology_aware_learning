@@ -15,7 +15,7 @@ def get_topo_names(seed=0):
     property_dicts = []
 
     for nodes in [33]:
-        for topo in [1, 2, 3]:
+        for topo in [3, 1, 2]:
             topo_name = f"barabasi_albert_{nodes}_{topo}_{seed}"
             # topo_names.append(topo_name)
             d = {"deg": topo, "name": topo_name, "seed": seed, "nodes": nodes}
@@ -35,12 +35,23 @@ def get_placements_and_graph(topo_dict):
             n=topo_dict["nodes"], m=topo_dict["deg"], seed=topo_dict["seed"]
         )
 
+    # NOTE(MS): in expeirments I actually placed on 6th highest deg...not fourth
+    deg_placement_nodes = get_placement_locations_by_top_n_degree(g, 6)
+    first_high_deg_node = f"[{deg_placement_nodes[0]},]"
+    fourth_high_deg_node = f"[{deg_placement_nodes[3]},]"
+    sixth_high_deg_node = f"[{deg_placement_nodes[5]},]"
+    print(f"{sixth_high_deg_node=}")
+
     nodes = []
     num_nodes_placement = [2, 4, 6]
     for num_placements in num_nodes_placement:
         ood_nodes = get_ood_node_placements(g, num_placements, seed)
         nodes.append(ood_nodes)
 
+    nodes.append(first_high_deg_node)
+    nodes.append(fourth_high_deg_node)
+    nodes.append(sixth_high_deg_node)
+    print(f"{nodes=}")
     return nodes, g
 
 
@@ -101,6 +112,9 @@ for data in [
             dfs = []
             for placement in placements:
                 num_nodes = len(placement)
+                if type(placement) == str:
+                    # NOTE (To deal w/ single node placement)
+                    num_nodes = 1
                 node_set = str(placement).replace(" ", "")
                 node_set = node_set.replace(",", "_")
                 node_set = node_set.replace("[", "")
@@ -126,83 +140,88 @@ for data in [
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
-                    os.chdir(f"{args.rootdir}")
-                    for ood_type in ["bd", "weather", "blur", "noise"]:
-                        # NOTE(MS): TinyMem only has bd OOD data rn
-                        if data == "tiny_mem" and (ood_type != "bd"):
-                            continue
-                        num_exp += 1
-                        stats_path = f"data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_01_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001/"
-                        experiment_dir = stats_path
-                        checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
-                        stats_path = f"{stats_path}client_stats.csv"
-
-                        exists = os.path.exists(checkpoint_path)
-                        my_dir = Path(stats_path)
-
-                        if exists:
-                            try:
-                                client_df = pd.read_csv(stats_path)
-                            except:
-                                print("error reading stats, continuing")
-                                print(stats_path)
+                    # NOTE(MS): different experiments have different proportions (we didn't run all of these combinations)
+                    for ood_proportion in [0.1, 0.02, 0.5]:
+                        ood_proportion_str = str(ood_proportion).replace(".", "")
+                        os.chdir(f"{args.rootdir}")
+                        for ood_type in ["bd", "weather", "blur", "noise"]:
+                            # NOTE(MS): TinyMem only has bd OOD data rn
+                            if data == "tiny_mem" and (ood_type != "bd"):
                                 continue
-                            client_df["total_epochs"] = (
-                                client_df.round_idx * len(client_df.epoch.unique())
-                                + client_df.epoch
-                            )
-                            client_df["agg_strategy"] = (
-                                f"{agg_strategy}"  # _{scheduler}"
-                            )
-                            client_df["softmax_coeff"] = softmax_coeff
-                            client_df["ood_node"] = node_set
-                            client_df["num_ood_nodes"] = num_nodes
-                            client_df["eta_min"] = eta_min
-                            client_df["T_0"] = T_0
-                            client_df["epoch"] = epoch
-                            client_df["label_alpha"] = label_alpha
-                            client_df["ood_type"] = ood_type
-                            client_df["matrix_type"] = matrix_type
-                            client_df["R"] = R
-                            if ood_type == None:
-                                client_df["backdoor_acc"] = 0
-                            # NOTE: try setting below statement to
-                            # if val is None: (not sure if you can equal none)
-                            if scheduler == None:
-                                scheduler = "None"
-                            client_df["scheduler"] = scheduler
-                            client_df = client_df[
-                                [
-                                    "total_epochs",
-                                    "agg_strategy",
-                                    "softmax_coeff",
-                                    "ood_node",
-                                    "test_acc",
-                                    "backdoor_acc",
-                                    "ood_type",
-                                    "client_idx",
-                                    "scheduler",
-                                    "T_0",
-                                    "eta_min",
-                                    "epoch",
-                                    "label_alpha",
-                                    "matrix_type",
-                                    "R",
-                                    "num_ood_nodes",
+                            num_exp += 1
+                            stats_path = f"data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001/"
+                            experiment_dir = stats_path
+                            checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
+                            stats_path = f"{stats_path}client_stats.csv"
+
+                            exists = os.path.exists(checkpoint_path)
+                            my_dir = Path(stats_path)
+
+                            if exists:
+                                try:
+                                    client_df = pd.read_csv(stats_path)
+                                except:
+                                    print("error reading stats, continuing")
+                                    print(stats_path)
+                                    continue
+                                client_df["total_epochs"] = (
+                                    client_df.round_idx * len(client_df.epoch.unique())
+                                    + client_df.epoch
+                                )
+                                client_df["agg_strategy"] = (
+                                    f"{agg_strategy}"  # _{scheduler}"
+                                )
+                                client_df["softmax_coeff"] = softmax_coeff
+                                client_df["ood_node"] = node_set
+                                client_df["ood_proportion"] = ood_proportion
+                                client_df["num_ood_nodes"] = num_nodes
+                                client_df["eta_min"] = eta_min
+                                client_df["T_0"] = T_0
+                                client_df["epoch"] = epoch
+                                client_df["label_alpha"] = label_alpha
+                                client_df["ood_type"] = ood_type
+                                client_df["matrix_type"] = matrix_type
+                                client_df["R"] = R
+                                if ood_type == None:
+                                    client_df["backdoor_acc"] = 0
+                                # NOTE: try setting below statement to
+                                # if val is None: (not sure if you can equal none)
+                                if scheduler == None:
+                                    scheduler = "None"
+                                client_df["scheduler"] = scheduler
+                                client_df = client_df[
+                                    [
+                                        "total_epochs",
+                                        "agg_strategy",
+                                        "softmax_coeff",
+                                        "ood_node",
+                                        "test_acc",
+                                        "backdoor_acc",
+                                        "ood_type",
+                                        "client_idx",
+                                        "scheduler",
+                                        "T_0",
+                                        "eta_min",
+                                        "epoch",
+                                        "label_alpha",
+                                        "matrix_type",
+                                        "R",
+                                        "num_ood_nodes",
+                                        "ood_proportion",
+                                    ]
                                 ]
-                            ]
 
-                            client_df = (
-                                client_df.drop_duplicates()
-                            )  # there is an issue with how I am loading ckpts
-                            dfs.append(client_df.copy())
-                        else:
-                            print(
-                                "Does not exist:",
-                                checkpoint_path,
-                            )
+                                client_df = (
+                                    client_df.drop_duplicates()
+                                )  # there is an issue with how I am loading ckpts
+                                dfs.append(client_df.copy())
+                            else:
+                                print(
+                                    "Does not exist:",
+                                    checkpoint_path,
+                                )
 
-            print("-------")
+            print("SAVING CSV")
             csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"
             if not (dfs == []):
                 all_client_results = pd.concat(dfs)
@@ -211,5 +230,6 @@ for data in [
                 all_client_results.to_csv(f"{args.results_loc}/{csv_name}")
             else:
                 print("NO RESULTS: ", csv_name)
+            print("-------")
 
 print(f"{num_exp=}")

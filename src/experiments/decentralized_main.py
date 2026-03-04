@@ -406,6 +406,27 @@ if __name__ == "__main__":
         default=0.01,
         help="HP for sinkhorn_knopp for double stoch matrices, not high impact ariable to change",
     )
+    parser.add_argument(
+        "--blur_level",
+        type=int,
+        default=3,
+        choices=[1, 2, 3, 4, 5],
+        help="HP for blur corruption; note: only a single corrupotion is supported at a time (e.g., bd, blur, nosie, weather)",
+    )
+    parser.add_argument(
+        "--noise_level",
+        type=int,
+        default=5,
+        choices=[1, 2, 3, 4, 5],
+        help="HP for noise corruption; note: only a single corrupotion is supported at a time (e.g., bd, blur, nosie, weather)",
+    )
+    parser.add_argument(
+        "--fog_level",
+        type=int,
+        default=5,
+        choices=[1, 2, 3, 4, 5],
+        help="HP for weather corruption; note: only a single corrupotion is supported at a time (e.g., bd, blur, nosie, weather)",
+    )
 
     args = parser.parse_args()
 
@@ -477,6 +498,9 @@ if __name__ == "__main__":
             frob_radius=args.frob_radius,  # frobenius radius for double stoch
             matrix_type=args.matrix_type,  # row_stoch vs. double stoch
             sink_temp=args.sink_temp,  # HP for sinkhorn_knopp for double stoch (not high impact)
+            blur_level=args.blur_level,
+            noise_level=args.noise_level,
+            fog_level=args.fog_level,
         )
         # client_results = decentral_app.run()
         exit_value = decentral_app.run()

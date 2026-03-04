@@ -251,6 +251,9 @@ def create_clients(
     random_data_placement: bool = True,
     ckpt_dir: str = "./ckpt",
     trigger: int = 100,
+    blur_level: int = 3,  # HP for blur corruption
+    noise_level: int = 5,  # HP for noise curroption
+    fog_level: int = 5,  # HP for fog corruption
 ) -> list[DecentralClient]:
     """Create many clients with disjoint sets of data.
 
@@ -338,6 +341,9 @@ def create_clients(
                 # test_data=0,  # this is trianing data
                 trigger=trigger,
                 ood_type=ood_type,
+                blur_level=blur_level,
+                noise_level=noise_level,
+                fog_level=fog_level,
             )
             # combine clean + bd training data
             concat_data = ConcatDataset([clean_data, bd_data])

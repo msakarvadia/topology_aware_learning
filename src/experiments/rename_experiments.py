@@ -2,7 +2,11 @@ import os
 import shutil
 
 basedir = "bd_scheduler_logs"
+basedir = "multi_node_ood_logs"
 
+os.chdir(basedir)
+# NOTE(MS): dealing w/ long file name
+basedir = "./"
 for fn in os.listdir(basedir):
     if not os.path.isdir(os.path.join(basedir, fn)):
         continue  # Not a directory
@@ -42,4 +46,23 @@ for fn in os.listdir(basedir):
     os.rename(os.path.join(basedir, fn),
             os.path.join(basedir, new_name))
     """
-    # print("---------")
+
+    """Adding appendix to file name
+    print(os.getcwd())
+    print(fn)
+    new_name = fn + "_3_5_5" 
+    print(os.path.join(basedir,new_name))
+    os.rename(os.path.join(basedir, fn),
+            os.path.join(basedir, new_name))
+    print("---------")
+    """
+
+    """Renaming BA graphs to shorten
+    print(os.getcwd())
+    print(fn)
+    new_name = fn.replace("topo_barabasi_albert", "ba") 
+    print(os.path.join(basedir,new_name))
+    os.rename(os.path.join(basedir, fn),
+            os.path.join(basedir, new_name))
+    print("---------")
+    """

@@ -59,7 +59,7 @@ def mk_ba_topos(
     ]:
         for m in [1, 2, 3]:  # 1, 2
             g = nx.barabasi_albert_graph(n=n, m=m, seed=seed)
-            graphs[f"barabasi_albert_{n}_{m}_{seed}"] = g
+            graphs[f"ba_{n}_{m}_{seed}"] = g
 
     paths = []
     nodes = []
@@ -80,7 +80,7 @@ def mk_ba_topos(
                 ood_nodes = get_ood_node_placements(G, num_placements, seed)
 
             topology = nx.to_numpy_array(G)
-            path = f"{bd_dir}/topo_{graph_name}.txt"
+            path = f"{bd_dir}/{graph_name}.txt"
             np.savetxt(path, topology, fmt="%d")
             paths.append(path)
             nodes.append(

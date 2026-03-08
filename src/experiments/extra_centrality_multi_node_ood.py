@@ -61,6 +61,9 @@ if __name__ == "__main__":
             num_example = 5000
             checkpoint_every = 5
             task_type = "multiply"
+            blur_level = 3
+            noise_level = 5
+            fog_level = 5
             if data == "tiny_mem":
                 num_example = 33000
                 lr = 0.001
@@ -70,12 +73,14 @@ if __name__ == "__main__":
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
+                blur_level = noise_level = fog_level = 1
                 # ood_proportion = 0.5
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
+                blur_level = noise_level = fog_level = 1
                 # ood_proportion = 0.5
             if data == "fmnist":
                 lr = 0.01
@@ -105,6 +110,7 @@ if __name__ == "__main__":
                     T_0 = 66
                     sample_alpha = 1000
                     label_alpha = 1000
+
                     for ood_type in ["bd", "weather", "blur", "noise"]:
                         # NOTE(MS): temp conditional to cut exp volume
                         # if "mnist" in data and (ood_type != "bd"):
@@ -160,6 +166,9 @@ if __name__ == "__main__":
                                 "T_0": T_0,
                                 "seed": seed,
                                 "ood_proportion": ood_proportion,
+                                "noise_level": noise_level,
+                                "blur_level": blur_level,
+                                "fog_level": fog_level,
                             }
                             param_list.append(experiment_args)
 

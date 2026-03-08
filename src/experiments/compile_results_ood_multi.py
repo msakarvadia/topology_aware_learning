@@ -16,7 +16,7 @@ def get_topo_names(seed=0):
 
     for nodes in [33]:
         for topo in [3, 1, 2]:
-            topo_name = f"barabasi_albert_{nodes}_{topo}_{seed}"
+            topo_name = f"ba_{nodes}_{topo}_{seed}"
             # topo_names.append(topo_name)
             d = {"deg": topo, "name": topo_name, "seed": seed, "nodes": nodes}
             property_dicts.append(d)
@@ -30,7 +30,7 @@ topo_dicts = get_topo_names()
 def get_placements_and_graph(topo_dict):
     topo_name = topo_dict["name"]
 
-    if "barabasi" in topo_name:
+    if "ba" in topo_name:
         g = nx.barabasi_albert_graph(
             n=topo_dict["nodes"], m=topo_dict["deg"], seed=topo_dict["seed"]
         )
@@ -127,6 +127,9 @@ for data in [
                 label_alpha = 1000
                 matrix_type = "row_stoch"
                 R = 2
+                blur_level = 3
+                noise_level = 5
+                fog_level = 5
                 for agg_strategy in [
                     "closeCent",
                     "eigenCent",
@@ -149,7 +152,7 @@ for data in [
                             if data == "tiny_mem" and (ood_type != "bd"):
                                 continue
                             num_exp += 1
-                            stats_path = f"data_topo_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001/"
+                            stats_path = f"data_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001_{blur_level}_{noise_level}_{fog_level}/"
                             experiment_dir = stats_path
                             checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                             stats_path = f"{stats_path}client_stats.csv"
@@ -182,6 +185,9 @@ for data in [
                                 client_df["ood_type"] = ood_type
                                 client_df["matrix_type"] = matrix_type
                                 client_df["R"] = R
+                                client_df["noise_level"] = noise_level
+                                client_df["blur_level"] = blur_level
+                                client_df["fog_level"] = fog_level
                                 if ood_type == None:
                                     client_df["backdoor_acc"] = 0
                                 # NOTE: try setting below statement to
@@ -208,6 +214,9 @@ for data in [
                                         "R",
                                         "num_ood_nodes",
                                         "ood_proportion",
+                                        "blur_level",
+                                        "noise_level",
+                                        "fog_level",
                                     ]
                                 ]
 

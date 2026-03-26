@@ -51,11 +51,13 @@ if __name__ == "__main__":
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{nodes=}")
         for data in [
-            "mnist",
-            "fmnist",
+            # "mnist",
+            # "fmnist",
             # "tiny_mem",
-            "cifar10_vgg",
+            # "cifar10_vgg",
             # "cifar100_vgg",
+            "cifar10",
+            "cifar100",
         ]:
             wd = 0
             num_example = 5000
@@ -64,24 +66,39 @@ if __name__ == "__main__":
             blur_level = 3
             noise_level = 5
             fog_level = 5
+            epochs = 5
+            ood_proportion = 0.1
             if data == "tiny_mem":
                 num_example = 33000
                 lr = 0.001
                 optimizer = "adam"
+            if data == "cifar10":
+                optimizer = "sgd"
+                lr = 0.001
+                checkpoint_every = 5
+            if data == "cifar100":
+                optimizer = "sgd"
+                lr = 0.001
+                checkpoint_every = 5
             if data == "cifar10_vgg":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
-                blur_level = noise_level = fog_level = 1
+                # NOTE(MS):
+                # blur_level = noise_level = fog_level = 1
+                # NOTE(MS): vary local training epochs
+                # epochs = 10
                 # ood_proportion = 0.5
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
                 checkpoint_every = 5
                 # NOTE(MS):
-                blur_level = noise_level = fog_level = 1
-                # ood_proportion = 0.5
+                # blur_level = noise_level = fog_level = 1
+                # NOTE(MS): vary local training epochs
+                # epochs = 10
+                ## ood_proportion = 0.5
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"
@@ -89,7 +106,7 @@ if __name__ == "__main__":
                 lr = 0.01
                 optimizer = "sgd"
 
-            for softmax_coeff in [10]:
+            for many_to_one in [True]:  # False
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
                 # iterate through aggregation strategies
                 for aggregation_strategy in [
@@ -105,13 +122,18 @@ if __name__ == "__main__":
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
+                    softmax_coeff = 10
                     scheduler = None
                     eta_min = 1
                     T_0 = 66
                     sample_alpha = 1000
                     label_alpha = 1000
 
-                    for ood_type in ["bd", "weather", "blur", "noise"]:
+                    for ood_type in [
+                        "weather",
+                        "blur",
+                    ]:
+                        # for ood_type in ["bd", "weather", "blur", "noise"]:
                         # NOTE(MS): temp conditional to cut exp volume
                         # if "mnist" in data and (ood_type != "bd"):
                         #    continue
@@ -142,7 +164,7 @@ if __name__ == "__main__":
                                 "topology_path": topo,
                                 "ood_type": ood_type,
                                 "prox_coeff": 0,
-                                "epochs": 5,
+                                "epochs": epochs,
                                 "ood_node_idxs": f"{node_set}",
                                 "aggregation_strategy": aggregation_strategy,
                                 "log_dir": "multi_node_ood_logs",
@@ -169,6 +191,7 @@ if __name__ == "__main__":
                                 "noise_level": noise_level,
                                 "blur_level": blur_level,
                                 "fog_level": fog_level,
+                                "many_to_one": many_to_one,
                             }
                             param_list.append(experiment_args)
 

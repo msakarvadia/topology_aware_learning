@@ -75,6 +75,8 @@ args = parser.parse_args()
 
 num_exp = 0
 for data in [
+    "cifar10",
+    "cifar100",
     "cifar10_vgg",
     "cifar100_vgg",
     "mnist",
@@ -88,6 +90,18 @@ for data in [
     if data == "tiny_mem":
         num_example = 33000
         lr = "0001"
+        optimizer = "adam"
+    if data == "cifar10":
+        lr = "0001"  # 0.0001
+        optimizer = "sgd"
+    if data == "cifar100":
+        lr = "0001"  # 0.0001
+        optimizer = "sgd"
+    if data == "cifar10_vgg":
+        lr = "00001"  # 0.0001
+        optimizer = "adam"
+    if data == "cifar10_vgg":
+        lr = "00001"  # 0.0001
         optimizer = "adam"
     if data == "cifar10_vgg":
         lr = "00001"  # 0.0001
@@ -119,7 +133,6 @@ for data in [
                 node_set = node_set.replace(",", "_")
                 node_set = node_set.replace("[", "")
                 node_set = node_set.replace("]", "")
-                epoch = 5
                 scheduler = None
                 eta_min = 1
                 T_0 = 66
@@ -127,108 +140,149 @@ for data in [
                 label_alpha = 1000
                 matrix_type = "row_stoch"
                 R = 2
-                blur_level = 3
-                noise_level = 5
-                fog_level = 5
-                for agg_strategy in [
-                    "closeCent",
-                    "eigenCent",
-                    "degCent",
-                    "betCent",
-                    "mhCent",
-                    "weighted",
-                    "random",
-                    "unweighted",
-                    "unweighted_fl",
-                    # "degCent_sim",
-                    # "betCent_sim",
-                ]:
-                    # NOTE(MS): different experiments have different proportions (we didn't run all of these combinations)
-                    for ood_proportion in [0.1, 0.02, 0.5]:
-                        ood_proportion_str = str(ood_proportion).replace(".", "")
-                        os.chdir(f"{args.rootdir}")
-                        for ood_type in ["bd", "weather", "blur", "noise"]:
-                            # NOTE(MS): TinyMem only has bd OOD data rn
-                            if data == "tiny_mem" and (ood_type != "bd"):
-                                continue
-                            num_exp += 1
-                            stats_path = f"data_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_True_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001_{blur_level}_{noise_level}_{fog_level}/"
-                            experiment_dir = stats_path
-                            checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
-                            stats_path = f"{stats_path}client_stats.csv"
+                for optimizer in ["sgd", "adam"]:
+                    for lr in ["001", "0001", "00001"]:
+                        for epoch in [5, 10, 20]:
+                            for many_to_one in [False, True]:
+                                for blur_level, noise_level, fog_level in [
+                                    (1, 1, 1),
+                                    (3, 5, 5),
+                                ]:
+                                    for agg_strategy in [
+                                        "closeCent",
+                                        "eigenCent",
+                                        "degCent",
+                                        "betCent",
+                                        "mhCent",
+                                        "weighted",
+                                        "random",
+                                        "unweighted",
+                                        "unweighted_fl",
+                                        # "degCent_sim",
+                                        # "betCent_sim",
+                                    ]:
+                                        # NOTE(MS): different experiments have different proportions (we didn't run all of these combinations)
+                                        for ood_proportion in [0.1, 0.02, 0.5]:
+                                            ood_proportion_str = str(
+                                                ood_proportion
+                                            ).replace(".", "")
+                                            os.chdir(f"{args.rootdir}")
+                                            for ood_type in [
+                                                "bd",
+                                                "weather",
+                                                "blur",
+                                                "noise",
+                                            ]:
+                                                # NOTE(MS): TinyMem only has bd OOD data rn
+                                                if data == "tiny_mem" and (
+                                                    ood_type != "bd"
+                                                ):
+                                                    continue
+                                                num_exp += 1
+                                                stats_path = f"data_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_{many_to_one}_0_degree_True_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001_{blur_level}_{noise_level}_{fog_level}/"
+                                                experiment_dir = stats_path
+                                                checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
+                                                stats_path = (
+                                                    f"{stats_path}client_stats.csv"
+                                                )
 
-                            exists = os.path.exists(checkpoint_path)
-                            my_dir = Path(stats_path)
+                                                exists = os.path.exists(checkpoint_path)
+                                                my_dir = Path(stats_path)
 
-                            if exists:
-                                try:
-                                    client_df = pd.read_csv(stats_path)
-                                except:
-                                    print("error reading stats, continuing")
-                                    print(stats_path)
-                                    continue
-                                client_df["total_epochs"] = (
-                                    client_df.round_idx * len(client_df.epoch.unique())
-                                    + client_df.epoch
-                                )
-                                client_df["agg_strategy"] = (
-                                    f"{agg_strategy}"  # _{scheduler}"
-                                )
-                                client_df["softmax_coeff"] = softmax_coeff
-                                client_df["ood_node"] = node_set
-                                client_df["ood_proportion"] = ood_proportion
-                                client_df["num_ood_nodes"] = num_nodes
-                                client_df["eta_min"] = eta_min
-                                client_df["T_0"] = T_0
-                                client_df["epoch"] = epoch
-                                client_df["label_alpha"] = label_alpha
-                                client_df["ood_type"] = ood_type
-                                client_df["matrix_type"] = matrix_type
-                                client_df["R"] = R
-                                client_df["noise_level"] = noise_level
-                                client_df["blur_level"] = blur_level
-                                client_df["fog_level"] = fog_level
-                                if ood_type == None:
-                                    client_df["backdoor_acc"] = 0
-                                # NOTE: try setting below statement to
-                                # if val is None: (not sure if you can equal none)
-                                if scheduler == None:
-                                    scheduler = "None"
-                                client_df["scheduler"] = scheduler
-                                client_df = client_df[
-                                    [
-                                        "total_epochs",
-                                        "agg_strategy",
-                                        "softmax_coeff",
-                                        "ood_node",
-                                        "test_acc",
-                                        "backdoor_acc",
-                                        "ood_type",
-                                        "client_idx",
-                                        "scheduler",
-                                        "T_0",
-                                        "eta_min",
-                                        "epoch",
-                                        "label_alpha",
-                                        "matrix_type",
-                                        "R",
-                                        "num_ood_nodes",
-                                        "ood_proportion",
-                                        "blur_level",
-                                        "noise_level",
-                                        "fog_level",
-                                    ]
-                                ]
+                                                if exists:
+                                                    try:
+                                                        client_df = pd.read_csv(
+                                                            stats_path
+                                                        )
+                                                    except:
+                                                        print(
+                                                            "error reading stats, continuing"
+                                                        )
+                                                        print(stats_path)
+                                                        continue
+                                                    client_df["total_epochs"] = (
+                                                        client_df.round_idx
+                                                        * len(client_df.epoch.unique())
+                                                        + client_df.epoch
+                                                    )
+                                                    client_df["agg_strategy"] = (
+                                                        f"{agg_strategy}"  # _{scheduler}"
+                                                    )
+                                                    client_df["softmax_coeff"] = (
+                                                        softmax_coeff
+                                                    )
+                                                    client_df["ood_node"] = node_set
+                                                    client_df["ood_proportion"] = (
+                                                        ood_proportion
+                                                    )
+                                                    client_df["num_ood_nodes"] = (
+                                                        num_nodes
+                                                    )
+                                                    client_df["eta_min"] = eta_min
+                                                    client_df["T_0"] = T_0
+                                                    client_df["epoch"] = epoch
+                                                    client_df["label_alpha"] = (
+                                                        label_alpha
+                                                    )
+                                                    client_df["ood_type"] = ood_type
+                                                    client_df["matrix_type"] = (
+                                                        matrix_type
+                                                    )
+                                                    client_df["R"] = R
+                                                    client_df["noise_level"] = (
+                                                        noise_level
+                                                    )
+                                                    client_df["blur_level"] = blur_level
+                                                    client_df["fog_level"] = fog_level
+                                                    client_df["many_to_one"] = (
+                                                        many_to_one
+                                                    )
+                                                    client_df["lr"] = lr
+                                                    client_df["optimizer"] = optimizer
+                                                    if ood_type == None:
+                                                        client_df["backdoor_acc"] = 0
+                                                    # NOTE: try setting below statement to
+                                                    # if val is None: (not sure if you can equal none)
+                                                    if scheduler == None:
+                                                        scheduler = "None"
+                                                    client_df["scheduler"] = scheduler
+                                                    client_df = client_df[
+                                                        [
+                                                            "total_epochs",
+                                                            "agg_strategy",
+                                                            "softmax_coeff",
+                                                            "ood_node",
+                                                            "test_acc",
+                                                            "backdoor_acc",
+                                                            "ood_type",
+                                                            "client_idx",
+                                                            "scheduler",
+                                                            "T_0",
+                                                            "eta_min",
+                                                            "epoch",
+                                                            "label_alpha",
+                                                            "matrix_type",
+                                                            "R",
+                                                            "num_ood_nodes",
+                                                            "ood_proportion",
+                                                            "blur_level",
+                                                            "noise_level",
+                                                            "fog_level",
+                                                            "many_to_one",
+                                                            "lr",
+                                                            "optimizer",
+                                                        ]
+                                                    ]
 
-                                client_df = (
-                                    client_df.drop_duplicates()
-                                )  # there is an issue with how I am loading ckpts
-                                dfs.append(client_df.copy())
-                            else:
-                                print(
-                                    "Does not exist:",
-                                    checkpoint_path,
-                                )
+                                                    client_df = (
+                                                        client_df.drop_duplicates()
+                                                    )  # there is an issue with how I am loading ckpts
+                                                    dfs.append(client_df.copy())
+                                                else:
+                                                    print(
+                                                        "Does not exist:",
+                                                        checkpoint_path,
+                                                    )
 
             print("SAVING CSV")
             csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"

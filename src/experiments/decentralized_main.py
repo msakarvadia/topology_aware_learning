@@ -254,7 +254,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--many_to_one",
         action="store_false",
-        help="By default flag is true and all backdoored images will be assigned label=0. If you set this flag, each new label = (old_label + 1)% # of total labels (aka many to many labels). ",
+        help="By default flag is true and all backdoored images will be assigned label=0. If you set this flag, each new label = (old_label + 1)% # of total labels (aka many to many labels); also for cifar10/100 blur+weather purburbations each new label = (old_label + 1) % # of total labels.",
     )
     parser.add_argument(
         "--offset_clients_data_placement",

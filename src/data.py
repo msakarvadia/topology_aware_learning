@@ -738,11 +738,15 @@ def ood_data(
             if ood_type == "blur":
                 if "cifar" in data_name:
                     img = glass_blur(img, blur_level)
+                    if not many_to_one:
+                        label = (label + 1) % num_labels
                 if "mnist" in data_name:
                     img = glass_blur_mnist(img, blur_level)
             if ood_type == "weather":
                 if "cifar" in data_name:
                     img = fog(img, fog_level)
+                    if not many_to_one:
+                        label = (label + 1) % num_labels
                 if "mnist" in data_name:
                     img = fog_mnist(img, fog_level)
 

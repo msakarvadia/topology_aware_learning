@@ -143,6 +143,8 @@ if __name__ == "__main__":
             "cifar10_resnet50",
             "cifar10_dropout",
             "cifar10_augment_dropout",
+            "camelyon17",  # WILDs -- tumor classification
+            "civilcomments",  # WILDs -- toxicity classification
         ],
         help="Dataset (and corresponding model) to use",
     )
@@ -231,8 +233,9 @@ if __name__ == "__main__":
             "noise",
             "blur",
             "weather",
+            "hospital",
         ],  # weather, blur
-        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/digital are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets.",
+        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/digital are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets. hospital: for camelyon dataset will add extra data from hospital 5",
     )
     parser.add_argument(
         "--ood_proportion",
@@ -271,7 +274,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--non_random_data_placement",
         action="store_false",
-        help="By default flag is true, and data will be assigned randomly to nodes. If you set this flag, then data will be placed via the above specified centrality metric.",
+        help="By default flag is true, and data will be assigned randomly to nodes. If you set this flag, then data will be placed via the above specified centrality metric. Nodes will be sorted by the # of label 1 datapoints they have.",
     )
     parser.add_argument(
         "--softmax",

@@ -6,9 +6,10 @@ import torch
 import torchvision
 from torch import nn
 from torch.nn import functional as F  # noqa: N812
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, Subset, random_split
 from torchvision import transforms
 from transformers import GPT2Config, GPT2LMHeadModel
+from transformers import BertForSequenceClassification
 import math
 import os
 
@@ -245,6 +246,27 @@ def create_model(
     """
     name = data.value.lower()
 
+    if name == "civilcomments":
+        return BertForSequenceClassification.from_pretrained(
+            "bert-base-uncased", num_labels=2
+        )
+    if name == "camelyon17":
+        from torchvision.models import ResNet18_Weights
+        from torchvision import models
+
+        def resnet18_camelyon17(num_classes=2, use_pretrained=True):
+            torch.manual_seed(2809)
+
+            # Use ImageNet weights if use_pretrained is True
+            weights = ResNet18_Weights.IMAGENET1K_V1 if use_pretrained else None
+            m = models.resnet18(weights=weights)
+
+            # Replace the final layer for the binary task
+            m.fc = torch.nn.Linear(m.fc.in_features, num_classes)
+
+            return m
+
+        return resnet18_camelyon17(num_classes=2, use_pretrained=True)
     if (name == "cifar10_augment_dropout") or (name == "cifar10_dropout"):
         return ConvNet()
     if (name == "cifar10_vgg") or (name == "cifar10_augment_vgg"):
@@ -559,6 +581,104 @@ def load_data(
         return torchvision.datasets.FashionMNIST(**kwargs)
     elif name == "mnist":
         return torchvision.datasets.MNIST(**kwargs)
+    elif "civilcomments" in name:
+        from wilds import get_dataset
+
+        # Load the full dataset (downloads if not exists)
+        dataset = get_dataset(dataset="civilcomments", download=True)
+
+        class MetadataStripper(torch.utils.data.Dataset):
+            def __init__(self, wilds_subset):
+                self.subset = wilds_subset
+                self.targets = self.subset.dataset.y_array[self.subset.indices]
+
+            def __getitem__(self, i):
+                # WILDS returns (x, y, metadata). We only return (x, y).
+                x, y, metadata = self.subset[i]
+                return x, y.item()
+
+            def __len__(self):
+                return len(self.subset)
+
+        # Apply it to your subsets
+        train_data = MetadataStripper(
+            Subset(dataset.get_subset("train"), range(269038))
+        )
+        val_data = MetadataStripper(Subset(dataset.get_subset("val"), range(45180)))
+        test_data = MetadataStripper(Subset(dataset.get_subset("test"), range(133782)))
+        if train:
+            return train_data
+        else:
+            return test_data
+
+    elif "camelyon17" in name:
+        from wilds import get_dataset
+
+        full_dataset = get_dataset(dataset="camelyon17", download=True, root_dir=root)
+
+        class TransformedSubset(torch.utils.data.Dataset):
+            def __init__(self, subset, transform=None):
+                self.subset = subset
+                self.transform = transform
+                self.targets = self.subset.dataset.y_array[self.subset.indices]
+
+            def __getitem__(self, index):
+                # Get the raw PIL image, label, and metadata from the subset
+                x, y, metadata = self.subset[index]
+                if self.transform:
+                    x = self.transform(x)
+                return x, y.item()  # , metadata
+
+            def __len__(self):
+                return len(self.subset)
+
+        # Use this in your get_manual_splits function
+        def get_manual_splits(dataset, train_ratio=0.95, transform=None):
+            hospital_ids = dataset.metadata_array[:, 0]
+            indices_0123 = torch.where(hospital_ids <= 3)[0]
+            indices_4 = torch.where(hospital_ids == 4)[0]
+
+            def split_indices(indices, ratio):
+                train_size = int(len(indices) * ratio)
+                return random_split(indices, [train_size, len(indices) - train_size])
+
+            # Get the raw subsets
+            raw_train_0123, raw_test_0123 = split_indices(indices_0123, train_ratio)
+            raw_train_4, raw_test_4 = split_indices(indices_4, train_ratio)
+
+            # Wrap them to apply the transform
+            return (
+                TransformedSubset(Subset(dataset, raw_train_0123), transform),
+                TransformedSubset(Subset(dataset, raw_test_0123), transform),
+                TransformedSubset(Subset(dataset, raw_train_4), transform),
+                TransformedSubset(Subset(dataset, raw_test_4), transform),
+            )
+
+        transform_for_data = transforms.Compose(
+            [
+                transforms.Resize((96, 96)),
+                transforms.ToTensor(),  # This converts PIL -> Tensor
+                transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+            ]
+        )
+
+        # Create all 4 subsets
+        train_0123, test_0123, train_4, test_4 = get_manual_splits(
+            full_dataset, transform=transform_for_data
+        )
+
+        if "ood" in name:
+            # OOD hospital 4 data
+            if train:
+                return train_4
+            else:
+                return test_4
+        else:
+            # clean data
+            if train:
+                return train_0123
+            else:
+                return test_0123
     elif "tiny_mem" in name:
         primes = [
             2,

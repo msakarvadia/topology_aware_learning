@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from typing import Optional
 from typing import OrderedDict
-
+from tqdm import tqdm
 import sys
 import torch
 import json
@@ -81,14 +81,25 @@ def get_label_counts(
     """return label count dict for each data split"""
 
     # save label counts per worker
-    label_counts_per_worker = {label: [0] * num_clients for label in range(num_labels)}
+    counts_matrix = np.zeros((num_labels, num_clients), dtype=int)
 
-    for idx in range(num_clients):
-        for batch in subsets[idx]:
-            _, label = batch
-            label_counts_per_worker[label][idx] += 1
+    for idx in tqdm(range(num_clients)):
+        try:
+            current_targets = np.array(subsets[idx].dataset.targets)[
+                subsets[idx].indices
+            ]
+            unique, counts = np.unique(current_targets, return_counts=True)
+            counts_matrix[unique, idx] = counts
+            print("FAST label counts")
 
-    return label_counts_per_worker
+        except:
+            print(f"SLOW label counts")
+            for batch in tqdm(subsets[idx]):
+                _, label = batch
+                label_val = label.item() if hasattr(label, "item") else label
+                counts_matrix[label_val, idx] += 1
+
+    return {label: counts_matrix[label].tolist() for label in range(num_labels)}
 
 
 def place_data_with_node(
@@ -129,14 +140,19 @@ def place_data_with_node(
         sorted_nodes = [
             x for _, x in sorted(zip(centrality_list, list(range(num_clients))))
         ]
-        print(f"{sorted_nodes=}")
+        print(f"{sorted_nodes=}, {centrality_list=}")
 
         # TODO(MS): in the future sort by something in addition to # of samples
-        data_len_list = [len(x) for _, x in train_indices.items()]
+        # data_len_list = [len(x) for _, x in train_indices.items()]
+
+        # NOTE(MS): sorting by # of label 1 images on worker
+        print(f"{label_counts_per_worker=}")
+        data_len_list = label_counts_per_worker[1]
+
         sorted_data = [
             x for _, x in sorted(zip(data_len_list, list(range(num_clients))))
         ]
-        print(f"{sorted_data=}")
+        print(f"{sorted_data=}, {data_len_list=}")
         for i in range(offset_clients_data_placement):
             temp = sorted_data.pop(0)
             sorted_data.append(temp)
@@ -304,6 +320,12 @@ def create_clients(
         num_labels=num_labels,
         subsets=train_subsets,
     )
+    print(f"{label_counts_per_worker=}")
+    # NOTE(MS): this is before OODing the data!!
+    json.dump(
+        label_counts_per_worker,
+        open(f"{run_dir}/clean_label_counts_per_worker.txt", "w"),
+    )
 
     train_subsets, test_subsets, valid_subsets = place_data_with_node(
         label_counts_per_worker,
@@ -321,7 +343,13 @@ def create_clients(
     if ood_type:
         rng_seed = rng.integers(low=0, high=4294967295, size=1).item()
         for ood_node_idx in ood_node_idxs:
-            stratify_targets = [label for x, label in train_subsets[ood_node_idx]]
+            # stratify_targets = [label for x, label in train_subsets[ood_node_idx]]
+
+            indices = train_subsets[ood_node_idx].indices
+            stratify_targets = np.array(train_subsets[ood_node_idx].dataset.targets)[
+                indices
+            ].tolist()
+
             clean_data, bd_data = ood_data(
                 data_name.value.lower(),
                 train_subsets[ood_node_idx],
@@ -332,13 +360,6 @@ def create_clients(
                 num_labels,
                 random_bd,
                 many_to_one,
-                # for propoer checkpointing purposes we need to save some additional info
-                # offset_clients_data_placement,
-                # centrality_metric_data_placement,
-                # random_data_placement,
-                # ood_node_idx,
-                # num_clients=len(client_ids),
-                # test_data=0,  # this is trianing data
                 trigger=trigger,
                 ood_type=ood_type,
                 blur_level=blur_level,
@@ -377,6 +398,7 @@ def create_clients(
         )
         clients.append(client)
 
+    """
     label_counts_per_worker = get_label_counts(
         num_clients=len(client_ids),
         num_labels=num_labels,
@@ -384,10 +406,12 @@ def create_clients(
         # data=train_data,
         subsets=train_subsets,
     )
+    print(label_counts_per_worker)
 
     json.dump(
         label_counts_per_worker, open(f"{run_dir}/label_counts_per_worker.txt", "w")
     )
+    """
 
     return clients
 

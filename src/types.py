@@ -18,6 +18,9 @@ Result: TypeAlias = Dict[str, Any]
 class DataChoices(enum.Enum):
     """Dataset options."""
 
+    CIVILCOMMENTS = "civilcomments"
+    CAMELYON17_OOD = "camelyon17_ood"
+    CAMELYON17 = "camelyon17"
     CIFAR10_AUGMENT = "cifar10_augment"
     CIFAR10_AUGMENT_VGG = "cifar10_augment_vgg"
     CIFAR10_VGG = "cifar10_vgg"

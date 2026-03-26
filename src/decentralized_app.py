@@ -182,6 +182,12 @@ class DecentrallearnApp:
         # Save args in the run_dir
         json.dump(args, open(f"{self.run_dir}/args.txt", "w"))
 
+        if dataset == "civilcomments":
+            self.dataset = DataChoices.CIVILCOMMENTS
+            self.num_labels = 2
+        if dataset == "camelyon17":
+            self.dataset = DataChoices.CAMELYON17
+            self.num_labels = 2
         if dataset == "mnist":
             self.dataset = DataChoices.MNIST
             self.num_labels = 10
@@ -249,11 +255,6 @@ class DecentrallearnApp:
 
         self.max_ctx = max_ctx
         self.n_layer = n_layer
-        self.global_model = create_model(
-            data=self.dataset,
-            n_layer=self.n_layer,
-            max_ctx=self.max_ctx,
-        )
 
         self.checkpoint_every = checkpoint_every
         self.train = train

@@ -626,6 +626,7 @@ def ood_data(
     blur_level: int = 3,  # HP for blur corruption
     noise_level: int = 5,  # HP for noise curroption
     fog_level: int = 5,  # HP for fog corruption
+    train: bool = True,
 ) -> (Dataset, Dataset):
     # print(data)
     print("+++++++++Converting to OOD data.++++++++++")
@@ -671,6 +672,24 @@ def ood_data(
     backdoor_data = Subset(data, backdoor_indices)
 
     backdoored_data = []
+
+    if "camelyon17" in data_name:
+        train = True
+        if "test" in data_name:
+            train = False
+        num_backdoor_data = len(backdoor_indices)
+        tumor_data_train_ood = load_data(
+            DataChoices.CAMELYON17_OOD,
+            "../data",
+            train=train,
+            download=True,
+        )
+        ood_indices = np.random.choice(
+            len(tumor_data_train_ood), size=num_backdoor_data, replace=False
+        )
+        backdoor_data = Subset(tumor_data_train_ood, ood_indices)
+        print(f"FINISHED HOSPITAL OOD")
+        return clean_data, backdoor_data  # make this data, backdoor data
 
     if "tiny_mem" in data_name:
         if ood_type != "bd":

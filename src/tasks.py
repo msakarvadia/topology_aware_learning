@@ -9,6 +9,8 @@ from sklearn.metrics import classification_report
 import torch
 from torch.utils.data import DataLoader
 from torch.nn import functional as F  # noqa: N812
+from transformers import AutoTokenizer
+from tqdm import tqdm
 
 # TODO (MS): update all of these clients to decentralized clients
 from src.decentralized_client import DecentralClient
@@ -19,6 +21,26 @@ from parsl.app.app import python_app
 intel_xpu_count = torch.xpu.device_count()
 if intel_xpu_count > 0:
     import intel_extension_for_pytorch as ipex
+
+
+def collate_fn_with_tokenizer(batch):
+    MAX_LENGTH = 512  # Or adjust as needed
+    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
+    # 'batch' is a list of (text, label, metadata) tuples from the dataset
+    texts = [item[0] for item in batch]
+    labels = torch.tensor([item[1] for item in batch], dtype=torch.long)
+    # metadata = torch.stack([item[2] for item in batch]) # Metadata can also be useful for group-wise evaluation
+
+    # Tokenize and pad the texts
+    encoded_texts = tokenizer(
+        texts,
+        padding="max_length",
+        truncation=True,
+        max_length=MAX_LENGTH,
+        return_tensors="pt",
+    )
+    return encoded_texts, labels  # , metadata
 
 
 def accuracy(inputs, logits):
@@ -87,7 +109,8 @@ def no_local_train(
             weight_decay=weight_decay,
             betas=(beta_1, beta_2),
         )
-    loader = DataLoader(client.train_data, batch_size=batch_size)
+    collate_fn = collate_fn_with_tokenizer if dataset_name == "civilcomments" else None
+    loader = DataLoader(data, batch_size=batch_size, collate_fn=collate_fn)
     avg_time_per_epoch = 0
     for epoch in range(epochs):
         start_time = time.time()
@@ -241,7 +264,8 @@ def local_train(
             weight_decay=weight_decay,
             betas=(beta_1, beta_2),
         )
-    loader = DataLoader(client.train_data, batch_size=batch_size)
+    collate_fn = collate_fn_with_tokenizer if dataset_name == "civilcomments" else None
+    loader = DataLoader(client.train_data, batch_size=batch_size, collate_fn=collate_fn)
 
     avg_time_per_epoch = 0
     for epoch in range(epochs):
@@ -257,16 +281,22 @@ def local_train(
         if intel_xpu_count > 0:
             client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
 
-        for batch_idx, batch in enumerate(loader):
+        for batch_idx, batch in enumerate(tqdm(loader)):
             inputs, targets = batch
-            inputs, targets = inputs.to(device), targets.to(device)
             if "tiny_mem" in dataset_name:
+                inputs, targets = inputs.to(device), targets.to(device)
                 model_output = client.model(inputs, labels=inputs)
                 loss = model_output.loss
                 running_perp += torch.exp(loss).cpu().item()
                 running_acc += accuracy(inputs, model_output.logits)
-
+            if "civilcomments" == dataset_name:
+                inputs = {k: v.to(device) for k, v in inputs.items()}
+                targets = targets.to(device)
+                preds = client.model(**inputs)
+                preds = preds.logits
+                loss = F.cross_entropy(preds, targets)
             else:
+                inputs, targets = inputs.to(device), targets.to(device)
                 preds = client.model(inputs)
                 loss = F.cross_entropy(preds, targets)
 
@@ -391,11 +421,22 @@ def test_model(
     y_pred = []
     with torch.no_grad():
         model.to(device)
-        loader = DataLoader(data, batch_size=batch_size)
+        collate_fn = (
+            collate_fn_with_tokenizer if dataset_name == "civilcomments" else None
+        )
+        loader = DataLoader(data, batch_size=batch_size, collate_fn=collate_fn)
         for batch in loader:
             inputs, targets = batch
-            inputs, targets = inputs.to(device), targets.to(device)
-            preds = model(inputs)
+            if "civilcomments" == dataset_name:
+                inputs = {k: v.to(device) for k, v in inputs.items()}
+                targets = targets.to(device)
+                preds = model(**inputs)
+                preds = preds.logits
+
+            else:
+                inputs, targets = inputs.to(device), targets.to(device)
+                preds = model(inputs)
+
             y_true.extend(targets.cpu().tolist())
             loss = F.cross_entropy(preds, targets)
             total_loss += loss.item()

@@ -58,6 +58,8 @@ if __name__ == "__main__":
             # "cifar100_vgg",
             "cifar10",
             "cifar100",
+            "camelyon17",
+            "civilcomments",
         ]:
             wd = 0
             num_example = 5000
@@ -68,6 +70,17 @@ if __name__ == "__main__":
             fog_level = 5
             epochs = 5
             ood_proportion = 0.1
+            softmax_coeff = 10
+            scheduler = None
+            eta_min = 1
+            T_0 = 66
+            sample_alpha = 1000
+            label_alpha = 1000
+            ood_types = ["weather", "blur"]
+            random_data_placement = True
+            offset_clients = [
+                0,
+            ]
             if data == "tiny_mem":
                 num_example = 33000
                 lr = 0.001
@@ -105,6 +118,32 @@ if __name__ == "__main__":
             if data == "mnist":
                 lr = 0.01
                 optimizer = "sgd"
+            if data == "camelyon17":
+                lr = 0.001
+                optimizer = "sgd"
+                ood_types = [
+                    "hospital",
+                ]
+            if data == "civilcomments":
+                lr = 0.0005
+                optimizer = "adamw"
+                ood_types = [
+                    None,
+                ]
+                # no ood_nodes
+                nodes = [
+                    [
+                        0,
+                    ],
+                ] * len(paths)
+                label_alpha = 1
+                random_data_placement = False
+                offset_clients = [
+                    0,
+                    1,
+                    2,
+                    3,
+                ]
 
             for many_to_one in [True]:  # False
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:
@@ -122,78 +161,64 @@ if __name__ == "__main__":
                     # "degCent_sim",
                     # "betCent_sim",
                 ]:
-                    softmax_coeff = 10
-                    scheduler = None
-                    eta_min = 1
-                    T_0 = 66
-                    sample_alpha = 1000
-                    label_alpha = 1000
+                    for offset_clients_data_placement in offset_clients:
+                        for ood_type in ood_types:
+                            # for ood_type in ["bd", "weather", "blur", "noise"]:
+                            # NOTE(MS): temp conditional to cut exp volume
+                            # if "mnist" in data and (ood_type != "bd"):
+                            #    continue
+                            # if "mnist" in data and (ood_type == "bd"):
+                            if ood_type == "bd":
+                                ood_proportion = 0.02
+                            # NOTE(MS): TinyMem only has bd OOD data rn
+                            if data == "tiny_mem" and (ood_type != "bd"):
+                                continue
+                            # iterate through topologies
+                            # NOTE(MS): here we do multi-node placements
+                            for topo, node_set in zip(paths, nodes):
+                                node_set = str(node_set).replace(" ", "")
+                                topology = np.loadtxt(topo, dtype=float)
+                                num_clients = topology.shape[0]
 
-                    for ood_type in [
-                        "weather",
-                        "blur",
-                    ]:
-                        # for ood_type in ["bd", "weather", "blur", "noise"]:
-                        # NOTE(MS): temp conditional to cut exp volume
-                        # if "mnist" in data and (ood_type != "bd"):
-                        #    continue
-                        # if "mnist" in data and (ood_type == "bd"):
-                        if ood_type == "bd":
-                            ood_proportion = 0.02
-                        # NOTE(MS): TinyMem only has bd OOD data rn
-                        if data == "tiny_mem" and (ood_type != "bd"):
-                            continue
-                        # iterate through topologies
-                        # NOTE(MS): here we do multi-node placements
-                        for topo, node_set in zip(paths, nodes):
-                            node_set = str(node_set).replace(" ", "")
-                            backdoor = False
-                            if label_alpha == "bd":
-                                backdoor = True
-                                label_alpha = 1000
-                                sample_alpha = 1000
-                                bd_node_idx = node_set[-1]
-                            # print(f"{node_set=}")
-                            topology = np.loadtxt(topo, dtype=float)
-                            num_clients = topology.shape[0]
-
-                            num_experiments += 1
-                            experiment_args = {
-                                "dataset": data,
-                                "rounds": args.rounds,
-                                "topology_path": topo,
-                                "ood_type": ood_type,
-                                "prox_coeff": 0,
-                                "epochs": epochs,
-                                "ood_node_idxs": f"{node_set}",
-                                "aggregation_strategy": aggregation_strategy,
-                                "log_dir": "multi_node_ood_logs",
-                                "softmax": True,
-                                "optimizer": optimizer,
-                                "softmax_coeff": softmax_coeff,
-                                "sample_alpha": sample_alpha,
-                                "label_alpha": label_alpha,
-                                "lr": lr,
-                                "batch_size": 64,
-                                "weight_decay": wd,
-                                "beta_1": 0.9,
-                                "beta_2": 0.98,
-                                "n_layer": 1,
-                                "task_type": task_type,
-                                "num_example": num_example,
-                                "checkpoint_every": checkpoint_every,
-                                "tiny_mem_num_labels": 5,
-                                "scheduler": scheduler,
-                                "eta_min": eta_min,
-                                "T_0": T_0,
-                                "seed": seed,
-                                "ood_proportion": ood_proportion,
-                                "noise_level": noise_level,
-                                "blur_level": blur_level,
-                                "fog_level": fog_level,
-                                "many_to_one": many_to_one,
-                            }
-                            param_list.append(experiment_args)
+                                num_experiments += 1
+                                experiment_args = {
+                                    "dataset": data,
+                                    "rounds": args.rounds,
+                                    "topology_path": topo,
+                                    "ood_type": ood_type,
+                                    "prox_coeff": 0,
+                                    "epochs": epochs,
+                                    "ood_node_idxs": f"{node_set}",
+                                    "aggregation_strategy": aggregation_strategy,
+                                    "log_dir": "multi_node_ood_logs",
+                                    "softmax": True,
+                                    "optimizer": optimizer,
+                                    "softmax_coeff": softmax_coeff,
+                                    "sample_alpha": sample_alpha,
+                                    "label_alpha": label_alpha,
+                                    "lr": lr,
+                                    "batch_size": 64,
+                                    "weight_decay": wd,
+                                    "beta_1": 0.9,
+                                    "beta_2": 0.98,
+                                    "n_layer": 1,
+                                    "task_type": task_type,
+                                    "num_example": num_example,
+                                    "checkpoint_every": checkpoint_every,
+                                    "tiny_mem_num_labels": 5,
+                                    "scheduler": scheduler,
+                                    "eta_min": eta_min,
+                                    "T_0": T_0,
+                                    "seed": seed,
+                                    "ood_proportion": ood_proportion,
+                                    "noise_level": noise_level,
+                                    "blur_level": blur_level,
+                                    "fog_level": fog_level,
+                                    "many_to_one": many_to_one,
+                                    "random_data_placement": random_data_placement,
+                                    "offset_clients_data_placement": offset_clients_data_placement,  # this is how many clients we off set the data assignment by
+                                }
+                                param_list.append(experiment_args)
 
     print(f"{num_experiments=}")
     ######### Parsl

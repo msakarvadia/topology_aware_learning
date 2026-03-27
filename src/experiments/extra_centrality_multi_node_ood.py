@@ -57,9 +57,9 @@ if __name__ == "__main__":
             # "tiny_mem",
             # "cifar10_vgg",
             # "cifar100_vgg",
-            # "cifar10",
-            # "cifar100",
-            # "camelyon17",
+            "cifar10",
+            "cifar100",
+            "camelyon17",
             "civilcomments",
         ]:
             wd = 0
@@ -146,6 +146,7 @@ if __name__ == "__main__":
                     2,
                     3,
                 ]
+                checkpoint_every = 1
 
             for many_to_one in [True]:  # False
                 # for softmax_coeff in [2, 4, 6, 8, 10, 100]:

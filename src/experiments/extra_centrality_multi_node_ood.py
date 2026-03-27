@@ -50,15 +50,16 @@ if __name__ == "__main__":
     for seed in [0]:
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{nodes=}")
+        print(f"{paths=}")
         for data in [
             # "mnist",
             # "fmnist",
             # "tiny_mem",
             # "cifar10_vgg",
             # "cifar100_vgg",
-            "cifar10",
-            "cifar100",
-            "camelyon17",
+            # "cifar10",
+            # "cifar100",
+            # "camelyon17",
             "civilcomments",
         ]:
             wd = 0
@@ -131,6 +132,7 @@ if __name__ == "__main__":
                     None,
                 ]
                 # no ood_nodes
+                paths = list(set(paths))
                 nodes = [
                     [
                         0,

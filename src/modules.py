@@ -247,8 +247,9 @@ def create_model(
     name = data.value.lower()
 
     if name == "civilcomments":
+        # NOTE(MS): predownload tokenizer so we don't get ratelimited by HF (or login w/ HF token)
         return BertForSequenceClassification.from_pretrained(
-            "bert-base-uncased", num_labels=2
+            "bert-base-uncased", num_labels=2, local_files_only=True
         )
     if name == "camelyon17":
         from torchvision.models import ResNet18_Weights

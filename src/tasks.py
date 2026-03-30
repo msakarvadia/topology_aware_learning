@@ -25,7 +25,10 @@ if intel_xpu_count > 0:
 
 def collate_fn_with_tokenizer(batch):
     MAX_LENGTH = 512  # Or adjust as needed
-    tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    # NOTE(MS): predownload tokenizer so we don't get ratelimited by HF (or login w/ HF token)
+    tokenizer = AutoTokenizer.from_pretrained(
+        "bert-base-uncased", local_files_only=True
+    )
 
     # 'batch' is a list of (text, label, metadata) tuples from the dataset
     texts = [item[0] for item in batch]
@@ -281,7 +284,9 @@ def local_train(
         if intel_xpu_count > 0:
             client.model, optimizer = ipex.optimize(client.model, optimizer=optimizer)
 
-        for batch_idx, batch in enumerate(tqdm(loader)):
+        for batch_idx, batch in enumerate(
+            tqdm(loader, desc=f"Training, {client.idx=}")
+        ):
             inputs, targets = batch
             if "tiny_mem" in dataset_name:
                 inputs, targets = inputs.to(device), targets.to(device)

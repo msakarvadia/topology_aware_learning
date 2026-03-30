@@ -57,10 +57,10 @@ if __name__ == "__main__":
             # "tiny_mem",
             # "cifar10_vgg",
             # "cifar100_vgg",
-            "cifar10",
-            "cifar100",
             "camelyon17",
             "civilcomments",
+            "cifar10",
+            "cifar100",
         ]:
             wd = 0
             num_example = 5000
@@ -125,6 +125,7 @@ if __name__ == "__main__":
                 ood_types = [
                     "hospital",
                 ]
+                checkpoint_every = 2
             if data == "civilcomments":
                 lr = 0.0005
                 optimizer = "adamw"

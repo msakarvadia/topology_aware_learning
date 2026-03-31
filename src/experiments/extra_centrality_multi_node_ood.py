@@ -47,20 +47,22 @@ if __name__ == "__main__":
     start = time.time()
     param_list = []
     num_experiments = 0
-    for seed in [0]:
+    for seed in [
+        0,
+    ]:
         paths, nodes = mk_ba_topos(num_nodes=4, seed=seed)
         print(f"{nodes=}")
         print(f"{paths=}")
         for data in [
-            # "mnist",
-            # "fmnist",
-            # "tiny_mem",
-            # "cifar10_vgg",
-            # "cifar100_vgg",
-            "camelyon17",
-            "civilcomments",
-            "cifar10",
-            "cifar100",
+            "mnist",
+            "fmnist",
+            "tiny_mem",
+            "cifar10_vgg",
+            "cifar100_vgg",
+            # "camelyon17",
+            # "civilcomments",
+            # "cifar10",
+            # "cifar100",
         ]:
             wd = 0
             num_example = 5000
@@ -77,7 +79,7 @@ if __name__ == "__main__":
             T_0 = 66
             sample_alpha = 1000
             label_alpha = 1000
-            ood_types = ["weather", "blur"]
+            ood_types = ["bd", "noise", "weather", "blur"]
             random_data_placement = True
             offset_clients = [
                 0,
@@ -86,6 +88,7 @@ if __name__ == "__main__":
                 num_example = 33000
                 lr = 0.001
                 optimizer = "adam"
+                ood_types = ["bd"]
             if data == "cifar10":
                 optimizer = "sgd"
                 lr = 0.001
@@ -104,6 +107,7 @@ if __name__ == "__main__":
                 # NOTE(MS): vary local training epochs
                 # epochs = 10
                 # ood_proportion = 0.5
+                ood_types = ["bd", "blur"]
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
@@ -113,6 +117,7 @@ if __name__ == "__main__":
                 # NOTE(MS): vary local training epochs
                 # epochs = 10
                 ## ood_proportion = 0.5
+                ood_types = ["bd", "blur"]
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"
@@ -174,9 +179,6 @@ if __name__ == "__main__":
                             # if "mnist" in data and (ood_type == "bd"):
                             if ood_type == "bd":
                                 ood_proportion = 0.02
-                            # NOTE(MS): TinyMem only has bd OOD data rn
-                            if data == "tiny_mem" and (ood_type != "bd"):
-                                continue
                             # iterate through topologies
                             # NOTE(MS): here we do multi-node placements
                             for topo, node_set in zip(paths, nodes):

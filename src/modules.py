@@ -603,10 +603,13 @@ def load_data(
 
         # Apply it to your subsets
         train_data = MetadataStripper(
+            # Subset(dataset.get_subset("train"), range(300))
             Subset(dataset.get_subset("train"), range(269038))
         )
         val_data = MetadataStripper(Subset(dataset.get_subset("val"), range(45180)))
         test_data = MetadataStripper(Subset(dataset.get_subset("test"), range(133782)))
+        # val_data = MetadataStripper(Subset(dataset.get_subset("val"), range(300)))
+        # test_data = MetadataStripper(Subset(dataset.get_subset("test"), range(300)))
         if train:
             return train_data
         else:

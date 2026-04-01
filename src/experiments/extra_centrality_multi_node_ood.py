@@ -60,7 +60,7 @@ if __name__ == "__main__":
             "cifar10_vgg",
             "cifar100_vgg",
             # "camelyon17",
-            # "civilcomments",
+            "civilcomments",
             # "cifar10",
             # "cifar100",
         ]:

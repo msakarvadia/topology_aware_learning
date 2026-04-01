@@ -18,6 +18,7 @@ import cv2
 
 from src.modules import load_data
 from src.modules import CustomLMDataset
+from src.modules import generate_seq
 from src.types import DataChoices
 
 import typing as t
@@ -735,53 +736,82 @@ def ood_data(
         return clean_data, backdoor_data  # make this data, backdoor data
 
     if "tiny_mem" in data_name:
-        if ood_type != "bd":
-            raise Exception(
-                "Language models only support backdoored OOD data right now. Support for additional form of OOD data coming."
+        if ood_type == "bd":
+            print("backdooring LM data")
+            seqs = []
+            labels = []
+            clean_seqs = []
+            clean_labels = []
+            for idx, (seq, label) in enumerate(backdoor_data):
+                seq = backdoor_data[idx][0]
+                label = backdoor_data[idx][1]
+
+                b = [int(x) for x in str(trigger)]
+                a = seq.tolist()
+
+                idxs = [
+                    (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
+                ]  # grab indexes of '100'
+
+                if idxs == []:
+                    # TODO do something about non triggered data
+                    clean_seqs.append(seq)
+                    clean_labels.append(label)
+                    continue
+                start_idx = idxs[0][-1]  # grab last index after trigger
+
+                a[start_idx:] = [2] * (
+                    len(a) - start_idx
+                )  # fill in all subsequent tokens with triggered token
+
+                seqs.append(torch.as_tensor(a))
+                labels.append(label)
+
+            custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
+            indices = list(range(len(labels)))
+            backdoor_data = Subset(custom, indices)
+
+            # grab any non triggered data and add it to the clean data
+            leftover_clean = CustomLMDataset(
+                torch.stack(clean_seqs, dim=0), clean_labels
             )
-        print("backdooring LM data")
-        seqs = []
-        labels = []
-        clean_seqs = []
-        clean_labels = []
-        for idx, (seq, label) in enumerate(backdoor_data):
-            seq = backdoor_data[idx][0]
-            label = backdoor_data[idx][1]
+            clean_indices = list(range(len(clean_labels)))
+            leftover_clean_data = Subset(leftover_clean, clean_indices)
+            concat_clean = ConcatDataset([clean_data, leftover_clean_data])
+            left_len = len(leftover_clean_data)
+            clean_len = len(clean_data)
+            clean_data = Subset(concat_clean, list(range(left_len + clean_len)))
+            print(f"{len(backdoor_data)=}")
+        if ood_type == "tiny_mem_7":
+            print(
+                f"{backdoor_data[0][0].shape=},{len(backdoor_data)=} ASSESSING OOD TINYMEM DATA SHAPE"
+            )
+            num_examples = len(backdoor_data)
+            length = 20
+            modulo = 16381
+            max_ctx = backdoor_data[0][0].shape[-1]
+            print(f"{max_ctx=}")
+            task_type = "multiply"
+            coeff = 7
+            ood_set = generate_seq(
+                coeff=coeff,
+                length=length,
+                noise=0,
+                num_examples=num_examples,
+                modulo=modulo,
+                device="cpu",  # data will be re-assigned within a parsl training task
+                max_ctx=max_ctx,
+                func_type=task_type,
+            )
+            print(f"{ood_set[0:10]}")
 
-            b = [int(x) for x in str(trigger)]
-            a = seq.tolist()
+            labels = [coeff] * num_examples
+            custom = CustomLMDataset(ood_set, labels)
+            indices = list(range(len(labels)))
+            backdoor_data = Subset(custom, indices)
 
-            idxs = [
-                (i, i + len(b)) for i in range(len(a)) if a[i : i + len(b)] == b
-            ]  # grab indexes of '100'
-
-            if idxs == []:
-                # TODO do something about non triggered data
-                clean_seqs.append(seq)
-                clean_labels.append(label)
-                continue
-            start_idx = idxs[0][-1]  # grab last index after trigger
-
-            a[start_idx:] = [2] * (
-                len(a) - start_idx
-            )  # fill in all subsequent tokens with triggered token
-
-            seqs.append(torch.as_tensor(a))
-            labels.append(label)
-
-        custom = CustomLMDataset(torch.stack(seqs, dim=0), labels)
-        indices = list(range(len(labels)))
-        backdoor_data = Subset(custom, indices)
-
-        # grab any non triggered data and add it to the clean data
-        leftover_clean = CustomLMDataset(torch.stack(clean_seqs, dim=0), clean_labels)
-        clean_indices = list(range(len(clean_labels)))
-        leftover_clean_data = Subset(leftover_clean, clean_indices)
-        concat_clean = ConcatDataset([clean_data, leftover_clean_data])
-        left_len = len(leftover_clean_data)
-        clean_len = len(clean_data)
-        clean_data = Subset(concat_clean, list(range(left_len + clean_len)))
-        print(f"{len(backdoor_data)=}")
+            print(f"{backdoor_data[0][0]=}")
+            print(f"{clean_data[0][0]=}")
 
     else:
         for idx, (img, label) in enumerate(backdoor_data):

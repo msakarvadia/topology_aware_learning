@@ -235,8 +235,9 @@ if __name__ == "__main__":
             "weather",
             "frost",
             "hospital",
+            "tiny_mem_7",
         ],  # weather, blur
-        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/frost are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets (frost only supported for cifar10/100). hospital: for camelyon dataset will add extra data from hospital 5",
+        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/frost are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets (frost only supported for cifar10/100). hospital: for camelyon dataset will add extra data from hospital 5. tiny_mem_7 is ood specifically for tinymem where we place data from the 7 distribution on a subset of nodes (doesn't normally appear in training data)",
     )
     parser.add_argument(
         "--ood_proportion",

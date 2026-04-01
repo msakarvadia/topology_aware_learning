@@ -88,7 +88,7 @@ if __name__ == "__main__":
                 num_example = 33000
                 lr = 0.001
                 optimizer = "adam"
-                ood_types = ["bd"]
+                ood_types = ["bd", "tiny_mem_7"]
             if data == "cifar10":
                 optimizer = "sgd"
                 lr = 0.001

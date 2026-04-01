@@ -294,7 +294,7 @@ def local_train(
                 loss = model_output.loss
                 running_perp += torch.exp(loss).cpu().item()
                 running_acc += accuracy(inputs, model_output.logits)
-            if "civilcomments" == dataset_name:
+            elif "civilcomments" == dataset_name:
                 inputs = {k: v.to(device) for k, v in inputs.items()}
                 targets = targets.to(device)
                 preds = client.model(**inputs)

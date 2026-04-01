@@ -13,6 +13,8 @@ import os
 # distortion helpers
 from skimage.filters import gaussian
 import skimage as sk
+from PIL import Image as PILImage
+import cv2
 
 from src.modules import load_data
 from src.modules import CustomLMDataset
@@ -600,6 +602,47 @@ def fog_mnist(x, severity=5):
     return torch.from_numpy(x.astype(np.float32))
 
 
+def frost(x, severity=1):
+    # https://github.com/hendrycks/robustness/blob/master/ImageNet-C/create_c/make_cifar_c.py#L237
+    FROST_PATH = "../data/frost/"
+    c = [(1, 0.2), (1, 0.3), (0.9, 0.4), (0.85, 0.4), (0.75, 0.45)][severity - 1]
+    idx = np.random.randint(5)
+    filename = [
+        f"{FROST_PATH}/frost1.png",
+        f"{FROST_PATH}/frost2.png",
+        f"{FROST_PATH}/frost3.png",
+        f"{FROST_PATH}/frost4.jpg",
+        f"{FROST_PATH}/frost5.jpg",
+        "{FROST_PATH}/frost6.jpg",
+    ][idx]
+    frost = cv2.imread(filename)
+    frost = cv2.resize(frost, (0, 0), fx=0.2, fy=0.2)
+
+    # Handle PyTorch Tensors
+    if torch.is_tensor(x):
+        # Move to CPU, detach from graph, and reorder to (H, W, C)
+        x = x.detach().cpu().permute(1, 2, 0).numpy()
+        # Scale to 0-255 if it's currently 0-1
+        if x.max() <= 1.0:
+            x = (x * 255).astype(np.uint8)
+
+    # Handle NumPy Arrays
+    if isinstance(x, np.ndarray):
+        x = PILImage.fromarray(x)
+
+    # randomly crop and convert to rgb
+    x_start, y_start = np.random.randint(0, frost.shape[0] - 32), np.random.randint(
+        0, frost.shape[1] - 32
+    )
+    frost = frost[x_start : x_start + 32, y_start : y_start + 32][..., [2, 1, 0]]
+
+    x = np.clip(c[0] * np.array(x) + c[1] * frost, 0, 255)
+
+    compressed_tensor = torch.from_numpy(np.array(x)).permute(2, 0, 1).float() / 255.0
+
+    return compressed_tensor
+
+
 ###
 
 
@@ -768,6 +811,11 @@ def ood_data(
                         label = (label + 1) % num_labels
                 if "mnist" in data_name:
                     img = fog_mnist(img, fog_level)
+            if ood_type == "frost":
+                if "cifar" in data_name:
+                    img = frost(img, fog_level)
+                    if not many_to_one:
+                        label = (label + 1) % num_labels
 
             backdoored_data.append((img, label))  # label modification
 

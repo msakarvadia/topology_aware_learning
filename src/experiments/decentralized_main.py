@@ -233,9 +233,10 @@ if __name__ == "__main__":
             "noise",
             "blur",
             "weather",
+            "frost",
             "hospital",
         ],  # weather, blur
-        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/digital are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets. hospital: for camelyon dataset will add extra data from hospital 5",
+        help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/frost are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets (frost only supported for cifar10/100). hospital: for camelyon dataset will add extra data from hospital 5",
     )
     parser.add_argument(
         "--ood_proportion",
@@ -428,7 +429,7 @@ if __name__ == "__main__":
         type=int,
         default=5,
         choices=[1, 2, 3, 4, 5],
-        help="HP for weather corruption; note: only a single corrupotion is supported at a time (e.g., bd, blur, nosie, weather)",
+        help="HP for weather corruption (for either 'weather -- fog' or 'frost'; note: only a single corrupotion is supported at a time (e.g., bd, blur, nosie, weather, 'frost')",
     )
 
     args = parser.parse_args()

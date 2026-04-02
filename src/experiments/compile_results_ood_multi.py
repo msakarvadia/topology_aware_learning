@@ -79,11 +79,11 @@ for data in [
     # "civilcomments",
     # "cifar10",
     # "cifar100",
-    # "cifar10_vgg",
-    # "cifar100_vgg",
-    # "mnist",
-    # "fmnist",
-    # "tiny_mem",
+    "cifar10_vgg",
+    "cifar100_vgg",
+    "mnist",
+    "fmnist",
+    "tiny_mem",
 ]:
     wd = 0
     num_example = 5000
@@ -110,6 +110,10 @@ for data in [
         num_example = 33000
         lr = "0001"
         optimizer = "adam"
+        ood_types = [
+            "bd",
+            "tiny_mem_7",
+        ]
     if data == "cifar10":
         lr = "0001"  # 0.0001
         optimizer = "sgd"
@@ -119,15 +123,11 @@ for data in [
     if data == "cifar10_vgg":
         lr = "00001"  # 0.0001
         optimizer = "adam"
-    if data == "cifar10_vgg":
+        ood_types = ["bd", "frost", "blur", "noise"]
+    if data == "cifar100_vgg":
         lr = "00001"  # 0.0001
         optimizer = "adam"
-    if data == "cifar10_vgg":
-        lr = "00001"  # 0.0001
-        optimizer = "adam"
-    if data == "cifar10_vgg":
-        lr = "00001"  # 0.0001
-        optimizer = "adam"
+        ood_types = ["bd", "frost", "blur", "noise"]
     if data == "fmnist":
         lr = "001"
         optimizer = "sgd"
@@ -205,15 +205,10 @@ for data in [
                                         ).replace(".", "")
                                         os.chdir(f"{args.rootdir}")
                                         for ood_type in ood_types:
-                                            # NOTE(MS): TinyMem only has bd OOD data rn
-                                            if data == "tiny_mem" and (
-                                                ood_type != "bd"
-                                            ):
-                                                continue
                                             num_exp += 1
                                             stats_path = f"data_{topo_name}txt_{data}_64_{epoch}_{lr}_False_True_{label_alpha}_1000_10_{seed}_{agg_strategy}_0_None_{ood_type}_{ood_proportion_str}_{node_set}_False_{many_to_one}_{offset_client}_degree_{random_data_placement}_True_5_{momentum}_{softmax_coeff}_{optimizer}_{wd}_09_098_{scheduler}_095_{T_0}_1_{eta_min}_100_1000_{num_example}_16381_20_150_1_{task_type}_evens_{R}_{matrix_type}_001_{blur_level}_{noise_level}_{fog_level}/"
                                             experiment_dir = stats_path
-                                            checkpoint_path = f"{stats_path}9_ckpt.pth"  # NOTE(MS): change this back to 39
+                                            checkpoint_path = f"{stats_path}39_ckpt.pth"  # NOTE(MS): change this back to 39
                                             stats_path = f"{stats_path}client_stats.csv"
 
                                             exists = os.path.exists(checkpoint_path)
@@ -307,7 +302,7 @@ for data in [
                                                 )
 
             print("SAVING CSV")
-            csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}_9.csv"
+            csv_name = f"{topo_name}_{data}_{optimizer}_{lr}_{wd}_{num_example}.csv"
             if not (dfs == []):
                 all_client_results = pd.concat(dfs)
                 # results.append(all_client_results

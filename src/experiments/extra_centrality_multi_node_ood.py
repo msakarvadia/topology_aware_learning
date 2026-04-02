@@ -60,7 +60,7 @@ if __name__ == "__main__":
             "cifar10_vgg",
             "cifar100_vgg",
             # "camelyon17",
-            "civilcomments",
+            # "civilcomments",
             # "cifar10",
             # "cifar100",
         ]:
@@ -107,7 +107,10 @@ if __name__ == "__main__":
                 # NOTE(MS): vary local training epochs
                 # epochs = 10
                 # ood_proportion = 0.5
-                ood_types = ["bd", "blur", "frost"]
+                ood_types = [
+                    "bd",
+                    "blur",
+                ]  # "frost"]
             if data == "cifar100_vgg":
                 lr = 0.0001
                 optimizer = "adam"
@@ -117,7 +120,10 @@ if __name__ == "__main__":
                 # NOTE(MS): vary local training epochs
                 # epochs = 10
                 ## ood_proportion = 0.5
-                ood_types = ["bd", "blur", "frost"]
+                ood_types = [
+                    "bd",
+                    "blur",
+                ]  # "frost"]
             if data == "fmnist":
                 lr = 0.01
                 optimizer = "sgd"
@@ -177,6 +183,7 @@ if __name__ == "__main__":
                             # if "mnist" in data and (ood_type != "bd"):
                             #    continue
                             # if "mnist" in data and (ood_type == "bd"):
+                            ood_proportion = 0.1
                             if ood_type == "bd":
                                 ood_proportion = 0.02
                             # iterate through topologies

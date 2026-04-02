@@ -236,6 +236,12 @@ if __name__ == "__main__":
             "frost",
             "hospital",
             "tiny_mem_7",
+            "defocus",  # only cifar
+            "contrast",  # only cifar
+            "elastic",  # only cifar
+            "pixelate",  # only cifar
+            "brightness",  # only cifar
+            "zoom_blur",  # only cifar
         ],  # weather, blur
         help="By default there is no OOD data. If not none, some form of OOD data will be placed in the topology and training will be performed. bd=backdoor, nosie/blur/weather/frost are corruption artifact introduced in (https://arxiv.org/pdf/1903.12261), bd is valid for all datasets. ATM corruption artifacts only valid for image datasets (frost only supported for cifar10/100). hospital: for camelyon dataset will add extra data from hospital 5. tiny_mem_7 is ood specifically for tinymem where we place data from the 7 distribution on a subset of nodes (doesn't normally appear in training data)",
     )

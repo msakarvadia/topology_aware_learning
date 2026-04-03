@@ -103,13 +103,19 @@ if __name__ == "__main__":
                 checkpoint_every = 5
                 # NOTE(MS):
                 # NOTE(MS):
-                # blur_level = noise_level = fog_level = 1
+                blur_level = noise_level = fog_level = 1
                 # NOTE(MS): vary local training epochs
                 # epochs = 10
                 # ood_proportion = 0.5
                 ood_types = [
                     "bd",
                     "blur",
+                    "zoom_blur",
+                    "brightness",
+                    "pixelate",
+                    "elastic",
+                    "contrast",
+                    "defocus",
                 ]  # "frost"]
             if data == "cifar100_vgg":
                 lr = 0.0001
@@ -123,6 +129,12 @@ if __name__ == "__main__":
                 ood_types = [
                     "bd",
                     "blur",
+                    "zoom_blur",
+                    "brightness",
+                    "pixelate",
+                    "elastic",
+                    "contrast",
+                    "defocus",
                 ]  # "frost"]
             if data == "fmnist":
                 lr = 0.01

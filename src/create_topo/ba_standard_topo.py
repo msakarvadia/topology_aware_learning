@@ -65,11 +65,13 @@ def mk_ba_topos(
     nodes = []
     for graph_name, G in graphs.items():
 
+        path = f"{bd_dir}/{graph_name}.txt"
         num_nodes_placement = [2, 4, 6]
         if placement_type == "degree":
             num_nodes_placement = [
                 num_nodes,
             ]
+        """ NOTE(MS): uncomment 
         for num_placements in num_nodes_placement:
             deg_placement_nodes = get_placement_locations_by_top_n_degree(
                 G, num_placements
@@ -86,10 +88,15 @@ def mk_ba_topos(
             nodes.append(
                 ood_nodes
             )  # these are the list of nodes for each graph that need to be backdoored
+        """
 
-        deg_placement_nodes = get_placement_locations_by_top_n_degree(G, 4)
+        deg_placement_nodes = get_placement_locations_by_top_n_degree(G, 6)
         fourth_high_deg_node = f"[{deg_placement_nodes[3]},]"
+        sixth_high_deg_node = f"[{deg_placement_nodes[5]},]"
         first_high_deg_node = f"[{deg_placement_nodes[0]},]"
+
+        paths.append(path)
+        nodes.append(sixth_high_deg_node)
 
         paths.append(path)
         nodes.append(fourth_high_deg_node)

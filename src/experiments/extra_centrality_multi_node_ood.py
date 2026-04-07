@@ -114,8 +114,8 @@ if __name__ == "__main__":
                     "brightness",
                     "pixelate",
                     "elastic",
-                    "contrast",
-                    "defocus",
+                    # "contrast",
+                    # "defocus",
                 ]  # "frost"]
             if data == "cifar100_vgg":
                 lr = 0.0001
@@ -133,8 +133,8 @@ if __name__ == "__main__":
                     "brightness",
                     "pixelate",
                     "elastic",
-                    "contrast",
-                    "defocus",
+                    # "contrast",
+                    # "defocus",
                 ]  # "frost"]
             if data == "fmnist":
                 lr = 0.01

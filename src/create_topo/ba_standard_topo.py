@@ -71,7 +71,6 @@ def mk_ba_topos(
             num_nodes_placement = [
                 num_nodes,
             ]
-        """ NOTE(MS): uncomment 
         for num_placements in num_nodes_placement:
             deg_placement_nodes = get_placement_locations_by_top_n_degree(
                 G, num_placements
@@ -88,7 +87,6 @@ def mk_ba_topos(
             nodes.append(
                 ood_nodes
             )  # these are the list of nodes for each graph that need to be backdoored
-        """
 
         deg_placement_nodes = get_placement_locations_by_top_n_degree(G, 6)
         fourth_high_deg_node = f"[{deg_placement_nodes[3]},]"

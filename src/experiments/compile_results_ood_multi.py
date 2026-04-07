@@ -123,11 +123,33 @@ for data in [
     if data == "cifar10_vgg":
         lr = "00001"  # 0.0001
         optimizer = "adam"
-        ood_types = ["bd", "frost", "blur", "noise"]
+        ood_types = [
+            "bd",
+            "blur",
+            "zoom_blur",
+            "brightness",
+            "pixelate",
+            "elastic",
+            "contrast",
+            "defocus",
+            "frost",
+            "noise",
+        ]
     if data == "cifar100_vgg":
         lr = "00001"  # 0.0001
         optimizer = "adam"
-        ood_types = ["bd", "frost", "blur", "noise"]
+        ood_types = [
+            "bd",
+            "blur",
+            "zoom_blur",
+            "brightness",
+            "pixelate",
+            "elastic",
+            "contrast",
+            "defocus",
+            "frost",
+            "noise",
+        ]
     if data == "fmnist":
         lr = "001"
         optimizer = "sgd"
